@@ -1,0 +1,66 @@
+{% extends 'layouts/base.html' %}
+
+
+{% load static %}
+
+{%block content%}
+
+
+<head>
+    <title>HISTORIA CLÍNICA | IIG - LUZ</title>
+    <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+</head>
+    
+    <div class="main-content">
+        <div class="form-container">
+            <div class="imagenes-logo">
+                <img src="{% static '/images/LUZ.png' %}" width="80" height="80">
+            </div>
+            <h1>Historia Clínica</h1><br><br>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="numero_historia">Numero Historia</label>
+                        {{ form1.numero_historia }}
+                    </div>
+                    <div class="half-width">
+                        <label for="motivo_tipo_consulta">Motivo de Consulta</label>
+                        {{ form1.motivo_tipo_consulta }}
+                    </div>
+                </div><br>
+                
+
+                <div class="form-group">
+                    <label for="cursante_postgrado">Cursante de Postgrado</label>
+                    {{ form1.cursante_postgrado }}
+                </div><br>
+                <div class="form-group">
+                    <label for="centro_referencia">Centro de Referencia</label>
+                    {{ form1.centro_referencia }}
+                </div><br>
+                
+                <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="medico">Médico de Referencia</label>
+                        {{ form1.medico }}
+                    </div>
+                    <div class="half-width">
+                        <label for="especialidad">Especialidad Medico de Referencia</label>
+                        {{ form1.especialidad }}
+                    </div>
+                </div><br><br><br>
+
+                <div class="form-actions" id=" ">
+                    <button type="submit">Siguiente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% endblock %}
+    
+    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 
+
+   

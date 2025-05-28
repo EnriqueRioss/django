@@ -1,0 +1,21 @@
+
+
+{% extends 'layouts/base.html' %}
+
+
+{% load static %}
+
+{%block content%}
+<head>  
+
+    <link rel="stylesheet" href= "{% static '/styles/forms.css' %}">
+</head>
+<div class="form-container">
+  
+    <h1>WELCOME TO DJANGO APP {{title}}</h1>
+
+        <img src="{% static 'search.png' %}" alt="">
+
+        <P>Lorem ipsum dolor sit amet consectetur adipisicing elit. In inventore magnam, asperiores numquam delectus sit illo cupiditate neque, obcaecati praesentium officiis debitis rerum adipisci velit optio, aliquam incidunt itaque at?</P>
+</div>
+{% endblock %}

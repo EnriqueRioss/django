@@ -1,0 +1,506 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+/*--------------- GENERAL -------------------------- */
+:root {
+    --primary-darkerblue: #265073;
+    --buttons-blue: #0766AD;
+    --primary-lightblue: #AED3F2;
+    --lighter-blue: #D5E5F2;
+    --second-lighter-blue: #c8e1f5;
+    --background-color: #F3F3F3;
+    --border-gray: #b3b3b3;
+    --liner-gray: #d3d2d2;
+    --button-gray: #e4e4e4;
+}
+
+html {
+    font-size: 62.5%;
+    font-family: "Poppins", serif;
+    overflow-x: hidden;
+    
+}
+
+body{
+    background-color: var(--background-color);
+    overflow: hidden;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.container {
+    max-width: 120rem;
+    margin: 0 auto;
+}
+
+a{
+    text-decoration: none;
+}
+
+li{
+    list-style: none;
+}
+/*---------------- NAVBAR FORMULARIOS --------------------*/
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+
+.container-logo h1{
+    color: var(--primary-darkerblue);
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+
+.menu {
+    display: flex;
+    gap: 1rem;
+}
+
+.menu li {
+    list-style: none;
+}
+
+.menu a {
+    font-family: "Poppins", serif;
+    text-decoration: none;
+    font-size: 1.6rem;
+    color: var(--primary-darkerblue);
+    font-weight: 600;
+    font-weight: bold;
+    position: relative;
+    padding: 0.8em 1.5em;
+}
+
+.menu a::after {
+    content: '  ';
+    width: 3rem;
+    height: 1px;
+    background-color: var(--buttons-blue);
+    position: absolute;
+    bottom: 7px;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.menu a:hover::after {
+    opacity: 1;
+}
+
+.menu a:hover {
+    color: var(--buttons-blue);
+}
+
+hr{
+    border: 1px solid;
+    border-color: var(--liner-gray);
+}
+
+.conf-logo {
+    border-radius: 25%;
+    width: 3rem;
+    height: 3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--button-gray);
+    margin-left: 15px;
+}
+
+.conf-logo i{
+    color: var(--primary-darkerblue);
+    font-size: 1.5rem;
+}
+
+
+
+/*----------------- HISTORIA CLÍNICA --------------------*/
+
+
+.content-base {
+    margin-left: 30rem; /* Igual al ancho del sidebar */
+    padding: 2rem; 
+    width: calc(100% - 30rem); 
+    min-height: 100vh;
+}
+
+
+.imagenes-logo{
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+
+
+
+
+/*--------------------- FORMULARIOS --------------------*/
+.form-container {
+    background-color: var(--background-color);
+    padding: 5rem 2rem;
+    margin: 2rem auto;
+    max-width: 80rem;
+    
+}
+
+.form-container h1{
+    font-size: 20px;
+    color: var(--primary-darkerblue);
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.form-group-medio {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.half-width{
+    width: 50%;
+}
+
+.form-group-medio label{
+    font-family: "Poppins", serif;
+    font-size: 12px;
+    color: var(--primary-darkerblue);
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.half-width:first-child{
+    margin-right: 2%;
+}
+
+
+.form-group-tres {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap:1.5rem;
+}
+
+.third-width{
+    width: calc(33.3% - 1rem);
+    flex-grow: 1;
+}
+
+.half-width:first-child{
+    margin-right: 2%;
+}
+
+.form-group-tres label{
+    font-family: "Poppins", serif;
+    font-size: 12px;
+    color: var(--primary-darkerblue);
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group label {
+    font-family: "Poppins", serif;
+    font-size: 12px;
+    color: var(--primary-darkerblue);
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group-medio input,
+.form-group-medio select, .form-group-medio textarea {
+    background-color: var(--background-color);
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    background-color: var(--background-color);
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.form-group-tres input,
+.form-group-tres select {
+    background-color: var(--background-color);
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+
+/*------------ Apartado para los formularios desplegables ------------*/
+
+.form-section {
+    /*border: 1px solid var(--border-gray);*/
+    margin-bottom: 3rem;
+    overflow: hidden;
+}
+
+.section-header {
+    background-color: var(--primary-darkerblue);
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+.section-header h3{
+    color: var(--background-color);
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+}
+
+.section-header:hover{
+    background-color: var(--second-lighter-blue);
+
+}
+
+/* Cambiar el color del h3 cuando se hace hover en el section-header */
+.section-header:hover h3 {
+    color: var(--primary-darkerblue); 
+}
+
+.section-content {
+    padding: 0 15px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.section-content.active {
+    padding: 15px;
+    max-height: 2000px;
+}
+
+/* Esto solo funcionará en navegadores modernos */
+.form-section:has(.section-content.active) .section-header {
+    background-color: var(--background-color);
+    border-bottom: 2px solid var(--primary-darkerblue);
+}
+
+.form-section:has(.section-content.active) .section-header h3 {
+    color: var(--primary-darkerblue);
+}
+/* Cambiar el color del h3 cuando está activo */
+.section-header.active h3 {
+    color: var(--primary-darkerblue);
+}
+
+.form-group h3{
+    text-align: center;
+    margin-top: 15px;
+    color: var(--primary-darkerblue);
+    font-family: "Poppins", serif;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+
+}
+
+
+
+/*--------- Apartado para las divisiones en formularios ----------*/
+.section-liner{
+        background-color: var(--background-color);
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+        border-bottom: 2px solid var(--primary-darkerblue);
+        margin-bottom: 2rem;
+}
+
+.section-liner h3{
+    color: var(--primary-darkerblue);
+    font-size: 1.6rem;
+    margin-bottom: 10pxpx;
+}
+
+
+
+/* Botones de acción */
+.form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    padding: 1rem 3.5rem;
+    background-color: var(--primary-darkerblue);
+    color: var(--background-color);
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.form-actions button:hover {
+    background-color: var(--lighter-blue);
+    color: var(--primary-darkerblue);
+}
+
+/* Estilos para tablas (si las usas) */
+.table-container {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.table-container th,
+.table-container td {
+    border: 1px solid var(--border-gray);
+    padding: 8px;
+    text-align: left;
+}
+
+.table-container th {
+    background-color: var(--second-lighter-blue);
+    color: var(--primary-darkerblue);
+    font-family: "Poppins", serif;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.table-container td {
+    font-family: "Poppins", serif;
+    font-size: 1.2rem;
+}
+
+/* Clase para ocultar elementos */
+.hidden {
+    display: none;
+}
+
+
+
+
+/*---------------------- REVISAR -------------------------------*/
+
+/*Estilos para campos de archivo
+.form-group input[type="file"] {
+    padding: 5px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+}
+
+/* Estilos para campos de fecha
+.form-group input[type="date"] {
+    padding: 7px;
+}
+
+/* Estilos para campos de selección (select) 
+.form-group select {
+    padding: 7px;
+    background-color: var(--background-color);
+}
+
+
+/* Estilos para campos numéricos 
+.form-group input[type="number"] {
+    padding: 7px;
+}
+
+/* Estilos para campos de email 
+.form-group input[type="email"] {
+    padding: 7px;
+}
+
+.paciente-detalle-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.paciente-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+.paciente-header .paciente-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 30px;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paciente-header .paciente-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.paciente-header .paciente-info h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.paciente-header .paciente-metadata {
+    display: flex;
+    gap: 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.paciente-seccion {
+    margin-bottom: 30px;
+}
+
+.paciente-seccion h2 {
+    color: #444;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.paciente-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.paciente-datos p {
+    margin: 5px 0;
+}
+*/

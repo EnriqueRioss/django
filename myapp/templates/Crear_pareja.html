@@ -1,0 +1,260 @@
+
+    
+    
+    
+    
+    
+ {% extends 'layouts/base.html' %}
+ {% load static %}
+ 
+ {% block content %}
+ <head>  
+     <title>Registrar Pareja</title>
+     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+
+ </head>
+ 
+ <div class="form-container">
+     <h2>REGISTRAR PAREJA</h2>
+     <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
+    
+     <form method="post" enctype="multipart/form-data" class="pareja-form">
+         {% csrf_token %}
+ 
+         <!-- Primer Conyugue -->
+         <div class="conyugue-section">
+             <h3><i class="fas fa-user"></i> Primer Conyugue</h3>
+             
+             <div class="form-row">
+                 <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="{{ form.nombres_1.id_for_label }}">Nombres*</label>
+                         {{ form.nombres_1 }}
+                        {{ form.nombres_1.errors }}
+                    </div>
+                    <div class="half-width">
+                        <label for="{{ form.apellidos_1.id_for_label }}">Apellidos*</label>
+                        {{ form.apellidos_1 }}
+                        {{ form.apellidos_1.errors }}
+                    </div>
+                 </div>
+                 
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="{{ form.identificacion_1.id_for_label }}">Identificación*</label>
+                        {{ form.identificacion_1 }}
+                        {{ form.identificacion_1.errors }}
+                    </div>
+                    <div class="half-width">
+                        <label for="{{ form.fecha_nacimiento_1.id_for_label }}">Fecha Nacimiento</label>
+                        {{ form.fecha_nacimiento_1 }}
+                    </div>
+                     
+                 </div>
+                 
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.edad_1.id_for_label }}">Edad</label>
+                     {{ form.edad_1 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.lugar_nacimiento_1.id_for_label }}">Lugar Nacimiento</label>
+                     {{ form.lugar_nacimiento_1 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.escolaridad_1.id_for_label }}">Escolaridad</label>
+                     {{ form.escolaridad_1 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.ocupacion_1.id_for_label }}">Ocupación</label>
+                     {{ form.ocupacion_1 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.grupo_sanguineo_1.id_for_label }}">Grupo Sanguíneo</label>
+                     {{ form.grupo_sanguineo_1 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.factor_rh_1.id_for_label }}">Factor RH</label>
+                     {{ form.factor_rh_1 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.telefono_1.id_for_label }}">Teléfono</label>
+                     {{ form.telefono_1 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.email_1.id_for_label }}">Email</label>
+                     {{ form.email_1 }}
+                     {{ form.email_1.errors }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.direccion_1.id_for_label }}">Dirección</label>
+                     {{ form.direccion_1 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.documento_nacimiento_1.id_for_label }}">Documento Nacimiento</label>
+                     {{ form.documento_nacimiento_1 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.foto_1.id_for_label }}">Foto</label>
+                     <div class="file-input-container">
+                         {{ form.foto_1 }}
+                         <label for="{{ form.foto_1.id_for_label }}" class="file-label">
+                             <i class="fas fa-camera"></i> Seleccionar archivo
+                         </label>
+                         <span class="file-name" id="file-name-1">Ningún archivo seleccionado</span>
+                     </div>
+                 </div>
+             </div>
+         </div>
+ 
+         <!-- Segundo Conyugue -->
+         <div class="conyugue-section">
+             <h3><i class="fas fa-user"></i> Segundo Conyugue</h3>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.nombres_2.id_for_label }}">Nombres*</label>
+                     {{ form.nombres_2 }}
+                     {{ form.nombres_2.errors }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.apellidos_2.id_for_label }}">Apellidos*</label>
+                     {{ form.apellidos_2 }}
+                     {{ form.apellidos_2.errors }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.identificacion_2.id_for_label }}">Identificación*</label>
+                     {{ form.identificacion_2 }}
+                     {{ form.identificacion_2.errors }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.fecha_nacimiento_2.id_for_label }}">Fecha Nacimiento</label>
+                     {{ form.fecha_nacimiento_2 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.edad_2.id_for_label }}">Edad</label>
+                     {{ form.edad_2 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.lugar_nacimiento_2.id_for_label }}">Lugar Nacimiento</label>
+                     {{ form.lugar_nacimiento_2 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.escolaridad_2.id_for_label }}">Escolaridad</label>
+                     {{ form.escolaridad_2 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.ocupacion_2.id_for_label }}">Ocupación</label>
+                     {{ form.ocupacion_2 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.grupo_sanguineo_2.id_for_label }}">Grupo Sanguíneo</label>
+                     {{ form.grupo_sanguineo_2 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.factor_rh_2.id_for_label }}">Factor RH</label>
+                     {{ form.factor_rh_2 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.telefono_2.id_for_label }}">Teléfono</label>
+                     {{ form.telefono_2 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.email_2.id_for_label }}">Email</label>
+                     {{ form.email_2 }}
+                     {{ form.email_2.errors }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.direccion_2.id_for_label }}">Dirección</label>
+                     {{ form.direccion_2 }}
+                 </div>
+             </div>
+             
+             <div class="form-row">
+                 <div class="form-group">
+                     <label for="{{ form.documento_nacimiento_2.id_for_label }}">Documento Nacimiento</label>
+                     {{ form.documento_nacimiento_2 }}
+                 </div>
+                 <div class="form-group">
+                     <label for="{{ form.foto_2.id_for_label }}">Foto</label>
+                     <div class="file-input-container">
+                         {{ form.foto_2 }}
+                         <label for="{{ form.foto_2.id_for_label }}" class="file-label">
+                             <i class="fas fa-camera"></i> Seleccionar archivo
+                         </label>
+                         <span class="file-name" id="file-name-2">Ningún archivo seleccionado</span>
+                     </div>
+                 </div>
+             </div>
+         </div>
+ 
+         <div class="form-actions">
+             <button type="submit" class="btn-submit">
+                 <i class="fas fa-save"></i> Guardar Pareja
+        
+         </div>
+     </form>
+ </div>
+ 
+ <script>
+ // Mostrar nombre de archivo seleccionado
+ document.getElementById('{{ form.foto_1.id_for_label }}').addEventListener('change', function(e) {
+     const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+     document.getElementById('file-name-1').textContent = fileName;
+ });
+ 
+ document.getElementById('{{ form.foto_2.id_for_label }}').addEventListener('change', function(e) {
+     const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+     document.getElementById('file-name-2').textContent = fileName;
+ });
+ 
+ // Validación de fechas
+ document.querySelector('.pareja-form').addEventListener('submit', function(e) {
+     const fecha1 = document.getElementById('{{ form.fecha_nacimiento_1.id_for_label }}').value;
+     const fecha2 = document.getElementById('{{ form.fecha_nacimiento_2.id_for_label }}').value;
+     
+     if (fecha1 && fecha2 && new Date(fecha1) > new Date(fecha2)) {
+         alert('La fecha de nacimiento del primer conyugue no puede ser posterior a la del segundo');
+         e.preventDefault();
+     }
+ });
+ </script>
+ {% endblock %}

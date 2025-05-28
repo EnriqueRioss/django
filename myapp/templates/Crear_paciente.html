@@ -1,0 +1,113 @@
+{% extends 'layouts/base2.html' %}
+
+
+{% load static %}
+ 
+{%block content%}
+ 
+<head>  
+    <title>Datos del Proposito</title>
+    <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+</head>
+
+<div class="form-container">
+    <h1>Propósito-Diagnóstico</h1><br><br>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div id="proposito-diagnostico-section">
+            <div class="section-liner">
+                <h3>Datos del Propósito</h3>
+            </div>
+            <br><br>
+            
+            <div class="form-group-medio">
+                <div class="half-width">
+                    <label for="nombres_proposito">Nombres</label>
+                    {{ form.nombres }}
+                </div>
+                <div class="half-width">
+                    <label for="apellidos_proposito">Apellidos</label>
+                    {{ form.apellidos }}
+                </div>
+            </div>
+            
+            <div class="form-group-medio">
+                <div class="half-width">
+                    <label for="lugar_nacimiento_proposito">Lugar de Nacimiento</label>
+                    {{ form.lugar_nacimiento }}
+                </div>
+                <div class="half-width">
+                    <label for="fecha_nacimiento_proposito">Fecha de Nacimiento</label>
+                    {{ form.fecha_nacimiento }}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="escolaridad_proposito">Escolaridad</label>
+                {{ form.escolaridad }}
+            </div>
+            
+            <div class="form-group">
+                <label for="ocupacion_proposito">Ocupación</label>
+                {{ form.ocupacion }}
+            </div>
+            
+            <div class="form-group-medio">
+                <div class="half-width">
+                    <label for="edad_proposito">Edad</label>
+                    {{ form.edad }}
+                </div>
+                <div class="half-width">
+                    <label for="identificacion_proposito">Identificación</label>
+                    {{ form.identificacion }}
+                </div>
+            </div>
+            
+            <div class="form-group-medio">
+                <div class="half-width">
+                    <label for="grupo_sanguineo_proposito">Grupo Sanguíneo</label>
+                    {{ form.grupo_sanguineo }}
+                </div>
+                <div class="half-width">
+                    <label for="factor_rh_proposito">Factor RH</label>
+                    {{ form.factor_rh }}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.documento_nacimiento.id_for_label }}">Documento de Nacimiento</label>
+                {{ form.documento_nacimiento }}
+            </div>
+            
+            <div class="form-group-medio">
+                <div class="half-width">
+                    <label for="telefono_proposito">Teléfono</label>
+                    {{ form.telefono }}
+                </div>
+                <div class="half-width">
+                    <label for="email_proposito">Email</label>
+                    {{ form.email }}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="direccion_proposito">Dirección</label>
+                {{ form.direccion }}
+            </div>
+            
+            <div class="form-group">
+                <label for="Foto_Proposito">Foto del Proposito</label>
+                {{ form.foto }}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Siguiente</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+{% endblock %}

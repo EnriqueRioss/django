@@ -1,0 +1,247 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IIG - LUZ{% endblock %}</title>
+    <link rel="stylesheet" href="{% static '/styles/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <section id="sidebar">
+        <div class="sidebar-top">
+            <ul class="menu-top">
+                <li class="active">
+                    <a href="{% url 'index' %}">
+                        <i class="fa-solid fa-house"></i>
+                        <span class="text">Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="patients.html">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="text">Pacientes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="reports.html">
+                        <i class="fa-solid fa-file"></i>
+                        <span class="text">Reportes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="settings.html">
+                        <i class="fa-solid fa-gear"></i>
+                        <span class="text">Ajustes</span>
+                    </a>
+                </li>
+                {% if user.is_authenticated %}
+                <li>
+                    <a href=/logout>
+                    <i class="fa-solid fa-sign-out"></i>
+                    <span class="text">Logout</span>
+                    </a>
+                </li> 
+                {% else %}
+                <li>
+                    <a href="{% url 'login' %}">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span class="text">Login</span>
+                    </a>
+                </li> 
+                <li>
+                    <a href="{% url 'signup' %}">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span class="text">Signup</span>
+                    </a>
+                </li> 
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="spacer" style="height: 250px;"></div>
+    
+        <div class="sidebar-bottom">
+           <div class="buttom">
+             <a href="{% url 'historia_clinica' %}">
+                <span class="text">Nueva Historia</span>
+              </a>
+           </div> 
+            
+            <!-- Formulario de búsqueda mejorado -->
+            <form class="search-form" id="search-form">
+                <input type="search" id="search-input" placeholder="Buscar por nombre, apellido o cédula..."/>
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </form>
+
+            <!-- Lista de pacientes -->
+            <div id="pacientes-list" class="pacientes-container">
+                {% for proposito in ultimos_propositos %}
+                <a href="{% url 'detalle_paciente' proposito.id %}" class="paciente-link">
+                    <div class="paciente-card">
+                        <div class="paciente-avatar">
+                            {% if proposito.foto %}
+                                <img src="{{ proposito.foto.url }}" alt="{{ proposito.nombres }}">
+                            {% else %}
+                                <div class="avatar-placeholder">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="paciente-info">
+                            <h4 class="paciente-nombre">{{ proposito.nombres }} {{ proposito.apellidos }}</h4>
+                            <div class="paciente-detalle">
+                                <span class="edad">{{ proposito.edad|default:"--" }} años</span>
+                                <span class="fecha-ingreso">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                    {{ proposito.historia.fecha_ingreso|date:"d/m/Y"|default:"--" }}
+                                </span>
+                            </div>
+                            <div class="paciente-direccion">
+                                <i class="fa-solid fa-location-dot"></i>
+                                {{ proposito.direccion|truncatechars:25|default:"Sin dirección" }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="no-pacientes">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <p>No hay pacientes recientes</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <div class="content">
+        {% block content %}
+
+
+
+        
+        {% endblock %}
+    </div>   
+
+    <script>
+        // Variables globales definidas desde Django
+        const USER_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
+        const SEARCH_URL = "{% url 'buscar_propositos' %}";
+        
+        $(document).ready(function() {
+            // Función para mostrar lista vacía
+            function mostrarListaVacia() {
+                let html = `
+                <div class="no-pacientes">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <p>${USER_AUTHENTICATED ? 'No hay pacientes recientes' : 'Inicie sesión para ver pacientes'}</p>
+                </div>`;
+                $('#pacientes-list').html(html);
+            }
+        
+            // Función para cargar pacientes recientes del genetista logueado
+            function cargarPacientesRecientes() {
+                if (USER_AUTHENTICATED) {
+                    $.ajax({
+                        url: SEARCH_URL,
+                        data: { 'q': '' },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.propositos && data.propositos.length > 0) {
+                                actualizarListaPacientes(data.propositos);
+                            } else {
+                                mostrarListaVacia();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("Error al cargar pacientes:", error);
+                            mostrarListaVacia();
+                        }
+                    });
+                } else {
+                    mostrarListaVacia();
+                }
+            }
+            
+            // Función para actualizar la lista de pacientes
+            function actualizarListaPacientes(propositos) {
+                let html = '';
+                
+                if (propositos.length > 0) {
+                    propositos.forEach(function(proposito) {
+                        html += `
+                        <a href="/propositos/${proposito.proposito_id}/" class="paciente-link">
+                            <div class="paciente-card">
+                                <div class="paciente-avatar">
+                                    ${proposito.foto ? 
+                                        `<img src="${proposito.foto}" alt="${proposito.nombres}">` : 
+                                        `<div class="avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
+                                    }
+                                </div>
+                                <div class="paciente-info">
+                                    <h4 class="paciente-nombre">${proposito.nombres} ${proposito.apellidos}</h4>
+                                    <div class="paciente-detalle">
+                                        <span class="edad">${proposito.edad || '--'} años</span>
+                                        <span class="fecha-ingreso">
+                                            <i class="fa-solid fa-calendar-day"></i>
+                                            ${proposito.fecha_ingreso || '--'}
+                                        </span>
+                                    </div>
+                                    <div class="paciente-direccion">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        ${proposito.direccion ? (proposito.direccion.length > 25 ? 
+                                            proposito.direccion.substring(0, 25) + '...' : proposito.direccion) : 
+                                            'Sin dirección'}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>`;
+                    });
+                } else {
+                    mostrarListaVacia();
+                    return;
+                }
+                
+                $('#pacientes-list').html(html);
+            }
+        
+            // Manejar la búsqueda en tiempo real
+            $('#search-input').on('input', function() {
+                const query = $(this).val().trim();
+                
+                if (!USER_AUTHENTICATED) {
+                    mostrarListaVacia();
+                    return;
+                }
+                
+                // Si el campo está vacío, mostrar pacientes recientes
+                if (query === '') {
+                    cargarPacientesRecientes();
+                    return;
+                }
+                
+                // Buscar pacientes
+                $.ajax({
+                    url: SEARCH_URL,
+                    data: { 'q': query },
+                    dataType: 'json',
+                    success: function(data) {
+                        actualizarListaPacientes(data.propositos);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error en la búsqueda:", error);
+                        mostrarListaVacia();
+                    }
+                });
+            });
+            
+            // Cargar pacientes recientes al inicio
+            cargarPacientesRecientes();
+        });
+        </script>
+</body>
+</html>

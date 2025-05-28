@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href= "{% static '/styles/stylesforms.css' %}">
+</head>
+<body>
+
+    <header>
+        <div class="container-navbar">
+            <nav class="navbar container">
+                <div class="container-logo">
+                    <h1 class="logo">IIG - LUZ</h1>
+                </div>
+                <div class="opciones">
+                    <ul class="menu">
+                        <li>
+                            <a href="{%  url 'index' %}">Inicio</a>
+                            <a href="patients.html">Pacientes</a>
+                            <a href="reports.html">Reportes</a>
+                            {% if user.is_authenticated %}
+                            <a href="/logout">Logout</a>
+                            {% else %}
+                            <a href="{%  url 'login' %}">Login</a>
+                            {% endif %}
+                            
+                            <span class="conf-logo">
+                                <i class="fa-solid fa-gear"></i>
+                            </span>
+                            <span class="conf-logo">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <hr>
+        </div>
+    </header>
+
+
+<div class="content">
+    {% block content %}
+
+
+    
+    {% endblock %}
+</div>   
+</body>
