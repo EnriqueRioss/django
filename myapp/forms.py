@@ -89,7 +89,7 @@ class PropositosForm(forms.Form):
     )
     identificacion = forms.CharField(max_length=20)
 
-    documento_nacimiento = forms.FileField(required=False )  # Campo para la carga de archivos
+    # documento_nacimiento = forms.FileField(required=False )  # Campo para la carga de archivos
     direccion = forms.CharField(max_length=200, required=False)
     telefono = forms.CharField(max_length=15, required=False)
     email = forms.EmailField(max_length=100, required=False)
@@ -146,7 +146,7 @@ class ParejaPropositosForm(forms.Form):
     ocupacion_1 = forms.CharField(max_length=100, required=False)
     edad_1 = forms.IntegerField(required=False)
     identificacion_1 = forms.CharField(max_length=20, label="Identificación")
-    documento_nacimiento_1 = forms.FileField(required=False)
+    # documento_nacimiento_1 = forms.FileField(required=False)
     direccion_1 = forms.CharField(max_length=200, required=False)
     telefono_1 = forms.CharField(max_length=15, required=False)
     email_1 = forms.EmailField(max_length=100, required=False)
@@ -172,7 +172,7 @@ class ParejaPropositosForm(forms.Form):
     ocupacion_2 = forms.CharField(max_length=100, required=False)
     edad_2 = forms.IntegerField(required=False)
     identificacion_2 = forms.CharField(max_length=20, label="Identificación")
-    documento_nacimiento_2 = forms.FileField(required=False)
+    # documento_nacimiento_2 = forms.FileField(required=False)
     direccion_2 = forms.CharField(max_length=200, required=False)
     telefono_2 = forms.CharField(max_length=15, required=False)
     email_2 = forms.EmailField(max_length=100, required=False)
@@ -205,16 +205,16 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     numero_abortos = forms.IntegerField(required=False)
     numero_mortinatos = forms.IntegerField(required=False)
     numero_malformaciones = forms.IntegerField(required=False)
-    complicaciones_embarazo = forms.CharField(required=False, widget=forms.Textarea)
+    complicaciones_embarazo = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
     exposicion_teratogenos = forms.ChoiceField(
         choices=[('', '---------')] + AntecedentesPersonales._meta.get_field('exposicion_teratogenos').choices,
         required=False
     )
-    descripcion_exposicion = forms.CharField(required=False, widget=forms.Textarea)
-    enfermedades_maternas = forms.CharField(required=False, widget=forms.Textarea)
-    complicaciones_parto = forms.CharField(required=False, widget=forms.Textarea)
-    otros_antecedentes = forms.CharField(required=False, widget=forms.Textarea)
-    observaciones = forms.CharField(required=False, widget=forms.Textarea)
+    descripcion_exposicion = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    enfermedades_maternas = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    complicaciones_parto = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    otros_antecedentes = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    observaciones = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
 
     # Campos de DesarrolloPsicomotor
     sostener_cabeza = forms.BooleanField(required=False)
@@ -225,20 +225,20 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     caminar = forms.BooleanField(required=False)
     primeras_palabras = forms.BooleanField(required=False)
     primeros_dientes = forms.BooleanField(required=False)
-    progreso_escuela = forms.CharField(required=False, widget=forms.Textarea)
-    progreso_peso = forms.CharField(required=False, widget=forms.Textarea)
-    progreso_talla = forms.CharField(required=False, widget=forms.Textarea)
+    progreso_escuela = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    progreso_peso = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    progreso_talla = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
 
     # Campos de PeriodoNeonatal
     peso_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
     talla_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
     circunferencia_cefalica = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
-    cianosis = forms.BooleanField(required=False)
-    ictericia = forms.BooleanField(required=False)
-    hemorragia = forms.BooleanField(required=False)
-    infecciones = forms.BooleanField(required=False)
-    convulsiones = forms.BooleanField(required=False)
-    vomitos = forms.BooleanField(required=False)
+    cianosis =forms.CharField(max_length=100, required=False)
+    ictericia = forms.CharField(max_length=100, required=False)
+    hemorragia = forms.CharField(max_length=100, required=False)
+    infecciones = forms.CharField(max_length=100, required=False)
+    convulsiones = forms.CharField(max_length=100, required=False)
+    vomitos = forms.CharField(max_length=100, required=False)
     observacion_complicaciones = forms.CharField(required=False, widget=forms.Textarea)
     otros_complicaciones = forms.CharField(required=False, widget=forms.Textarea)
     tipo_alimentacion = forms.ChoiceField(
@@ -382,18 +382,18 @@ class ExamenFisicoForm(forms.ModelForm):
             'pabellones_auriculares': forms.NumberInput(attrs={'step': '0.01'}),
             'tension_arterial_sistolica': forms.NumberInput(attrs={'step': '0.01'}),
             'tension_arterial_diastolica': forms.NumberInput(attrs={'step': '0.01'}),
-            'observaciones_cabeza': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_cuello': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_torax': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_abdomen': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_genitales': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_espalda': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_miembros_superiores': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_miembros_inferiores': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_piel': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_osteomioarticular': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_neurologico': forms.Textarea(attrs={'rows': 3}),
-            'observaciones_pliegues': forms.Textarea(attrs={'rows': 3}),
+            'observaciones_cabeza': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_cuello': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_torax': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_abdomen': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_genitales': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_espalda': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_miembros_superiores': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_miembros_inferiores': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_piel': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_osteomioarticular': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_neurologico': forms.Textarea(attrs={'rows': 1}),
+            'observaciones_pliegues': forms.Textarea(attrs={'rows': 1}),
         }
 
     def save(self, commit=True):

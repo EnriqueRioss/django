@@ -232,7 +232,7 @@ class Autorizaciones(models.Model):
     autorizacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
     autorizacion_examenes = models.BooleanField(null=True, blank=True)
-    archivo_autorizacion = models.BinaryField(null=True, blank=True)
+    archivo_autorizacion = models.FileField(null=True, blank=True)
     padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True)
 
     def __str__(self):
@@ -337,7 +337,7 @@ class EvolucionDesarrollo(models.Model):
     cirugias = models.TextField(null=True, blank=True)
     convulsiones = models.TextField(null=True, blank=True)
     otros_antecedentes = models.TextField(null=True, blank=True)
-    resultados_examenes = models.BinaryField(null=True, blank=True)
+    resultados_examenes = models.FileField(null=True, blank=True)
 
     def __str__(self):
         return f"Evolucion Desarrollo {self.evolucion_id}"
@@ -465,6 +465,19 @@ class InformacionPadres(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     direccion = models.CharField(max_length=200, null=True, blank=True)
 
+class Meta:
+    constraints = [
+        models.UniqueConstraint(
+            fields=['proposito', 'tipo'],
+            name='unique_tipo_por_proposito'
+        ),
+        models.CheckConstraint(
+            check=models.Q(tipo__in=['Padre', 'Madre']),
+            name='tipo_valido'
+        )
+    ]
+
+
     def clean(self):
         # Validación para asegurar que solo haya un padre y una madre por propósito
         padres = InformacionPadres.objects.filter(proposito=self.proposito)
@@ -517,12 +530,12 @@ class PeriodoNeonatal(models.Model):
     peso_nacer = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     talla_nacer = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     circunferencia_cefalica = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    cianosis = models.BooleanField(null=True, blank=True)
-    ictericia = models.BooleanField(null=True, blank=True)
-    hemorragia = models.BooleanField(null=True, blank=True)
-    infecciones = models.BooleanField(null=True, blank=True)
-    convulsiones = models.BooleanField(null=True, blank=True)
-    vomitos = models.BooleanField(null=True, blank=True)
+    cianosis = models.CharField(max_length=100, null=True, blank=True)
+    ictericia = models.CharField(max_length=100, null=True, blank=True)
+    hemorragia = models.CharField(max_length=100, null=True, blank=True)
+    infecciones = models.CharField(max_length=100, null=True, blank=True)
+    convulsiones = models.CharField(max_length=100, null=True, blank=True)
+    vomitos = models.CharField(max_length=100, null=True, blank=True)
     observacion_complicaciones = models.TextField(null=True, blank=True)
     otros_complicaciones = models.TextField(null=True, blank=True)
     tipo_alimentacion = models.CharField(
@@ -587,7 +600,7 @@ class Propositos(models.Model):
     ocupacion = models.CharField(max_length=100, null=True, blank=True)
     edad = models.IntegerField(null=True, blank=True)
     identificacion = models.CharField(max_length=20, unique=True)
-    documento_nacimiento = models.BinaryField(null=True, blank=True)
+    # documento_nacimiento = models.BinaryField(null=True, blank=True)
     direccion = models.CharField(max_length=200, null=True, blank=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
