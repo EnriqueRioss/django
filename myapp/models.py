@@ -314,17 +314,21 @@ class DesarrolloPsicomotor(models.Model):
 
 class DiagnosticosPlanEstudio(models.Model):
     diagnostico_id = models.AutoField(primary_key=True)
-    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True,unique=True)
+    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
     signos_clinicos = models.TextField(null=True, blank=True)
     enfermedad_actual = models.TextField(null=True, blank=True)
-    diagnostico_presuntivo_1 = models.TextField(null=True, blank=True)
-    diagnostico_presuntivo_2 = models.TextField(null=True, blank=True)
-    diagnostico_presuntivo_3 = models.TextField(null=True, blank=True)
     plan_estudio = models.TextField(null=True, blank=True)
     diagnostico_confirmado = models.TextField(null=True, blank=True)
-
+    
     def __str__(self):
-        return f"Diagnostico {self.diagnostico_id}"
+        return f"Diagnóstico y Plan para {self.proposito}"
+
+class DiagnosticoPresuntivo(models.Model):
+    diagnostico = models.ForeignKey(DiagnosticosPlanEstudio, on_delete=models.CASCADE, related_name='diagnosticos_presuntivos')
+    descripcion = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.descripcion
 
 
 

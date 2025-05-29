@@ -1,7 +1,7 @@
 from django import forms
 from django.utils import timezone
 from django.forms import ModelForm, Select,DateInput
-from .models import ExamenFisico, HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,AntecedentesFamiliaresPreconcepcionales,DesarrolloPsicomotor,AntecedentesPersonales, ExamenFisico, Parejas
+from .models import ExamenFisico, HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,AntecedentesFamiliaresPreconcepcionales,DesarrolloPsicomotor,AntecedentesPersonales, ExamenFisico, Parejas, DiagnosticosPlanEstudio, DiagnosticoPresuntivo
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -412,5 +412,32 @@ class ExamenFisicoForm(forms.ModelForm):
         
         return examenfisico
 
-        
+
+
+class DiagnosticosPlanEstudioForm(forms.ModelForm):
+    class Meta:
+        model = DiagnosticosPlanEstudio
+        fields = ['signos_clinicos', 'enfermedad_actual', 'plan_estudio', 'diagnostico_confirmado']
+        widgets = {
+            'signos_clinicos': forms.Textarea(attrs={'rows': 4}),
+            'enfermedad_actual': forms.Textarea(attrs={'rows': 4}),
+            'plan_estudio': forms.Textarea(attrs={'rows': 4}),
+            'diagnostico_confirmado': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class DiagnosticoPresuntivoForm(forms.ModelForm):
+    class Meta:
+        model = DiagnosticoPresuntivo
+        fields = ['descripcion']
+        widgets = {
+            'descripcion': forms.TextInput(attrs={'placeholder': 'Añadir diagnóstico presuntivo'})
+        }
+
+DiagnosticoPresuntivoFormSet = forms.inlineformset_factory(
+    DiagnosticosPlanEstudio,
+    DiagnosticoPresuntivo,
+    form=DiagnosticoPresuntivoForm,
+    extra=1,
+    can_delete=True
+)       
 
