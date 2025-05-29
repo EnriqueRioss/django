@@ -402,7 +402,8 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         if form.is_valid():
             try:
                 antecedentespre = form.save(proposito=proposito, pareja=pareja, tipo=tipo)
-                return redirect('diagnosticos_plan')
+                return redirect('diagnosticos_plan',
+                                  proposito_id=proposito.proposito_id)
             except Exception as e:
                 return render(request, 'error.html', {'mensaje': f'Error al guardar: {str(e)}'})
         else:
