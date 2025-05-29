@@ -1,0 +1,113 @@
+{% extends 'layouts/base2.html' %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnósticos y Plan de Estudio</title>
+    <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+    <style>
+        .dynamic-formset {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-row input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .add-row {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Diagnósticos y Plan de Estudio</h1>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.signos_clinicos.id_for_label }}">Signos Clínicos Relevantes</label>
+                {{ form.signos_clinicos }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.enfermedad_actual.id_for_label }}">Enfermedad Actual</label>
+                {{ form.enfermedad_actual }}
+            </div>
+            
+            <div class="form-group">
+                <label>Diagnósticos Presuntivos</label>
+                <div class="dynamic-formset" id="diagnosticos-formset">
+                    {{ formset.management_form }}
+                    {% for form in formset %}
+                        <div class="form-row">
+                            {{ form.id }}
+                            {{ form.descripcion }}
+                            {% if form.DELETE %}
+                                <label class="delete-label">
+                                    {{ form.DELETE }} Eliminar
+                                </label>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="add-row" id="add-diagnostico">+ Añadir diagnóstico</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.plan_estudio.id_for_label }}">Plan de Estudio</label>
+                {{ form.plan_estudio }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.diagnostico_confirmado.id_for_label }}">Diagnóstico Confirmado</label>
+                {{ form.diagnostico_confirmado }}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit">Guardar</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clona el último formulario para añadir nuevos diagnósticos
+            document.getElementById('add-diagnostico').addEventListener('click', function() {
+                const formRows = document.querySelectorAll('.form-row');
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const newFormNum = parseInt(totalForms.value);
+                
+                // Clona el último formulario
+                const newRow = formRows[formRows.length - 1].cloneNode(true);
+                
+                // Actualiza los índices
+                newRow.innerHTML = newRow.innerHTML.replace(/form-(\d+)-/g, `form-${newFormNum}-`);
+                newRow.innerHTML = newRow.innerHTML.replace(
+                    'value="0" name="form-0-id"',
+                    `value="" name="form-${newFormNum}-id"`
+                );
+                
+                // Limpia el valor del nuevo input
+                const input = newRow.querySelector('input[type="text"]');
+                if (input) input.value = '';
+                
+                // Añade el nuevo formulario al contenedor
+                document.getElementById('diagnosticos-formset').appendChild(newRow);
+                
+                // Actualiza el contador de formularios
+                totalForms.value = newFormNum + 1;
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}
