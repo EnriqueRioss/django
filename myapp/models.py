@@ -258,17 +258,17 @@ class DesarrolloPsicomotor(models.Model):
     )
     
     # Campos del modelo
-    sostener_cabeza = models.BooleanField(null=True, blank=True)
-    sonrisa_social = models.BooleanField(null=True, blank=True)
-    sentarse = models.BooleanField(null=True, blank=True)
-    gatear = models.BooleanField(null=True, blank=True)
-    pararse = models.BooleanField(null=True, blank=True)
-    caminar = models.BooleanField(null=True, blank=True)
-    primeras_palabras = models.BooleanField(null=True, blank=True)
-    primeros_dientes = models.BooleanField(null=True, blank=True)
-    progreso_escuela = models.TextField(null=True, blank=True)
-    progreso_peso = models.TextField(null=True, blank=True)
-    progreso_talla = models.TextField(null=True, blank=True)
+    sostener_cabeza = models.CharField(max_length=100, null=True, blank=True)
+    sonrisa_social = models.CharField(max_length=100, null=True, blank=True)
+    sentarse = models.CharField(max_length=100, null=True, blank=True)
+    gatear = models.CharField(max_length=100, null=True, blank=True)
+    pararse = models.CharField(max_length=100, null=True, blank=True)
+    caminar = models.CharField(max_length=100, null=True, blank=True)
+    primeras_palabras =models.CharField(max_length=100, null=True, blank=True)
+    primeros_dientes = models.CharField(max_length=100, null=True, blank=True)
+    progreso_escuela = models.CharField(max_length=100, null=True, blank=True)
+    progreso_peso = models.CharField(max_length=100, null=True, blank=True)
+    progreso_talla = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -545,7 +545,8 @@ class PeriodoNeonatal(models.Model):
         blank=True
     )
     observaciones_alimentacion = models.TextField(null=True, blank=True)
-    Habitos_psicologicos = models.TextField(null=True, blank=True)
+    evolucion = models.TextField(null=True, blank=True)
+    observaciones_habitos_psicologicos = models.TextField(null=True, blank=True)
 
     class Meta:
         constraints = [

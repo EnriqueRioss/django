@@ -205,29 +205,29 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     numero_abortos = forms.IntegerField(required=False)
     numero_mortinatos = forms.IntegerField(required=False)
     numero_malformaciones = forms.IntegerField(required=False)
-    complicaciones_embarazo = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    complicaciones_embarazo = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
     exposicion_teratogenos = forms.ChoiceField(
         choices=[('', '---------')] + AntecedentesPersonales._meta.get_field('exposicion_teratogenos').choices,
         required=False
     )
-    descripcion_exposicion = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    enfermedades_maternas = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    complicaciones_parto = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    otros_antecedentes = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    observaciones = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    descripcion_exposicion = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    enfermedades_maternas = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    complicaciones_parto = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    otros_antecedentes = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    observaciones = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
 
     # Campos de DesarrolloPsicomotor
-    sostener_cabeza = forms.BooleanField(required=False)
-    sonrisa_social = forms.BooleanField(required=False)
-    sentarse = forms.BooleanField(required=False)
-    gatear = forms.BooleanField(required=False)
-    pararse = forms.BooleanField(required=False)
-    caminar = forms.BooleanField(required=False)
-    primeras_palabras = forms.BooleanField(required=False)
-    primeros_dientes = forms.BooleanField(required=False)
-    progreso_escuela = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    progreso_peso = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
-    progreso_talla = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 1}))
+    sostener_cabeza = forms.CharField(max_length=100, required=False)
+    sonrisa_social = forms.CharField(max_length=100, required=False)
+    sentarse =forms.CharField(max_length=100, required=False)
+    gatear = forms.CharField(max_length=100, required=False)
+    pararse = forms.CharField(max_length=100, required=False)
+    caminar = forms.CharField(max_length=100, required=False)
+    primeras_palabras = forms.CharField(max_length=100, required=False)
+    primeros_dientes = forms.CharField(max_length=100, required=False)
+    progreso_escuela = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    progreso_peso = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    progreso_talla = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
 
     # Campos de PeriodoNeonatal
     peso_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2)
@@ -239,14 +239,15 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     infecciones = forms.CharField(max_length=100, required=False)
     convulsiones = forms.CharField(max_length=100, required=False)
     vomitos = forms.CharField(max_length=100, required=False)
-    observacion_complicaciones = forms.CharField(required=False, widget=forms.Textarea)
-    otros_complicaciones = forms.CharField(required=False, widget=forms.Textarea)
+    observacion_complicaciones = forms.CharField(required=False, widget=forms.Textarea (attrs={'rows': 2}))
+    otros_complicaciones = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
     tipo_alimentacion = forms.ChoiceField(
         choices=[('', '---------')] + PeriodoNeonatal._meta.get_field('tipo_alimentacion').choices,
         required=False
     )
-    observaciones_alimentacion = forms.CharField(required=False, widget=forms.Textarea)
-    Habitos_psicologicos = forms.CharField(required=False, widget=forms.Textarea)
+    observaciones_alimentacion = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    evolucion = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    observaciones_habitos_psicologicos = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
 
     def save(self, proposito=None, pareja=None):
         if not proposito and not pareja:
@@ -311,7 +312,8 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
             otros_complicaciones=self.cleaned_data.get('otros_complicaciones'),
             tipo_alimentacion=self.cleaned_data.get('tipo_alimentacion'),
             observaciones_alimentacion=self.cleaned_data.get('observaciones_alimentacion'),
-            Habitos_psicologicos=self.cleaned_data.get('Habitos_psicologicos')
+            evolucion=self.cleaned_data.get('evolucion'),
+            observaciones_habitos_psicologicos=self.cleaned_data.get('observaciones_habitos_psicologicos')
         )
         neonatal.save()
 
@@ -320,10 +322,10 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
 
 class AntecedentesPreconcepcionalesForm(forms.Form):
     # Campos de AntecedentesPersonales
-    antecedentes_padre = forms.CharField(required=False, widget=forms.Textarea)
-    antecedentes_madre = forms.CharField(required=False, widget=forms.Textarea)
-    estado_salud_padre = forms.CharField(required=False, widget=forms.Textarea)
-    estado_salud_madre = forms.CharField(required=False, widget=forms.Textarea)
+    antecedentes_padre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    antecedentes_madre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    estado_salud_padre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+    estado_salud_madre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
     fecha_union_pareja = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     consanguinidad = forms.ChoiceField(choices=[('si', 'Si'), ('no', 'No')], required=False)
     grado_consanguinidad = forms.CharField(max_length=30, required=False)
