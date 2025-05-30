@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 
@@ -312,25 +313,78 @@ class DesarrolloPsicomotor(models.Model):
             return f"Desarrollo Psicomotor de Pareja {self.pareja}"
         return f"Desarrollo Psicomotor {self.desarrollo_id}"
 
-class DiagnosticosPlanEstudio(models.Model):
-    diagnostico_id = models.AutoField(primary_key=True)
-    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
-    signos_clinicos = models.TextField(null=True, blank=True)
-    enfermedad_actual = models.TextField(null=True, blank=True)
-    plan_estudio = models.TextField(null=True, blank=True)
-    diagnostico_confirmado = models.TextField(null=True, blank=True)
+
+
+class EvaluacionGenetica(models.Model):
+    proposito = models.OneToOneField(
+        'Propositos', 
+        on_delete=models.CASCADE,
+        related_name='evaluacion_genetica'
+    )
     
+    # Signos clínicos (texto libre)
+    signos_clinicos = models.TextField(
+        verbose_name="Signos Clínicos Relevantes",
+        blank=True,
+        null=True,
+        help_text="Describa los signos clínicos más relevantes"
+    )
+    
+    # Fecha de creación
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return f"Diagnóstico y Plan para {self.proposito}"
+        return f"Evaluación Genética de {self.proposito}"
 
 class DiagnosticoPresuntivo(models.Model):
-    diagnostico = models.ForeignKey(DiagnosticosPlanEstudio, on_delete=models.CASCADE, related_name='diagnosticos_presuntivos')
-    descripcion = models.CharField(max_length=255)
-    
+    evaluacion = models.ForeignKey(
+        EvaluacionGenetica,
+        on_delete=models.CASCADE,
+        related_name='diagnosticos_presuntivos'
+    )
+    descripcion = models.TextField(
+        verbose_name="Diagnóstico Presuntivo",
+        help_text="Ingrese un diagnóstico presuntivo"
+    )
+    orden = models.PositiveIntegerField(
+        default=0,
+        help_text="Orden de importancia (0=primero)"
+    )
+
+    class Meta:
+        ordering = ['orden']
+        verbose_name_plural = "Diagnósticos Presuntivos"
+
     def __str__(self):
-        return self.descripcion
+        return f"Diagnóstico {self.orden}: {self.descripcion[:50]}..."
 
+class PlanEstudio(models.Model):
+    evaluacion = models.ForeignKey(
+        EvaluacionGenetica,
+        on_delete=models.CASCADE,
+        related_name='planes_estudio'
+    )
+    accion = models.TextField(
+        verbose_name="Acción a realizar",
+        help_text="Describa un paso del plan de estudio"
+    )
+    completado = models.BooleanField(default=False)
+    fecha_limite = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha límite"
+    )
 
+    class Meta:
+        ordering = ['fecha_limite']
+        verbose_name_plural = "Planes de Estudio"
+
+    def clean(self):
+        if self.fecha_limite and self.fecha_limite < timezone.now().date():
+            raise ValidationError("La fecha límite no puede ser en el pasado")
+
+    def __str__(self):
+        return f"{self.accion[:30]}... ({'Completado' if self.completado else 'Pendiente'})"
 
 class EvolucionDesarrollo(models.Model):
     evolucion_id = models.AutoField(primary_key=True)

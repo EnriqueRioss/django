@@ -11,8 +11,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from .forms import ExtendedUserCreationForm, HistoriasForm , PropositosForm, PadresPropositoForm, AntecedentesDesarrolloNeonatalForm ,AntecedentesPreconcepcionalesForm, ExamenFisicoForm, ParejaPropositosForm, DiagnosticosPlanEstudioForm, DiagnosticoPresuntivoFormSet
-from .models import Genetistas, Propositos, HistoriasClinicas ,InformacionPadres, ExamenFisico,Parejas, AntecedentesPersonales, DiagnosticosPlanEstudio, DiagnosticoPresuntivo
+from .forms import ExtendedUserCreationForm, HistoriasForm , PropositosForm, PadresPropositoForm, AntecedentesDesarrolloNeonatalForm ,AntecedentesPreconcepcionalesForm, ExamenFisicoForm, ParejaPropositosForm,SignosClinicosForm,DiagnosticoPresuntivoFormSet,PlanEstudioFormSet
+from .models import Genetistas, Propositos, HistoriasClinicas ,InformacionPadres, ExamenFisico,Parejas, AntecedentesPersonales,EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q
@@ -20,6 +20,9 @@ from django.core import serializers
 import json
 from django.utils import timezone
 from django.db import transaction
+from django.forms import formset_factory
+from django.contrib import messages
+
 # Create your views here.
 
 
@@ -544,29 +547,62 @@ def ver_proposito(request, proposito_id):
 @login_required
 def diagnosticos_plan_estudio(request, proposito_id):
     proposito = get_object_or_404(Propositos, pk=proposito_id)
-    diagnostico_plan, created = DiagnosticosPlanEstudio.objects.get_or_create(
-        proposito=proposito
+    
+    try:
+        evaluacion = EvaluacionGenetica.objects.get(proposito=proposito)
+    except EvaluacionGenetica.DoesNotExist:
+        evaluacion = EvaluacionGenetica.objects.create(proposito=proposito)
+    
+    signos_form = SignosClinicosForm(request.POST or None, instance=evaluacion)
+    diagnostico_formset = DiagnosticoPresuntivoFormSet(
+        request.POST or None,
+        prefix='diagnosticos'
     )
-    
+    plan_formset = PlanEstudioFormSet(
+        request.POST or None,
+        prefix='planes'
+    )
+
     if request.method == 'POST':
-        form = DiagnosticosPlanEstudioForm(request.POST, instance=diagnostico_plan)
-        formset = DiagnosticoPresuntivoFormSet(request.POST, instance=diagnostico_plan)
-        
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
+        if all([
+            signos_form.is_valid(),
+            diagnostico_formset.is_valid(),
+            plan_formset.is_valid()
+        ]):
+            # Guardar signos clínicos
+            signos_form.save()
+            
+            # Guardar diagnósticos (eliminar existentes primero)
+            evaluacion.diagnosticos_presuntivos.all().delete()
+            for form in diagnostico_formset:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    DiagnosticoPresuntivo.objects.create(
+                        evaluacion=evaluacion,
+                        descripcion=form.cleaned_data['descripcion'],
+                        orden=form.cleaned_data['orden']
+                    )
+            
+            # Guardar planes de estudio
+            evaluacion.planes_estudio.all().delete()
+            for form in plan_formset:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                    PlanEstudio.objects.create(
+                        evaluacion=evaluacion,
+                        accion=form.cleaned_data['accion'],
+                        fecha_limite=form.cleaned_data['fecha_limite'],
+                        completado=form.cleaned_data['completado']
+                    )
+            
+            messages.success(request, "Evaluación guardada exitosamente!")
             return redirect('ver_proposito', proposito_id=proposito_id)
-    else:
-        form = DiagnosticosPlanEstudioForm(instance=diagnostico_plan)
-        formset = DiagnosticoPresuntivoFormSet(instance=diagnostico_plan)
-    
-    return render(request, 'diagnosticos_plan.html', {
-        'form': form,
-        'formset': formset,
-        'proposito': proposito
-    })
 
-
+    context = {
+        'proposito': proposito,
+        'signos_form': signos_form,
+        'diagnostico_formset': diagnostico_formset,
+        'plan_formset': plan_formset,
+    }
+    return render(request, 'diagnosticos_plan.html', context)
 
 
 

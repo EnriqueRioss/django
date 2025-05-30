@@ -1,7 +1,8 @@
 from django import forms
 from django.utils import timezone
+from django.forms import formset_factory
 from django.forms import ModelForm, Select,DateInput
-from .models import ExamenFisico, HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,AntecedentesFamiliaresPreconcepcionales,DesarrolloPsicomotor,AntecedentesPersonales, ExamenFisico, Parejas, DiagnosticosPlanEstudio, DiagnosticoPresuntivo
+from .models import ExamenFisico, HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,AntecedentesFamiliaresPreconcepcionales,DesarrolloPsicomotor,AntecedentesPersonales, ExamenFisico, Parejas,EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -414,30 +415,67 @@ class ExamenFisicoForm(forms.ModelForm):
 
 
 
-class DiagnosticosPlanEstudioForm(forms.ModelForm):
+class SignosClinicosForm(forms.ModelForm):
     class Meta:
-        model = DiagnosticosPlanEstudio
-        fields = ['signos_clinicos', 'enfermedad_actual', 'plan_estudio', 'diagnostico_confirmado']
+        model = EvaluacionGenetica
+        fields = ['signos_clinicos']
         widgets = {
-            'signos_clinicos': forms.Textarea(attrs={'rows': 4}),
-            'enfermedad_actual': forms.Textarea(attrs={'rows': 4}),
-            'plan_estudio': forms.Textarea(attrs={'rows': 4}),
-            'diagnostico_confirmado': forms.Textarea(attrs={'rows': 4}),
+            'signos_clinicos': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Ej: Microcefalia, hipotonía, fisura palpebral...'
+            })
         }
 
-class DiagnosticoPresuntivoForm(forms.ModelForm):
-    class Meta:
-        model = DiagnosticoPresuntivo
-        fields = ['descripcion']
-        widgets = {
-            'descripcion': forms.TextInput(attrs={'placeholder': 'Añadir diagnóstico presuntivo'})
-        }
+class DiagnosticoPresuntivoForm(forms.Form):
+    descripcion = forms.CharField(
+        label="Diagnóstico",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: Síndrome de Down'
+        })
+    )
+    orden = forms.IntegerField(
+        label="Prioridad",
+        initial=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '0'
+        })
+    )
 
-DiagnosticoPresuntivoFormSet = forms.inlineformset_factory(
-    DiagnosticosPlanEstudio,
-    DiagnosticoPresuntivo,
-    form=DiagnosticoPresuntivoForm,
+DiagnosticoPresuntivoFormSet = formset_factory(
+    DiagnosticoPresuntivoForm,
     extra=1,
     can_delete=True
-)       
+)
 
+class PlanEstudioForm(forms.Form):
+    accion = forms.CharField(
+        label="Acción",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: Cariotipo, estudio molecular...'
+        })
+    )
+    fecha_limite = forms.DateField(
+        label="Fecha límite",
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        required=False
+    )
+    completado = forms.BooleanField(
+        label="Completado",
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
+    )
+
+PlanEstudioFormSet = formset_factory(
+    PlanEstudioForm,
+    extra=1,
+    can_delete=True
+)

@@ -3,34 +3,36 @@
 
 {% block content %}
 <script src="{% static 'js/input.js' %}"></script>
-<link rel="stylesheet" href= "{% static '/styles/stylesforms.css' %}">
+<link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
 
 <div class="form-container">
-    <h1>Diagnósticos y Plan de Estudio</h1>
+    <h1>Evaluación Genética</h1>
+    <h4>Paciente: {{ proposito.nombres }} {{ proposito.apellidos }}</h4>
+    
     <form method="post" id="diagnosticos-form">
         {% csrf_token %}
         
-        <!-- Formulario principal -->
+        <!-- Signos Clínicos -->
         <div class="form-group">
             <label>Signos Clínicos Relevantes</label>
-            {{ form.signos_clinicos }}
+            {{ signos_form.signos_clinicos }}
         </div>
-        
-        <div class="form-group">
-            <label>Enfermedad Actual</label>
-            {{ form.enfermedad_actual }}
-        </div>
-        
-        <!-- Formset de diagnósticos presuntivos -->
+
+        <!-- Diagnósticos Presuntivos -->
         <div class="form-group">
             <label>Diagnósticos Presuntivos</label>
-            <div id="diagnosticos-container">
-                {{ formset.management_form }}
-                {% for form in formset %}
+            <div id="diagnosticos-formset">
+                {{ diagnostico_formset.management_form }}
+                {% for form in diagnostico_formset %}
                 <div class="diagnostico-item form-row">
                     {{ form.id }}
                     <div class="flex-grow-1">
+                        {{ form.descripcion.label_tag }}
                         {{ form.descripcion }}
+                    </div>
+                    <div>
+                        {{ form.orden.label_tag }}
+                        {{ form.orden }}
                     </div>
                     <div class="ml-2">
                         {% if form.instance.pk %}
@@ -41,27 +43,184 @@
                 {% endfor %}
             </div>
             <button type="button" id="add-diagnostico" class="btn btn-secondary mt-2">
-                <i class="fas fa-plus"></i> Añadir diagnóstico
+                <i class="fas fa-plus"></i> Añadir Diagnóstico
             </button>
         </div>
-        
+
+        <!-- Plan de Estudio -->
         <div class="form-group">
             <label>Plan de Estudio</label>
-            {{ form.plan_estudio }}
+            <div id="planes-formset">
+                {{ plan_formset.management_form }}
+                {% for form in plan_formset %}
+                <div class="plan-item form-row">
+                    <div class="flex-grow-1">
+                        {{ form.accion.label_tag }}
+                        {{ form.accion }}
+                    </div>
+                    <div>
+                        {{ form.fecha_limite.label_tag }}
+                        {{ form.fecha_limite }}
+                    </div>
+                    <div>
+                        {{ form.completado.label_tag }}
+                        {{ form.completado }}
+                    </div>
+                    <div class="ml-2">
+                        {% if form.instance.pk %}
+                            {{ form.DELETE }} <label>Eliminar</label>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-plan" class="btn btn-secondary mt-2">
+                <i class="fas fa-plus"></i> Añadir Acción
+            </button>
         </div>
-        
-        <div class="form-group">
-            <label>Diagnóstico Confirmado</label>
-            {{ form.diagnostico_confirmado }}
-        </div>
-        
+
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
         </div>
     </form>
 </div>
 
+<script>
+// JavaScript para manejar formsets dinámicos
+document.addEventListener('DOMContentLoaded', function() {
+    // Añadir nuevos diagnósticos
+    document.getElementById('add-diagnostico').addEventListener('click', function() {
+        const formset = document.getElementById('diagnosticos-formset');
+        const totalForms = document.getElementById('id_diagnosticos-TOTAL_FORMS');
+        const formNum = parseInt(totalForms.value);
+        
+        const newForm = document.createElement('div');
+        newForm.className = 'diagnostico-item form-row';
+        newForm.innerHTML = `
+            <div class="flex-grow-1">
+                <label for="id_diagnosticos-${formNum}-descripcion">Descripción:</label>
+                <textarea name="diagnosticos-${formNum}-descripcion" class="form-control" cols="40" rows="2" id="id_diagnosticos-${formNum}-descripcion"></textarea>
+            </div>
+            <div>
+                <label for="id_diagnosticos-${formNum}-orden">Orden:</label>
+                <input type="number" name="diagnosticos-${formNum}-orden" id="id_diagnosticos-${formNum}-orden">
+            </div>
+            <div class="ml-2">
+                <input type="hidden" name="diagnosticos-${formNum}-id" id="id_diagnosticos-${formNum}-id">
+            </div>
+        `;
+        
+        formset.appendChild(newForm);
+        totalForms.value = formNum + 1;
+    });
+    
+    // Añadir nuevos planes
+    document.getElementById('add-plan').addEventListener('click', function() {
+        const formset = document.getElementById('planes-formset');
+        const totalForms = document.getElementById('id_planes-TOTAL_FORMS');
+        const formNum = parseInt(totalForms.value);
+        
+        const newForm = document.createElement('div');
+        newForm.className = 'plan-item form-row';
+        newForm.innerHTML = `
+            <div class="flex-grow-1">
+                <label for="id_planes-${formNum}-accion">Acción:</label>
+                <input type="text" name="planes-${formNum}-accion" id="id_planes-${formNum}-accion">
+            </div>
+            <div>
+                <label for="id_planes-${formNum}-fecha_limite">Fecha límite:</label>
+                <input type="date" name="planes-${formNum}-fecha_limite" id="id_planes-${formNum}-fecha_limite">
+            </div>
+            <div>
+                <label for="id_planes-${formNum}-completado">Completado:</label>
+                <input type="checkbox" name="planes-${formNum}-completado" id="id_planes-${formNum}-completado">
+            </div>
+            <div class="ml-2">
+                <input type="hidden" name="planes-${formNum}-id" id="id_planes-${formNum}-id">
+            </div>
+        `;
+        
+        formset.appendChild(newForm);
+        totalForms.value = formNum + 1;
+    });
+    
+    // Eliminar formularios
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-form')) {
+            e.preventDefault();
+            const form = e.target.closest('.diagnostico-item, .plan-item');
+            const deleteCheckbox = form.querySelector('input[type="checkbox"][name*="DELETE"]');
+            
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true;
+                form.style.display = 'none';
+            } else {
+                form.remove();
+            }
+        }
+    });
+});
+</script>
 
-
+<style>
+    .form-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .form-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-radius: 4px;
+    }
+    
+    .flex-grow-1 {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+    
+    .ml-2 {
+        margin-left: 10px;
+    }
+    
+    .form-actions {
+        text-align: right;
+        margin-top: 20px;
+    }
+    
+    textarea.form-control {
+        width: 100%;
+        min-height: 100px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    input[type="text"],
+    input[type="date"],
+    input[type="number"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+</style>
 
 {% endblock %}

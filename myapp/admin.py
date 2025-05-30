@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Project, Task, AntecedentesFamiliaresPreconcepcionales,Autorizaciones,AntecedentesPersonales,PeriodoNeonatal,Propositos,DesarrolloPsicomotor,InformacionPadres,DiagnosticosPlanEstudio,EvolucionDesarrollo,Genealogia,Genetistas,HistorialCambios,HistoriasClinicas,Parejas,ExamenFisico
+from .models import Project, Task, AntecedentesFamiliaresPreconcepcionales,Autorizaciones,AntecedentesPersonales,PeriodoNeonatal,Propositos,DesarrolloPsicomotor,InformacionPadres,EvolucionDesarrollo,Genealogia,Genetistas,HistorialCambios,HistoriasClinicas,Parejas,ExamenFisico,PlanEstudio,DiagnosticoPresuntivo,EvaluacionGenetica
 
 
 # Readers
@@ -16,7 +16,9 @@ admin.site.register(PeriodoNeonatal)
 admin.site.register(Propositos)
 admin.site.register(DesarrolloPsicomotor)
 admin.site.register(InformacionPadres)
-admin.site.register(DiagnosticosPlanEstudio)
+admin.site.register(PlanEstudio)
+admin.site.register(DiagnosticoPresuntivo)
+admin.site.register(EvaluacionGenetica)
 admin.site.register(ExamenFisico,Dateexamen)
 admin.site.register(EvolucionDesarrollo)
 admin.site.register(Genealogia)
