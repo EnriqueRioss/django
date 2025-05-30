@@ -443,7 +443,14 @@ class DiagnosticoPresuntivoForm(forms.Form):
             'min': '0'
         })
     )
-
+    # Cambia HiddenInput a CheckboxInput para ver el checkbox
+    DELETE = forms.BooleanField(
+        label="Eliminar",
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'delete-checkbox'
+        })
+    )
 DiagnosticoPresuntivoFormSet = formset_factory(
     DiagnosticoPresuntivoForm,
     extra=1,
@@ -473,7 +480,14 @@ class PlanEstudioForm(forms.Form):
             'class': 'form-check-input'
         })
     )
-
+    # Cambia HiddenInput a CheckboxInput para ver el checkbox
+    DELETE = forms.BooleanField(
+        label="Eliminar",
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'delete-checkbox'
+        })
+    )
 PlanEstudioFormSet = formset_factory(
     PlanEstudioForm,
     extra=1,

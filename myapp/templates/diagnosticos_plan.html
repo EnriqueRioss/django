@@ -36,7 +36,14 @@
                     </div>
                     <div class="ml-2">
                         {% if form.instance.pk %}
-                            {{ form.DELETE }} <label>Eliminar</label>
+                        <div class="delete-container">
+                            <label class="delete-label">
+                                {{ form.DELETE }} Eliminar
+                            </label>
+                            <button type="button" class="btn btn-danger btn-sm remove-form">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -68,7 +75,14 @@
                     </div>
                     <div class="ml-2">
                         {% if form.instance.pk %}
-                            {{ form.DELETE }} <label>Eliminar</label>
+                        <div class="delete-container">
+                            <label class="delete-label">
+                                {{ form.DELETE }} Eliminar
+                            </label>
+                            <button type="button" class="btn btn-danger btn-sm remove-form">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -145,24 +159,81 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Eliminar formularios
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-form')) {
-            e.preventDefault();
-            const form = e.target.closest('.diagnostico-item, .plan-item');
-            const deleteCheckbox = form.querySelector('input[type="checkbox"][name*="DELETE"]');
-            
-            if (deleteCheckbox) {
-                deleteCheckbox.checked = true;
-                form.style.display = 'none';
+   // Eliminar formularios
+document.addEventListener('click', function(e) {
+    // Manejar clic en el botón de eliminar
+    if (e.target.closest('.remove-form')) {
+        e.preventDefault();
+        const button = e.target.closest('.remove-form');
+        const form = button.closest('.diagnostico-item, .plan-item');
+        const deleteCheckbox = form.querySelector('.delete-checkbox');
+        
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = !deleteCheckbox.checked; // Alternar estado
+            if (deleteCheckbox.checked) {
+                form.style.opacity = '0.5';
+                form.style.backgroundColor = '#ffe6e6';
             } else {
-                form.remove();
+                form.style.opacity = '1';
+                form.style.backgroundColor = '';
             }
         }
-    });
+    }
+    
+    // Manejar clic en el label de eliminar
+    if (e.target.closest('.delete-label')) {
+        const label = e.target.closest('.delete-label');
+        const checkbox = label.querySelector('.delete-checkbox');
+        const form = label.closest('.diagnostico-item, .plan-item');
+        
+        if (checkbox.checked) {
+            form.style.opacity = '0.5';
+            form.style.backgroundColor = '#ffe6e6';
+        } else {
+            form.style.opacity = '1';
+            form.style.backgroundColor = '';
+        }
+    }
+});
 });
 </script>
 
 <style>
+    .delete-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
+.delete-checkbox {
+    margin-right: 5px;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
     .form-container {
         max-width: 900px;
         margin: 0 auto;
@@ -203,6 +274,22 @@ document.addEventListener('DOMContentLoaded', function() {
     .form-actions {
         text-align: right;
         margin-top: 20px;
+    }
+    
+    .delete-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
     }
     
     textarea.form-control {
