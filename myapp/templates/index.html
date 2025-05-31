@@ -1,21 +1,142 @@
-
-
 {% extends 'layouts/base.html' %}
-
 
 {% load static %}
 
+
 {%block content%}
-<head>  
 
-    <link rel="stylesheet" href= "{% static '/styles/forms.css' %}">
+
+<head>
+    <title>INICIO | IIG - LUZ</title>
+    <link rel="stylesheet" href= "{% static '/styles/main.css' %}">
 </head>
-<div class="form-container">
+    
+<div class="main-content">
+    <main class="barra-content">
+        <header class="content-header">
+            <div class="breadcrumb">
+                <span class="breadcrumb-item active">Inicio</span>
+            </div>
+        </header>
+    </main>
   
-    <h1>WELCOME TO DJANGO APP {{title}}</h1>
+    <div class="dashboard-content">
+        <div class="welcome-banner">
+            <div class="welcome-text">
+                <h1>Bienvenido, Dra. Gamboa</h1>
+                <p>Sistema de Gestión de Historias Clínicas Genéticas</p>
+                <div class="badge-group">
+                    <span class="badge">Medico Genetista</span>
+                </div>
+            </div>
+            <div class="welcome-icon">
+                <i class="fas fa-dna"></i>
+            </div>
+        </div>
 
-        <img src="{% static 'search.png' %}" alt="">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Historias Clínicas</h3>
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>160</h2>
+                    <p>+2% desde el mes pasado</p>
+                </div>
+            </div>
 
-        <P>Lorem ipsum dolor sit amet consectetur adipisicing elit. In inventore magnam, asperiores numquam delectus sit illo cupiditate neque, obcaecati praesentium officiis debitis rerum adipisci velit optio, aliquam incidunt itaque at?</P>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Diagnósticos Completados</h3>
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>100</h2>
+                    <p>+1.5% desde el mes pasado</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+          <!-- Recent Activity -->
+          <div class="content-card wide">
+            <div class="card-header">
+              <h2>Actividad Reciente</h2>
+              <p>Últimas acciones en el sistema</p>
+            </div>
+            <div class="card-content">
+              <div class="activity-list">
+                <div class="activity-item">
+                  <div class="activity-indicator success"></div>
+                  <div class="activity-details">
+                    <p class="activity-title">Nueva historia clínica creada</p>
+                    <p class="activity-meta">Paciente: María González • Hace 2 horas</p>
+                  </div>
+                </div>
+                
+                <div class="activity-item">
+                  <div class="activity-indicator info"></div>
+                  <div class="activity-details">
+                    <p class="activity-title">Análisis genético completado</p>
+                    <p class="activity-meta">Paciente: Carlos Rodríguez • Hace 4 horas</p>
+                  </div>
+                </div>
+                
+                <div class="activity-item">
+                  <div class="activity-indicator warning"></div>
+                  <div class="activity-details">
+                    <p class="activity-title">Resultado pendiente de revisión</p>
+                    <p class="activity-meta">Paciente: Ana Martínez • Hace 6 horas</p>
+                  </div>
+                </div>
+                
+                <div class="activity-item">
+                  <div class="activity-indicator info"></div>
+                  <div class="activity-details">
+                    <p class="activity-title">Consulta programada</p>
+                    <p class="activity-meta">Paciente: Luis Fernández • Hace 1 día</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="content-card">
+            <div class="card-header">
+              <h2>Acciones Rápidas</h2>
+              <p>Funciones más utilizadas</p>
+            </div>
+            <div class="card-content">
+              <button class="action-button">
+                <i class="fas fa-file-alt"></i>
+                Nueva Historia Clínica
+              </button>
+              <button class="action-button">
+                <i class="fas fa-users"></i>
+                Registrar Paciente
+              </button>
+              <button class="action-button">
+                <i class="fas fa-dna"></i>
+                Solicitar Análisis
+              </button>
+              <button class="action-button">
+                <i class="fas fa-chart-bar"></i>
+                Ver Reportes
+              </button>
+              <button class="action-button">
+                <i class="fas fa-calendar"></i>
+                Programar Cita
+              </button>
+            </div>
+          </div>
+        </div>
+    </div>
 </div>
-{% endblock %}
+    
+
+    {% endblock %}
+
+    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 

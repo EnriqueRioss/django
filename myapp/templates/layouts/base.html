@@ -1,122 +1,125 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}IIG - LUZ{% endblock %}</title>
-    <link rel="stylesheet" href="{% static '/styles/styles.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="{% static '/styles/stylesside.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> 
 </head>
 <body>
 
-    <section id="sidebar">
-        <div class="sidebar-top">
-            <ul class="menu-top">
-                <li class="active">
-                    <a href="{% url 'index' %}">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text">Inicio</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="patients.html">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text">Pacientes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="reports.html">
-                        <i class="fa-solid fa-file"></i>
-                        <span class="text">Reportes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="settings.html">
-                        <i class="fa-solid fa-gear"></i>
-                        <span class="text">Ajustes</span>
-                    </a>
-                </li>
-                {% if user.is_authenticated %}
-                <li>
-                    <a href=/logout>
-                    <i class="fa-solid fa-sign-out"></i>
-                    <span class="text">Logout</span>
-                    </a>
-                </li> 
-                {% else %}
-                <li>
-                    <a href="{% url 'login' %}">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    <span class="text">Login</span>
-                    </a>
-                </li> 
-                <li>
-                    <a href="{% url 'signup' %}">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span class="text">Signup</span>
-                    </a>
-                </li> 
-                {% endif %}
-            </ul>
-        </div>
-        
-        <div class="spacer" style="height: 250px;"></div>
-    
-        <div class="sidebar-bottom">
-           <div class="buttom">
-             <a href="{% url 'historia_clinica' %}">
-                <span class="text">Nueva Historia</span>
-              </a>
-           </div> 
-            
-            <!-- Formulario de búsqueda mejorado -->
-            <form class="search-form" id="search-form">
-                <input type="search" id="search-input" placeholder="Buscar por nombre, apellido o cédula..."/>
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </form>
-
-            <!-- Lista de pacientes -->
-            <div id="pacientes-list" class="pacientes-container">
-                {% for proposito in ultimos_propositos %}
-                <a href="{% url 'detalle_paciente' proposito.id %}" class="paciente-link">
-                    <div class="paciente-card">
-                        <div class="paciente-avatar">
-                            {% if proposito.foto %}
-                                <img src="{{ proposito.foto.url }}" alt="{{ proposito.nombres }}">
-                            {% else %}
-                                <div class="avatar-placeholder">
-                                    <i class="fa-solid fa-user"></i>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="paciente-info">
-                            <h4 class="paciente-nombre">{{ proposito.nombres }} {{ proposito.apellidos }}</h4>
-                            <div class="paciente-detalle">
-                                <span class="edad">{{ proposito.edad|default:"--" }} años</span>
-                                <span class="fecha-ingreso">
-                                    <i class="fa-solid fa-calendar-day"></i>
-                                    {{ proposito.historia.fecha_ingreso|date:"d/m/Y"|default:"--" }}
-                                </span>
-                            </div>
-                            <div class="paciente-direccion">
-                                <i class="fa-solid fa-location-dot"></i>
-                                {{ proposito.direccion|truncatechars:25|default:"Sin dirección" }}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                {% empty %}
-                <div class="no-pacientes">
-                    <i class="fa-solid fa-user-slash"></i>
-                    <p>No hay pacientes recientes</p>
+    <!-- sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-icon">G</div>
+                <div class="logo-text">
+                    <span class="logo-title">GenClinic</span>
+                    <span class="logo-subtitle">Sistema de Gestión</span>
                 </div>
-                {% endfor %}
+            </div>
+            <!-- La informacion del usuario se trae desde la base de datos con el inicio de sesion-->
+            <div class="user-profile">
+                <div class="user-avatar">DG</div>
+                <div class="user-info">
+                    <span class="user-name">Dra. Gamboa</span>
+                    <span class="user-role">Genetista</span>
+                </div>
             </div>
         </div>
-    </section>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h3 class="nav-section-title">Principal</h3>
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="{% url 'index' %}" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span class="text">Inicio</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="patients.html" class="nav-link">
+                            <i class="fas fa-users"></i>
+                            <span class="text">Pacientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'historia_clinica' %}" class="nav-link">
+                            <i class="fas fa-file-alt"></i>
+                            <span class="text">Historias Clínicas</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-section-title">Análisis</h3>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="reportes.html" class="nav-link">
+                            <i class="fas fa-chart-bar"></i>
+                            <span class="text">Reportes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="text">Estadísticas</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Colocar un if para que solo aparezca el modulo de administraacion si el usuario es ADMIN-->
+            <div class="nav-section">
+                <h3 class="nav-section-title">Administración</h3>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="admin-usurios.html" class="nav-link">
+                            <i class="fas fa-user-check"></i>
+                            <span class="text">Gestión de Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-database"></i>
+                            <span class="text">Gestión de Pacientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-download"></i>
+                            <span class="text">Exportar datos</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-section-title">Sistema</h3>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="configuraciones.html" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span class="text">Configuraciones</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href=/logout class="nav-link">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span class="text">Cerrar Sesion</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </aside>
+       
+    <!-- Aqui va el codigo que corte del anterior modelo de sidebar-->
 
     <div class="content">
         {% block content %}
@@ -127,6 +130,8 @@
         {% endblock %}
     </div>   
 
+
+    <!--
     <script>
         // Variables globales definidas desde Django
         const USER_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %};
@@ -242,6 +247,6 @@
             // Cargar pacientes recientes al inicio
             cargarPacientesRecientes();
         });
-        </script>
+        </script>-->
 </body>
 </html>

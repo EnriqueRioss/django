@@ -131,9 +131,9 @@ hr{
 
 
 .content-base {
-    margin-left: 30rem; /* Igual al ancho del sidebar */
+    margin-left: 3rem; /* Igual al ancho del sidebar */
     padding: 2rem; 
-    width: calc(100% - 30rem); 
+    width: calc(100% - 3rem); 
     min-height: 100vh;
 }
 
