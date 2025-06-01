@@ -29,8 +29,7 @@ urlpatterns = [
     path('buscar-propositos/', views.buscar_propositos, name='buscar_propositos'),
    path('propositos/<int:proposito_id>/', views.ver_proposito, name='ver_proposito'),
    path('propositos/<int:proposito_id>/diagnosticos/', views.diagnosticos_plan_estudio, name='diagnosticos_plan'),
-
-    
+    path('reports/', views.reports_view, name="reports"),
 
     
 

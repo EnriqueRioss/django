@@ -1,0 +1,56 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+
+{%block content%}
+
+
+<head>
+    <title>REPORTES | IIG - LUZ</title>
+    <link rel="stylesheet" href= "{% static '/styles/reports.css' %}">
+</head>
+
+<div class="main-content">
+    <main class="barra-content">
+      <header class="content-header">
+        <div class="breadcrumb">
+          <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+          <span class="breadcrumb-separator">></span>
+          <span class="breadcrumb-item active">Reportes</span>
+        </div>
+      </header>
+
+
+      <!-- Contenido del reporte-->
+      <div class="reports-content">
+        <!-- Header -->
+        <div class="content-header">
+          <div>
+            <h1>Reportes Genéticos</h1>
+            <p>Análisis y reportes de historias clínicas genéticas</p>
+          </div>
+          <div class="header-actions">
+            <button class="button outline">
+              <i class="fas fa-download"></i>
+              Exportar
+            </button>
+            <button class="button primary">
+              <i class="fas fa-file-alt"></i>
+              Nuevo Reporte
+            </button>
+          </div>
+        </div>
+
+
+
+
+
+
+
+</div>
+
+
+    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 
+
+{% endblock %}

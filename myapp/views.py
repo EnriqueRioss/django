@@ -604,6 +604,10 @@ def diagnosticos_plan_estudio(request, proposito_id):
     }
     return render(request, 'diagnosticos_plan.html', context)
 
+@login_required
+def reports_view(request):
+    return render(request, 'reports.html')
+
 
 
 
