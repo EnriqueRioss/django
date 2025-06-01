@@ -404,9 +404,19 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         form = AntecedentesPreconcepcionalesForm(request.POST)
         if form.is_valid():
             try:
-                antecedentespre = form.save(proposito=proposito, pareja=pareja, tipo=tipo)
-                return redirect('diagnosticos_plan',
-                                  proposito_id=proposito.proposito_id)
+                if tipo == 'proposito':
+                    antecedentespre = form.save(proposito=proposito, pareja=pareja, tipo=tipo)
+                    return redirect('diagnosticos_plan',
+                                 historia_id=historia.historia_id, 
+                                  tipo = "proposito",
+                                  objeto_id=proposito.proposito_id)
+                else:  # tipo == 'pareja'
+                    antecedentespre = form.save(proposito=proposito, pareja=pareja, tipo=tipo)
+                    return redirect('diagnosticos_plan',
+                                  historia_id=historia.historia_id,
+                                  tipo = "pareja",
+                                 objeto_id=pareja.pareja_id)
+            
             except Exception as e:
                 return render(request, 'error.html', {'mensaje': f'Error al guardar: {str(e)}'})
         else:
@@ -544,15 +554,51 @@ def ver_proposito(request, proposito_id):
     })
 
 
+
 @login_required
-def diagnosticos_plan_estudio(request, proposito_id):
-    proposito = get_object_or_404(Propositos, pk=proposito_id)
-    
+def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
     try:
-        evaluacion = EvaluacionGenetica.objects.get(proposito=proposito)
-    except EvaluacionGenetica.DoesNotExist:
-        evaluacion = EvaluacionGenetica.objects.create(proposito=proposito)
-    
+        # Verificar que la historia existe
+        historia = HistoriasClinicas.objects.get(historia_id=historia_id)
+        
+        if tipo == 'proposito':
+            try:
+                proposito = Propositos.objects.get(proposito_id=objeto_id)
+                pareja = None
+                objeto = proposito
+            except Propositos.DoesNotExist:
+                return render(request, 'error.html', {'mensaje': 'No se encontró el propósito.'})
+        elif tipo == 'pareja':
+            try:
+                pareja = Parejas.objects.get(pareja_id=objeto_id)
+                proposito = None
+                objeto = pareja
+            except Parejas.DoesNotExist:
+                return render(request, 'error.html', {'mensaje': 'No se encontró la pareja.'})
+        else:
+            return render(request, 'error.html', {'mensaje': 'Tipo no válido.'})
+        
+    except HistoriasClinicas.DoesNotExist:
+        return render(request, 'error.html', {'mensaje': 'La historia clínica no existe.'})
+
+    # Obtener o crear evaluación genética según el tipo
+    if tipo == 'proposito':
+        try:
+            evaluacion = EvaluacionGenetica.objects.get(proposito=proposito)
+        except EvaluacionGenetica.DoesNotExist:
+            evaluacion = EvaluacionGenetica.objects.create(
+                proposito=proposito,
+                pareja=None
+            )
+    else:  # tipo == 'pareja'
+        try:
+            evaluacion = EvaluacionGenetica.objects.get(pareja=pareja)
+        except EvaluacionGenetica.DoesNotExist:
+            evaluacion = EvaluacionGenetica.objects.create(
+                pareja=pareja,
+                proposito=None
+            )
+
     signos_form = SignosClinicosForm(request.POST or None, instance=evaluacion)
     diagnostico_formset = DiagnosticoPresuntivoFormSet(
         request.POST or None,
@@ -594,10 +640,14 @@ def diagnosticos_plan_estudio(request, proposito_id):
                     )
             
             messages.success(request, "Evaluación guardada exitosamente!")
-            return redirect('ver_proposito', proposito_id=proposito_id)
+            return redirect('index')
 
     context = {
-        'proposito': proposito,
+        'historia': historia,
+        'tipo': tipo,
+        'objeto': objeto,
+        'proposito': proposito if tipo == 'proposito' else None,
+        'pareja': pareja if tipo == 'pareja' else None,
         'signos_form': signos_form,
         'diagnostico_formset': diagnostico_formset,
         'plan_formset': plan_formset,
@@ -607,9 +657,6 @@ def diagnosticos_plan_estudio(request, proposito_id):
 @login_required
 def reports_view(request):
     return render(request, 'reports.html')
-
-
-
 
 
 

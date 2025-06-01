@@ -421,7 +421,7 @@ class SignosClinicosForm(forms.ModelForm):
         fields = ['signos_clinicos']
         widgets = {
             'signos_clinicos': forms.Textarea(attrs={
-                'rows': 3,
+                'rows': 2,
                 'class': 'form-control',
                 'placeholder': 'Ej: Microcefalia, hipotonía, fisura palpebral...'
             })
@@ -430,7 +430,8 @@ class SignosClinicosForm(forms.ModelForm):
 class DiagnosticoPresuntivoForm(forms.Form):
     descripcion = forms.CharField(
         label="Diagnóstico",
-        widget=forms.TextInput(attrs={
+        widget=forms.Textarea(attrs={
+            'rows': 1,
             'class': 'form-control',
             'placeholder': 'Ej: Síndrome de Down'
         })

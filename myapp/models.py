@@ -316,11 +316,21 @@ class DesarrolloPsicomotor(models.Model):
 
 
 class EvaluacionGenetica(models.Model):
-    proposito = models.OneToOneField(
+    proposito = models.ForeignKey(
         'Propositos', 
-        on_delete=models.CASCADE,
-        related_name='evaluacion_genetica'
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
     )
+    
+    # Relación con Pareja
+    pareja = models.ForeignKey(
+        'Parejas',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    
     
     # Signos clínicos (texto libre)
     signos_clinicos = models.TextField(
