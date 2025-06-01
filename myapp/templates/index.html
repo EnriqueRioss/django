@@ -48,6 +48,28 @@
 
             <div class="stat-card">
                 <div class="stat-header">
+                    <h3>Pacientes</h3>
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>160</h2>
+                    <p>+2% desde el mes pasado</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Consultas</h3>
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>320</h2>
+                    <p>+4% desde el mes pasado</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
                     <h3>Diagnósticos Completados</h3>
                     <i class="fas fa-check-circle"></i>
                 </div>
@@ -60,7 +82,7 @@
 
         <!-- Main Content Grid -->
         <div class="content-grid">
-          <!-- Recent Activity -->
+          <!-- Actividades Recientes -->
           <div class="content-card wide">
             <div class="card-header">
               <h2>Actividad Reciente</h2>
@@ -103,33 +125,33 @@
             </div>
           </div>
           
-          <!-- Quick Actions -->
+          <!-- Acciones Rapidas -->
           <div class="content-card">
             <div class="card-header">
               <h2>Acciones Rápidas</h2>
               <p>Funciones más utilizadas</p>
             </div>
             <div class="card-content">
-              <button class="action-button">
-                <i class="fas fa-file-alt"></i>
-                Nueva Historia Clínica
-              </button>
-              <button class="action-button">
-                <i class="fas fa-users"></i>
-                Registrar Paciente
-              </button>
-              <button class="action-button">
-                <i class="fas fa-dna"></i>
-                Solicitar Análisis
-              </button>
-              <button class="action-button">
-                <i class="fas fa-chart-bar"></i>
-                Ver Reportes
-              </button>
-              <button class="action-button">
-                <i class="fas fa-calendar"></i>
-                Programar Cita
-              </button>
+                <a href="{% url 'historia_clinica' %}" class="action-button">
+                    <i class="fas fa-file-alt"></i>
+                    Nueva Historia Clínica
+                </a>
+                <a href="#" class="action-button">
+                    <i class="fas fa-users"></i>
+                    Registrar Paciente
+                </a>
+                <a href="#" class="action-button">
+                    <i class="fas fa-dna"></i>
+                    Solicitar Análisis
+                </a>
+                <a href="#" class="action-button">
+                    <i class="fas fa-chart-bar"></i>
+                    Ver Reportes
+                </a>
+                <a href="#" class="action-button">
+                    <i class="fas fa-calendar"></i>
+                    Programar Cita
+                <a> 
             </div>
           </div>
         </div>
@@ -137,6 +159,6 @@
 </div>
     
 
-    {% endblock %}
+{% endblock %}
 
-    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 
+<script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 

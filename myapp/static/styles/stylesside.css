@@ -62,6 +62,7 @@ li{
     flex-direction: column;
     font-family: "Poppins", serif;
     overflow-x: hidden;
+
 	/*z-index: 2000;
 	transition: .3s ease;
 	*/
@@ -141,7 +142,7 @@ li{
 
 .user-role{
     font-size: 1.2rem;
-    color: var(--buttons-blue);
+    color: var(--primary-darkerblue);
 }
 
 .sidebar-nav{
@@ -175,11 +176,11 @@ li{
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.95rem;
+    padding: 0.80rem;
     border-radius: 0.5rem;
     color: var(--primary-darkerblue);
     text-decoration: none;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     transition: background-color 0.2s;
 }
 
