@@ -9,6 +9,8 @@
 <head>
     <title>REPORTES | IIG - LUZ</title>
     <link rel="stylesheet" href= "{% static '/styles/reports.css' %}">
+     <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <div class="main-content">
@@ -25,32 +27,149 @@
       <!-- Contenido del reporte-->
       <div class="reports-content">
         <!-- Header -->
-        <div class="content-header">
-          <div>
+        <div class="contenido-header">
+          <div class="header-content">
             <h1>Reportes Genéticos</h1>
             <p>Análisis y reportes de historias clínicas genéticas</p>
           </div>
           <div class="header-actions">
-            <button class="button outline">
+            <button class="btn-outline">
               <i class="fas fa-download"></i>
               Exportar
             </button>
-            <button class="button primary">
+            <button class="btn-primary">
               <i class="fas fa-file-alt"></i>
               Nuevo Reporte
             </button>
           </div>
         </div>
 
+        <!-- Filtros -->
+        <div class="content-card">
+          <div class="card-header">
+            <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
+            <p>Utiliza los filtros para encontrar información específica</p>
+          </div>
+          <div class="card-content">
+            <div class="filters-grid">
+              <div class="filter-group">
+                <label>Buscar Paciente</label>
+                <div class="search-input">
+                  <i class="fas fa-search"></i>
+                  <input type="text" placeholder="Nombre o ID del paciente" name="buscar-paciente" id="buscar-paciente">
+                </div>
+              </div>
 
 
+              <!-- IMPLEMENTÉ EL RANGO DE FECHAS DE BUSQUEDA CON UN SOLO INPUT, PERO SI ES MUCHO PEO LO CAMBIAMOS
+               NO LE PRESTES ATENCIÓN A ESO, ES SOLO POR MOTIVOS DE ESTÉTICA XD-->
+              <div class="filter-group">
+                <label>Rango de Fechas</label>
+                <div class="date-range-picker">
+                  <!--<input type="date" name="desde">
+                  <input type="date" name="hasta">-->
+                  <input type="text" class="date-range-input" id="date-range" placeholder="Seleccionar rango de fechas">
+                </div>
+              </div>
 
+              <div class="filter-group">
+                <label>Diagnóstico</label>
+                <select name="diagnóstico" id="diagnóstico">
+                  <option value="">Seleccionar diagnóstico</option>
+                  <option value="Sindrome-de-marfan">Sindrome de Marfan</option>
+                  <option value="Fibrosis-quistica">Fibrosis Quistica</option>
+                  <option value="huntintong">Huntington</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
 
+              <div class="filter-group">
+                <label>Genetista</label>
+                <select>
+                  <option value="">Seleccionar genetista</option>
+                  <option value="">Dra. Paola</option>
+                  <option value="">Dra. Alexandra</option>
+                  <option value="">Dr. Pedro</option>
+                </select>
+              </div>
 
+              <div class="filter-actions">
+                <a href="#" class="btn-buscar">
+                  <i class="fas fa-search"></i>
+                  Buscar
+                </a>
+                <a href="#" class="btn-limpiar">Limpiar</a>
+              </div>
+            </div>
+          </div>
+        </div>
 
-</div>
+        <div class="content-card">
+          <div class="card-header">
+            <h2>Resultados de Búsqueda</h2>
+            <p>Registros encontrados</p>
+          </div>
+          <div class="card-content">
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID Historia</th>
+                    <th>Paciente</th>
+                    <th>Edad</th>
+                    <th>Diagnóstico</th>
+                    <th>Genetista</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>HC001</td>
+                    <td>Maria Gonzalez</td>
+                    <td>34</td>
+                    <td>Sindrome de Marfan</td>
+                    <td>Dra. Paola</td>
+                    <td>15-01-2024</td>
+                  </tr>
+                  <tr>
+                    <td>HC002</td>
+                    <td>Carlos Rodriguez</td>
+                    <td>28</td>
+                    <td>Fibrosis Quistica</td>
+                    <td>Dra. Alexandra</td>
+                    <td>25-03-2024</td>
+                  </tr>
+                  <tr>
+                    <td>HC003</td>
+                    <td>Ana Martinez</td>
+                    <td>45</td>
+                    <td>Sindrome de Marfan</td>
+                    <td>Dra. Alexandra</td>
+                    <td>01-04-2024</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
+  <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script>
+        // Inicializar el date range picker
+        flatpickr("#date-range", {
+            mode: "range",
+            dateFormat: "d/m/Y",
+            locale: "es",
+            defaultDate: ["20/1/2024", "9/2/2024"],
+            allowInput: true
+        });
+    </script>
 
-    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 
+  <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 
 
 {% endblock %}
