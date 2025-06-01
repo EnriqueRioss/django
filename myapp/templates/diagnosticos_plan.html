@@ -2,14 +2,14 @@
 {% load static %}
 
 {% block content %}
-<script src="{% static 'js/input.js' %}"></script>
 <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <div class="form-container">
     <h1>Evaluación Genética</h1>
     <h4>Paciente: {{ proposito.nombres }} {{ proposito.apellidos }}</h4>
     
-    <form method="post" id="diagnosticos-form">
+    <form method="post" id="evaluacion-form">
         {% csrf_token %}
         
         <!-- Signos Clínicos -->
@@ -24,27 +24,23 @@
             <div id="diagnosticos-formset">
                 {{ diagnostico_formset.management_form }}
                 {% for form in diagnostico_formset %}
-                <div class="diagnostico-item form-row">
+                <div class="diagnostico-item form-row" data-form-type="diagnostico">
                     {{ form.id }}
                     <div class="flex-grow-1">
                         {{ form.descripcion.label_tag }}
                         {{ form.descripcion }}
+                        {{ form.descripcion.errors }}
                     </div>
                     <div>
                         {{ form.orden.label_tag }}
                         {{ form.orden }}
+                        {{ form.orden.errors }}
                     </div>
                     <div class="ml-2">
-                        {% if form.instance.pk %}
-                        <div class="delete-container">
-                            <label class="delete-label">
-                                {{ form.DELETE }} Eliminar
-                            </label>
-                            <button type="button" class="btn btn-danger btn-sm remove-form">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        {% endif %}
+                        {{ form.DELETE.as_hidden }}  <!-- Campo DELETE oculto -->
+                        <button type="button" class="btn btn-danger btn-sm remove-form">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
@@ -60,30 +56,26 @@
             <div id="planes-formset">
                 {{ plan_formset.management_form }}
                 {% for form in plan_formset %}
-                <div class="plan-item form-row">
+                <div class="plan-item form-row" data-form-type="plan">
                     <div class="flex-grow-1">
                         {{ form.accion.label_tag }}
                         {{ form.accion }}
+                        {{ form.accion.errors }}
                     </div>
                     <div>
                         {{ form.fecha_limite.label_tag }}
                         {{ form.fecha_limite }}
+                        {{ form.fecha_limite.errors }}
                     </div>
                     <div>
                         {{ form.completado.label_tag }}
                         {{ form.completado }}
                     </div>
                     <div class="ml-2">
-                        {% if form.instance.pk %}
-                        <div class="delete-container">
-                            <label class="delete-label">
-                                {{ form.DELETE }} Eliminar
-                            </label>
-                            <button type="button" class="btn btn-danger btn-sm remove-form">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        {% endif %}
+                        {{ form.DELETE.as_hidden }}  <!-- Campo DELETE oculto -->
+                        <button type="button" class="btn btn-danger btn-sm remove-form">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
                     </div>
                 </div>
                 {% endfor %}
@@ -100,29 +92,72 @@
 </div>
 
 <script>
-// JavaScript para manejar formsets dinámicos
 document.addEventListener('DOMContentLoaded', function() {
+    // Función para clonar un formulario vacío
+    function getEmptyForm(prefix) {
+        const template = document.querySelector(`[data-form-type="${prefix}"]`);
+        if (!template) return null;
+        
+        const emptyForm = template.cloneNode(true);
+        
+        // Limpiar valores del formulario clonado
+        emptyForm.querySelectorAll('input, textarea').forEach(field => {
+            if (field.name && !field.name.includes('DELETE') && !field.name.includes('id')) {
+                field.value = '';
+                field.classList.remove('is-invalid');
+            }
+            if (field.type === 'checkbox' && !field.name.includes('DELETE')) {
+                field.checked = false;
+            }
+        });
+        
+        // Limpiar errores
+        emptyForm.querySelectorAll('.errorlist').forEach(error => {
+            error.remove();
+        });
+        
+        // Asegurarse que el DELETE está desmarcado
+        const deleteField = emptyForm.querySelector('input[name*="-DELETE"]');
+        if (deleteField) {
+            deleteField.checked = false;
+        }
+        
+        // Mostrar el formulario (por si estaba oculto)
+        emptyForm.style.display = '';
+        
+        return emptyForm;
+    }
+
+    // Función para actualizar índices de los campos del formulario
+    function updateFormIndices(form, prefix, index) {
+        form.querySelectorAll('input, textarea, select, label').forEach(element => {
+            // Actualizar nombres de campos
+            if (element.name) {
+                element.name = element.name.replace(new RegExp(`${prefix}-\\d+-`), `${prefix}-${index}-`);
+            }
+            // Actualizar atributos 'for' de las etiquetas
+            if (element.htmlFor) {
+                element.htmlFor = element.htmlFor.replace(new RegExp(`${prefix}-\\d+-`), `${prefix}-${index}-`);
+            }
+            // Actualizar IDs de los elementos
+            if (element.id) {
+                element.id = element.id.replace(new RegExp(`${prefix}-\\d+-`), `${prefix}-${index}-`);
+            }
+        });
+        return form;
+    }
+
     // Añadir nuevos diagnósticos
     document.getElementById('add-diagnostico').addEventListener('click', function() {
         const formset = document.getElementById('diagnosticos-formset');
         const totalForms = document.getElementById('id_diagnosticos-TOTAL_FORMS');
         const formNum = parseInt(totalForms.value);
+        const emptyForm = getEmptyForm('diagnostico');
         
-        const newForm = document.createElement('div');
-        newForm.className = 'diagnostico-item form-row';
-        newForm.innerHTML = `
-            <div class="flex-grow-1">
-                <label for="id_diagnosticos-${formNum}-descripcion">Descripción:</label>
-                <textarea name="diagnosticos-${formNum}-descripcion" class="form-control" cols="40" rows="2" id="id_diagnosticos-${formNum}-descripcion"></textarea>
-            </div>
-            <div>
-                <label for="id_diagnosticos-${formNum}-orden">Orden:</label>
-                <input type="number" name="diagnosticos-${formNum}-orden" id="id_diagnosticos-${formNum}-orden">
-            </div>
-            <div class="ml-2">
-                <input type="hidden" name="diagnosticos-${formNum}-id" id="id_diagnosticos-${formNum}-id">
-            </div>
-        `;
+        if (!emptyForm) return;
+        
+        // Actualizar índices del nuevo formulario
+        const newForm = updateFormIndices(emptyForm, 'diagnosticos', formNum);
         
         formset.appendChild(newForm);
         totalForms.value = formNum + 1;
@@ -133,126 +168,49 @@ document.addEventListener('DOMContentLoaded', function() {
         const formset = document.getElementById('planes-formset');
         const totalForms = document.getElementById('id_planes-TOTAL_FORMS');
         const formNum = parseInt(totalForms.value);
+        const emptyForm = getEmptyForm('plan');
         
-        const newForm = document.createElement('div');
-        newForm.className = 'plan-item form-row';
-        newForm.innerHTML = `
-            <div class="flex-grow-1">
-                <label for="id_planes-${formNum}-accion">Acción:</label>
-                <input type="text" name="planes-${formNum}-accion" id="id_planes-${formNum}-accion">
-            </div>
-            <div>
-                <label for="id_planes-${formNum}-fecha_limite">Fecha límite:</label>
-                <input type="date" name="planes-${formNum}-fecha_limite" id="id_planes-${formNum}-fecha_limite">
-            </div>
-            <div>
-                <label for="id_planes-${formNum}-completado">Completado:</label>
-                <input type="checkbox" name="planes-${formNum}-completado" id="id_planes-${formNum}-completado">
-            </div>
-            <div class="ml-2">
-                <input type="hidden" name="planes-${formNum}-id" id="id_planes-${formNum}-id">
-            </div>
-        `;
+        if (!emptyForm) return;
+        
+        // Actualizar índices del nuevo formulario
+        const newForm = updateFormIndices(emptyForm, 'planes', formNum);
         
         formset.appendChild(newForm);
         totalForms.value = formNum + 1;
     });
     
-    // Eliminar formularios
-   // Eliminar formularios
-document.addEventListener('click', function(e) {
-    // Manejar clic en el botón de eliminar
-    if (e.target.closest('.remove-form')) {
-        e.preventDefault();
-        const button = e.target.closest('.remove-form');
-        const form = button.closest('.diagnostico-item, .plan-item');
-        const deleteCheckbox = form.querySelector('.delete-checkbox');
-        
-        if (deleteCheckbox) {
-            deleteCheckbox.checked = !deleteCheckbox.checked; // Alternar estado
-            if (deleteCheckbox.checked) {
-                form.style.opacity = '0.5';
-                form.style.backgroundColor = '#ffe6e6';
-            } else {
-                form.style.opacity = '1';
-                form.style.backgroundColor = '';
+    // Manejar eliminación de formularios
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-form')) {
+            e.preventDefault();
+            const button = e.target.closest('.remove-form');
+            const form = button.closest('[data-form-type]');
+            
+            // Marcar el formulario para eliminación
+            const deleteField = form.querySelector('input[name*="-DELETE"]');
+            if (deleteField) {
+                deleteField.checked = true;
+                form.style.display = 'none'; // Ocultar el formulario
             }
         }
-    }
+    });
     
-    // Manejar clic en el label de eliminar
-    if (e.target.closest('.delete-label')) {
-        const label = e.target.closest('.delete-label');
-        const checkbox = label.querySelector('.delete-checkbox');
-        const form = label.closest('.diagnostico-item, .plan-item');
+    // Actualizar índices al enviar el formulario
+    document.getElementById('evaluacion-form').addEventListener('submit', function(e) {
+        // Actualizar índices de diagnósticos
+        const diagnosticosContainer = document.getElementById('diagnosticos-formset');
+        const diagnosticosForms = diagnosticosContainer.querySelectorAll('[data-form-type="diagnostico"]:not([style*="display: none"])');
+        document.getElementById('id_diagnosticos-TOTAL_FORMS').value = diagnosticosForms.length;
         
-        if (checkbox.checked) {
-            form.style.opacity = '0.5';
-            form.style.backgroundColor = '#ffe6e6';
-        } else {
-            form.style.opacity = '1';
-            form.style.backgroundColor = '';
-        }
-    }
-});
+        // Actualizar índices de planes
+        const planesContainer = document.getElementById('planes-formset');
+        const planesForms = planesContainer.querySelectorAll('[data-form-type="plan"]:not([style*="display: none"])');
+        document.getElementById('id_planes-TOTAL_FORMS').value = planesForms.length;
+    });
 });
 </script>
 
 <style>
-    .delete-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.delete-label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    margin-bottom: 0;
-    font-weight: normal;
-}
-
-.delete-checkbox {
-    margin-right: 5px;
-}
-
-.btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-    .form-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
-    
     .form-row {
         display: flex;
         align-items: center;
@@ -260,6 +218,7 @@ document.addEventListener('click', function(e) {
         padding: 10px;
         background: #f9f9f9;
         border-radius: 4px;
+        position: relative;
     }
     
     .flex-grow-1 {
@@ -276,38 +235,70 @@ document.addEventListener('click', function(e) {
         margin-top: 20px;
     }
     
-    .delete-container {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
     .btn-danger {
         background-color: #dc3545;
         border-color: #dc3545;
-    }
-    
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
+        color: white;
+        padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
     }
     
-    textarea.form-control {
-        width: 100%;
-        min-height: 100px;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
+    .btn-danger i {
+        margin-right: 5px;
+        font-size: 14px;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+
     input[type="text"],
     input[type="date"],
-    input[type="number"] {
+    input[type="number"],
+    textarea {
         width: 100%;
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
     }
+    
+    .form-row:hover {
+        background-color: #f0f0f0;
+    }
+    
+    .errorlist {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Ocultar completamente el checkbox DELETE */
+    input[name$="-DELETE"] {
+        display: none !important;
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
 </style>
-
 {% endblock %}
