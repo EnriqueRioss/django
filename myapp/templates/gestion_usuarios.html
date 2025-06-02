@@ -9,7 +9,7 @@
 <head>
     <title>GESTIÓN USUARIOS | IIG - LUZ</title>
     <link rel="stylesheet" href= "{% static '/styles/adminuser.css' %}">
-    
+
 </head>
 
 <div class="main-content">
@@ -21,6 +21,195 @@
           <span class="breadcrumb-item active">Gestión de Usuarios</span>
         </div>
       </header>
+
+      <!--Contenido del usuario-->
+    <div class="users-content">
+        <div class="contenido-header">
+            <div class="header-content">
+                <h1>Gestión de Usuarios</h1>
+                <p>Administración de usuarios, roles y permisos del sistema</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" id="new-user-btn">
+                <i class="fas fa-user-plus"></i>
+                Nuevo Usuario
+            </button>
+            </div>
+        </div>
+
+        <!--Cartas de datos-->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Total Usuarios</h3>
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>24</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Usuarios Activos</h3>
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>21</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Administradores</h3>
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>2</h2>
+                </div>
+            </div>
+        </div>
+
+        <!--Divisor de secciones-->
+        <div class="tabs-container">
+            <div class="tab-list">
+                <button class="tabs-trigger active">Usuarios</button>
+                <button class="tabs-trigger">Roles y Permisos</button>
+            </div>
+        </div>
+
+        <!--Tabla de Usuarios-->
+        <div class="tabs-content active">
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Lista de Usuarios</h2>
+                    <p>Gestiona todos los usuarios del sistema</p>
+                    <div class="table-filters">
+                        <div class="search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar usuario..." name="buscar-usuario" id="buscar-usuario">
+                        </div>
+                        <select>
+                            <option value="">Filtrar por rol</option>
+                            <option value="admin">Administrador</option>
+                            <option value="genetista">Genetista</option>
+                            <option value="lector">Asistente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Dra. Alexandra</td>
+                                    <td>alexandra@email.com</td>
+                                    <td><span class="badge default">Genetista</span></td>
+                                    <td>
+                                        <div class="dropdwon">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
+                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
+                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Dra. Paola</td>
+                                    <td>paola.gonzalez@email.com</td>
+                                    <td><span class="badge default">Genetista</span></td>
+                                    <td>
+                                        <div class="dropdwon">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
+                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
+                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Dra. Ana</td>
+                                    <td>anabracho@email.com</td>
+                                    <td><span class="badge default">Genetista</span></td>
+                                    <td>
+                                        <div class="dropdwon">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
+                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
+                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs-content">
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Gestión de Roles y Permisos</h2>
+                    <p>Configura los roles y permisos del sistema</p>
+                </div>
+                <div class="card-content">
+                    <div class="roles-grid">
+                        <div class="role-card">
+                            <div class="role-header">
+                                <h3>Administrador</h3>
+                                <p>Acceso completo al sistema</p>
+                            </div>
+                            <div class="role-content">
+                                <div class="permisos">
+                                    <label>Permisos:</label>
+                                    <div class="badge-group">
+                                        <span class="badge outline">Crear</span>
+                                        <span class="badge outline">Leer</span>
+                                        <span class="badge outline">Actualizar</span>
+                                        <span class="badge outline">Eliminar</span>
+                                        <span class="badge outline">Administrar</span>
+                                    </div>
+                                </div>
+                                <div class="role-footer">
+                                    <span>2 usuarios asignados</span>
+                                    <button class="button outline small">
+                                        <i class="fas fa-edit"></i>
+                                        Editar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+
     </main>
 </div>
 

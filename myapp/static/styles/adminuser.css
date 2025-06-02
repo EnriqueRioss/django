@@ -78,3 +78,93 @@ li{
     color: var(--primary-darkerblue);
     font-weight: 500;
 }
+
+
+/*-------------- Contenido Header ------------*/
+.users-content {
+  padding-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contenido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content{
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    padding-left: 0.5rem;
+}
+
+.header-content h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 0.5rem;
+  color: var(--primary-darkerblue);
+  margin-bottom: 2rem;
+}
+
+.header-content p {
+  color: var(--primary-darkerblue);
+  font-size: 1.3rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-primary{
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background-color: var(--lighter-blue);
+  border: 1px solid var(--lighter-blue);
+  border-radius: 0.5rem;
+  color: var(--complement-blue);
+  font-size: 1.2rem;
+  font-family: "Poppins", serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button i {
+  font-size: 1.3rem;
+  margin-right: 1rem;
+  width: 2rem;
+  text-align: center;
+}
+
+
+/*---------- Tarjetas ------------*/
+.stats-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card{
+    background-color: var(--background-color);
+    border-radius: 0.5rem;
+    padding: 20px;
+    border: 1px solid var(--border-gray);
+}
+
+.stat-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.stat-header h3{
+    font-size: 1.6rem;
+    color: var(--primary-darkerblue);
+    margin: 0;
+}
