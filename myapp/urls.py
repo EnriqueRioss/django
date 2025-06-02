@@ -30,7 +30,7 @@ urlpatterns = [
    path('propositos/<int:proposito_id>/', views.ver_proposito, name='ver_proposito'),
     path('reports/', views.reports_view, name="reports"),
    path('diagnosticos/<int:historia_id>/<str:tipo>/<int:objeto_id>/', views.diagnosticos_plan_estudio, name='diagnosticos_plan'),
-
+    path('gestion_usuarios/', views.gestion_usuarios_view, name="gestion_usuarios"),
     
 
 

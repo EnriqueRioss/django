@@ -658,7 +658,9 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
 def reports_view(request):
     return render(request, 'reports.html')
 
-
+@login_required
+def gestion_usuarios_view(request):
+    return render(request, 'gestion_usuarios.html')
 
 
 

@@ -1,0 +1,28 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+
+{%block content%}
+
+
+<head>
+    <title>GESTIÓN USUARIOS | IIG - LUZ</title>
+    <link rel="stylesheet" href= "{% static '/styles/adminuser.css' %}">
+    
+</head>
+
+<div class="main-content">
+    <main class="barra-content">
+      <header class="content-header">
+        <div class="breadcrumb">
+          <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+          <span class="breadcrumb-separator">></span>
+          <span class="breadcrumb-item active">Gestión de Usuarios</span>
+        </div>
+      </header>
+    </main>
+</div>
+
+
+{% endblock %}
