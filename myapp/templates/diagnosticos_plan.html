@@ -11,7 +11,10 @@
         {% if tipo == 'proposito' and objeto %}
             Paciente: {{ objeto.nombres }} {{ objeto.apellidos }}
         {% elif tipo == 'pareja' and objeto %}
-            Pareja: {{ objeto.miembro1.nombres|default_if_none:"" }} {{ objeto.miembro1.apellidos|default_if_none:"" }} y {{ objeto.miembro2.nombres|default_if_none:"" }} {{ objeto.miembro2.apellidos|default_if_none:"" }}
+            Pareja: 
+            {{ objeto.proposito_id_1.nombres|default_if_none:"" }} {{ objeto.proposito_id_1.apellidos|default_if_none:"" }}
+            y 
+            {{ objeto.proposito_id_2.nombres|default_if_none:"" }} {{ objeto.proposito_id_2.apellidos|default_if_none:"" }}
         {% else %}
             Información del Paciente/Pareja no disponible
         {% endif %}
