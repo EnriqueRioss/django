@@ -68,18 +68,28 @@
                     <h2>2</h2>
                 </div>
             </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Lectores</h3>
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h2>3</h2>
+                </div>
+            </div>
         </div>
 
         <!--Divisor de secciones-->
         <div class="tabs-container">
-            <div class="tab-list">
-                <button class="tabs-trigger active">Usuarios</button>
-                <button class="tabs-trigger">Roles y Permisos</button>
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="users-tab">Usuarios</button>
+                <button class="tab-button" data-tab="roles">Roles y Permisos</button>
             </div>
         </div>
 
         <!--Tabla de Usuarios-->
-        <div class="tabs-content active">
+        <div class="tabs-content active" id="users-tab">
             <div class="content-card">
                 <div class="card-header">
                     <h2>Lista de Usuarios</h2>
@@ -167,7 +177,7 @@
             </div>
         </div>
 
-        <div class="tabs-content">
+        <div class="tabs-content" id="roles">
             <div class="content-card">
                 <div class="card-header">
                     <h2>Gestión de Roles y Permisos</h2>
@@ -212,6 +222,33 @@
 
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleccionar todos los botones de pestaña
+    const tabButtons = document.querySelectorAll('.tab-button');
+    
+    // Añadir evento click a cada botón
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remover clase 'active' de todos los botones
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Añadir clase 'active' al botón clickeado
+            this.classList.add('active');
+            
+            // Ocultar todos los contenidos de pestaña
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Mostrar el contenido de la pestaña correspondiente
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+});
+</script>
 
 
 {% endblock %}
