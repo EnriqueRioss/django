@@ -17,11 +17,9 @@ class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     done = models.BooleanField(default =False)
 
-    
-
     def __str__(self):
         return self.title + "-" + self.project.name
-    
+
 
 class ExamenFisico(models.Model):
     examen_id = models.AutoField(primary_key=True)
@@ -43,7 +41,7 @@ class ExamenFisico(models.Model):
     ct = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     pabellones_auriculares = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     tension_arterial_sistolica = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    tension_arterial_diastolica = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True) 
+    tension_arterial_diastolica = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     observaciones_cabeza = models.TextField(blank=True, null=True)
     observaciones_cuello = models.TextField(blank=True, null=True)
     observaciones_torax = models.TextField(blank=True, null=True)
@@ -58,52 +56,58 @@ class ExamenFisico(models.Model):
     observaciones_pliegues = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Examen Físico {self.examen_id} para {self.proposito.nombres if self.proposito else 'N/A'}"
+        proposito_nombre = "N/A"
+        if self.proposito:
+            proposito_nombre = f"{self.proposito.nombres} {self.proposito.apellidos}"
+        return f"Examen Físico {self.examen_id} para {proposito_nombre}"
 
 class Parejas(models.Model):
     pareja_id = models.AutoField(primary_key=True)
-    proposito_id_1 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='proposito_1')
-    proposito_id_2 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='proposito_2')
+    proposito_id_1 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_1') # Changed related_name
+    proposito_id_2 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_2') # Changed related_name
 
     class Meta:
-        # Esto asegura que no se puedan crear parejas duplicadas con los mismos proposito_id_1 y proposito_id_2
-        # Consider ensuring proposito_id_1 < proposito_id_2 to handle (A,B) vs (B,A) if not done elsewhere
         unique_together = (('proposito_id_1', 'proposito_id_2'),)
 
     def clean(self):
-        if self.proposito_id_1 == self.proposito_id_2:
-            raise ValidationError("Un propósito no puede formar una pareja consigo mismo.")
-        # Ensure consistent ordering for unique_together if not handled by sorting PKs before save
-        if self.proposito_id_1_id and self.proposito_id_2_id and self.proposito_id_1_id > self.proposito_id_2_id:
-            self.proposito_id_1, self.proposito_id_2 = self.proposito_id_2, self.proposito_id_1
+        if self.proposito_id_1_id and self.proposito_id_2_id: # Check if IDs are set
+            if self.proposito_id_1_id == self.proposito_id_2_id:
+                raise ValidationError("Un propósito no puede formar una pareja consigo mismo.")
+            # Ensure consistent ordering for unique_together
+            if self.proposito_id_1_id > self.proposito_id_2_id:
+                self.proposito_id_1, self.proposito_id_2 = self.proposito_id_2, self.proposito_id_1
+        super().clean()
 
+    def save(self, *args, **kwargs):
+        self.clean() # Call clean before saving
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Pareja {self.pareja_id}: {self.proposito_id_1.nombres if self.proposito_id_1 else 'N/A'} y {self.proposito_id_2.nombres if self.proposito_id_2 else 'N/A'}"
+        p1_nombre = "N/A"
+        p2_nombre = "N/A"
+        if self.proposito_id_1:
+            p1_nombre = f"{self.proposito_id_1.nombres} {self.proposito_id_1.apellidos}"
+        if self.proposito_id_2:
+            p2_nombre = f"{self.proposito_id_2.nombres} {self.proposito_id_2.apellidos}"
+        return f"Pareja {self.pareja_id}: {p1_nombre} y {p2_nombre}"
 
 
 class AntecedentesFamiliaresPreconcepcionales(models.Model):
     antecedente_familiar_id = models.AutoField(primary_key=True)
-    
-    # Relación con Proposito (individual)
     proposito = models.ForeignKey(
-        'Propositos', 
-        on_delete=models.CASCADE, 
-        null=True, 
+        'Propositos',
+        on_delete=models.CASCADE,
+        null=True,
         blank=True,
-        unique=False 
+        unique=False
     )
-    
-    # Relación con Pareja
     pareja = models.ForeignKey(
         'Parejas',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        unique=False 
+        unique=False
     )
-    
-    # Campos del modelo
     antecedentes_padre = models.TextField(null=True, blank=True)
     antecedentes_madre = models.TextField(null=True, blank=True)
     estado_salud_padre = models.TextField(null=True, blank=True)
@@ -116,46 +120,53 @@ class AntecedentesFamiliaresPreconcepcionales(models.Model):
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) | 
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
-                name='check_proposito_or_pareja'
+                name='check_proposito_or_pareja_familiares' # Renamed for clarity
             ),
             models.UniqueConstraint(
                 fields=['proposito'],
-                name='unique_antecedente_proposito',
+                name='unique_antecedente_familiar_proposito', # Renamed
                 condition=models.Q(proposito__isnull=False)
             ),
             models.UniqueConstraint(
                 fields=['pareja'],
-                name='unique_antecedente_pareja',
+                name='unique_antecedente_familiar_pareja', # Renamed
                 condition=models.Q(pareja__isnull=False)
             )
         ]
 
     def clean(self):
         if self.proposito and self.pareja:
-            raise ValidationError("Los antecedentes no pueden estar relacionados con un propósito y una pareja al mismo tiempo.")
+            raise ValidationError("Los antecedentes familiares no pueden estar relacionados con un propósito y una pareja al mismo tiempo.")
         if not self.proposito and not self.pareja:
-            raise ValidationError("Los antecedentes deben estar relacionados con un propósito o una pareja.")
+            raise ValidationError("Los antecedentes familiares deben estar relacionados con un propósito o una pareja.")
+        if self.consanguinidad == 'No' and self.grado_consanguinidad:
+            # Optionally clear grado_consanguinidad if consanguinidad is No
+            # self.grado_consanguinidad = ""
+            pass # Or raise error if it should be empty
+        if self.consanguinidad == 'Sí' and not self.grado_consanguinidad:
+             raise ValidationError("Debe especificar el grado de consanguinidad si seleccionó 'Sí'.")
+
 
     def save(self, *args, **kwargs):
-        self.clean() 
+        self.clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
         if self.proposito:
             return f"Antecedentes Familiares de {self.proposito}"
         elif self.pareja:
-            return f"Antecedentes Familiares de Pareja {self.pareja}"
+            return f"Antecedentes Familiares de Pareja {self.pareja_id}"
         return f"Antecedente Familiar {self.antecedente_familiar_id}"
 
 class AntecedentesPersonales(models.Model):
     antecedente_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
-        'Propositos', 
-        on_delete=models.CASCADE, 
-        null=True, 
+        'Propositos',
+        on_delete=models.CASCADE,
+        null=True,
         blank=True
     )
     pareja = models.ForeignKey(
@@ -166,7 +177,7 @@ class AntecedentesPersonales(models.Model):
     )
     fur = models.DateField(null=True, blank=True)
     edad_gestacional = models.IntegerField(null=True, blank=True)
-    controles_prenatales = models.CharField(max_length=100, blank=True, default='') # Default added
+    controles_prenatales = models.CharField(max_length=100, blank=True, default='')
     numero_partos = models.IntegerField(null=True, blank=True)
     numero_gestas = models.IntegerField(null=True, blank=True)
     numero_cesareas = models.IntegerField(null=True, blank=True)
@@ -175,9 +186,9 @@ class AntecedentesPersonales(models.Model):
     numero_malformaciones = models.IntegerField(null=True, blank=True)
     complicaciones_embarazo = models.TextField(null=True, blank=True)
     exposicion_teratogenos = models.CharField(
-        max_length=20, 
-        choices=[('Físicos', 'Físicos'), ('Químicos', 'Químicos'), ('Biológicos', 'Biológicos')], 
-        null=True, 
+        max_length=20,
+        choices=[('Físicos', 'Físicos'), ('Químicos', 'Químicos'), ('Biológicos', 'Biológicos')],
+        null=True,
         blank=True
     )
     descripcion_exposicion = models.TextField(null=True, blank=True)
@@ -190,7 +201,7 @@ class AntecedentesPersonales(models.Model):
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) | 
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
                 name='check_proposito_or_pareja_personales'
@@ -221,25 +232,25 @@ class AntecedentesPersonales(models.Model):
         if self.proposito:
             return f"Antecedentes Personales de {self.proposito}"
         elif self.pareja:
-            return f"Antecedentes Personales de Pareja {self.pareja}"
+            return f"Antecedentes Personales de Pareja {self.pareja_id}"
         return f"Antecedente Personal {self.antecedente_id}"
 
 class Autorizaciones(models.Model):
     autorizacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
     autorizacion_examenes = models.BooleanField(null=True, blank=True)
-    archivo_autorizacion = models.FileField(null=True, blank=True)
-    padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True)
+    archivo_autorizacion = models.FileField(null=True, blank=True) # Consider upload_to
+    padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True) # OneToOneField might be better if padre can only authorize once
 
     def __str__(self):
-        return f"Autorizacion {self.autorizacion_id}"
+        return f"Autorizacion {self.autorizacion_id} para {self.proposito if self.proposito else 'N/A'}"
 
 class DesarrolloPsicomotor(models.Model):
     desarrollo_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
-        'Propositos', 
-        on_delete=models.CASCADE, 
-        null=True, 
+        'Propositos',
+        on_delete=models.CASCADE,
+        null=True,
         blank=True
     )
     pareja = models.ForeignKey(
@@ -256,16 +267,15 @@ class DesarrolloPsicomotor(models.Model):
     caminar = models.CharField(max_length=100, null=True, blank=True)
     primeras_palabras =models.CharField(max_length=100, null=True, blank=True)
     primeros_dientes = models.CharField(max_length=100, null=True, blank=True)
-    progreso_escuela = models.CharField(max_length=100, null=True, blank=True) #CharField, not TextField
-    progreso_peso = models.CharField(max_length=100, null=True, blank=True)    #CharField, not TextField
-    progreso_talla = models.CharField(max_length=100, null=True, blank=True)   #CharField, not TextField
-
+    progreso_escuela = models.CharField(max_length=100, null=True, blank=True)
+    progreso_peso = models.CharField(max_length=100, null=True, blank=True)
+    progreso_talla = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) | 
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
                 name='check_desarrollo_proposito_or_pareja'
@@ -296,15 +306,16 @@ class DesarrolloPsicomotor(models.Model):
         if self.proposito:
             return f"Desarrollo Psicomotor de {self.proposito}"
         elif self.pareja:
-            return f"Desarrollo Psicomotor de Pareja {self.pareja}"
+            return f"Desarrollo Psicomotor de Pareja {self.pareja_id}"
         return f"Desarrollo Psicomotor {self.desarrollo_id}"
 
 
 class EvaluacionGenetica(models.Model):
+    evaluacion_id = models.AutoField(primary_key=True) # Added primary key
     proposito = models.ForeignKey(
-        'Propositos', 
-        on_delete=models.CASCADE, 
-        null=True, 
+        'Propositos',
+        on_delete=models.CASCADE,
+        null=True,
         blank=True
     )
     pareja = models.ForeignKey(
@@ -347,6 +358,7 @@ class EvaluacionGenetica(models.Model):
             raise ValidationError("La evaluación genética no puede estar relacionada con un propósito y una pareja al mismo tiempo.")
         if not self.proposito and not self.pareja:
             raise ValidationError("La evaluación genética debe estar relacionada con un propósito o una pareja.")
+        super().clean()
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -356,11 +368,12 @@ class EvaluacionGenetica(models.Model):
         if self.proposito:
             return f"Evaluación Genética de {self.proposito}"
         elif self.pareja:
-            return f"Evaluación Genética de Pareja {self.pareja.pareja_id if self.pareja else 'N/A'}"
-        return f"Evaluación Genética ID: {self.id or 'Unsaved'}"
+            return f"Evaluación Genética de Pareja {self.pareja_id if self.pareja else 'N/A'}"
+        return f"Evaluación Genética ID: {self.evaluacion_id}"
 
 
 class DiagnosticoPresuntivo(models.Model):
+    diagnostico_id = models.AutoField(primary_key=True) # Added primary key
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
         on_delete=models.CASCADE,
@@ -383,6 +396,7 @@ class DiagnosticoPresuntivo(models.Model):
         return f"Diagnóstico {self.orden}: {self.descripcion[:50]}..."
 
 class PlanEstudio(models.Model):
+    plan_id = models.AutoField(primary_key=True) # Added primary key
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
         on_delete=models.CASCADE,
@@ -404,25 +418,26 @@ class PlanEstudio(models.Model):
         verbose_name_plural = "Planes de Estudio"
 
     def clean(self):
-        if self.fecha_limite and self.fecha_limite < timezone.now().date() and not self.completado: # only error if not completed and past due
+        if self.fecha_limite and self.fecha_limite < timezone.now().date() and not self.completado:
             raise ValidationError("La fecha límite no puede ser en el pasado para un plan no completado.")
+        super().clean()
 
     def __str__(self):
         return f"{self.accion[:30]}... ({'Completado' if self.completado else 'Pendiente'})"
 
 class EvolucionDesarrollo(models.Model):
     evolucion_id = models.AutoField(primary_key=True)
-    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True)
+    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True) # Could be OneToOne if only one per Proposito
     fecha = models.DateField(blank=True, null=True)
     historial_enfermedades = models.TextField(null=True, blank=True)
     hospitalizaciones = models.TextField(null=True, blank=True)
     cirugias = models.TextField(null=True, blank=True)
     convulsiones = models.TextField(null=True, blank=True)
     otros_antecedentes = models.TextField(null=True, blank=True)
-    resultados_examenes = models.FileField(null=True, blank=True)
+    resultados_examenes = models.FileField(null=True, blank=True) # Consider upload_to
 
     def __str__(self):
-        return f"Evolucion Desarrollo {self.evolucion_id}"
+        return f"Evolucion Desarrollo {self.evolucion_id} para {self.proposito if self.proposito else 'N/A'}"
 
 class Genealogia(models.Model):
     TIPO_FAMILIAR_CHOICES = [
@@ -436,14 +451,13 @@ class Genealogia(models.Model):
         ('abuela_materna', 'Abuela Materna'),
         ('hermano', 'Hermano/a'),
         ('hijo', 'Hijo/a'),
-        # otros según necesidad
     ]
-    
+
     genealogia_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
-        'Propositos', 
-        on_delete=models.CASCADE, 
-        null=True, 
+        'Propositos',
+        on_delete=models.CASCADE,
+        null=True,
         blank=True,
         related_name='genealogia_proposito'
     )
@@ -462,38 +476,39 @@ class Genealogia(models.Model):
     estado_salud = models.TextField(null=True, blank=True)
     consanguinidad = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     notas = models.TextField(null=True, blank=True)
-    
+
     class Meta:
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) | 
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
-                name='proposito_or_pareja'
+                name='genealogia_proposito_or_pareja' # Renamed for clarity
             )
         ]
-    
+
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.get_tipo_familiar_display()})"
-    
+
     def clean(self):
         super().clean()
         if self.proposito and self.pareja:
             raise ValidationError("Un registro de genealogía debe estar relacionado con un propósito O una pareja, no ambos.")
         if not self.proposito and not self.pareja:
             raise ValidationError("Un registro de genealogía debe estar relacionado con un propósito o una pareja.")
-        
+
         if self.tipo_familiar == 'pareja' and not self.pareja:
             raise ValidationError("El tipo 'pareja' debe estar asociado a un registro de Pareja.")
-        if self.tipo_familiar == 'proposito' and not self.proposito: # Check if the current object is the Proposito itself
-             # This validation might be tricky depending on how it's used.
-             # For a 'proposito' type, it usually refers to the main subject of the genealogia tree.
-             pass
+        # if self.tipo_familiar == 'proposito' and not self.proposito:
+            # This validation is complex: 'proposito' type might refer to the subject Proposito itself.
+            # It depends on how you're structuring the genealogia tree input.
+            # If this Genealogia entry *is* for the main Proposito, then self.proposito should be set.
+            # If 'proposito' means "a relative of the main Proposito", this check is fine.
 
 
 class Genetistas(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='genetistas') # Added related_name
     genetista_id = models.AutoField(primary_key=True)
 
     def __str__(self):
@@ -506,7 +521,7 @@ class HistorialCambios(models.Model):
     descripcion_cambio = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"Historial Cambio {self.cambio_id}"
+        return f"Historial Cambio {self.cambio_id} para Historia {self.historia_id if self.historia else 'N/A'}"
 
 class HistoriasClinicas(models.Model):
     historia_id = models.AutoField(primary_key=True)
@@ -540,7 +555,7 @@ class InformacionPadres(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     direccion = models.CharField(max_length=200, null=True, blank=True)
 
-    class Meta: # Corrected indentation for Meta class
+    class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=['proposito', 'tipo'],
@@ -553,17 +568,13 @@ class InformacionPadres(models.Model):
         ]
 
     def clean(self):
-        # Validation for ensuring only one father and one mother per purpose
-        # This check is now primarily handled by the UniqueConstraint.
-        # The clean method can still be useful for more complex cross-field validations
-        # or for raising errors before hitting the DB.
-        if self.proposito:
-            padres_existentes = InformacionPadres.objects.filter(proposito=self.proposito, tipo=self.tipo)
-            if self.pk: # if updating
-                padres_existentes = padres_existentes.exclude(pk=self.pk)
-            if padres_existentes.exists():
+        # The UniqueConstraint handles most of this. This is a softer check.
+        if self.proposito and self.tipo:
+            existing = InformacionPadres.objects.filter(proposito=self.proposito, tipo=self.tipo)
+            if self.pk: # If instance is already saved (updating)
+                existing = existing.exclude(pk=self.pk)
+            if existing.exists():
                 raise ValidationError(f'Ya existe un registro de "{self.tipo}" para este propósito.')
-        
         super().clean()
 
 
@@ -572,7 +583,8 @@ class InformacionPadres(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Informacion {self.tipo}: {self.nombres} {self.apellidos} (Propósito: {self.proposito_id})"
+        proposito_str = self.proposito_id if not self.proposito else self.proposito.identificacion
+        return f"Informacion {self.tipo}: {self.nombres} {self.apellidos} (Propósito: {proposito_str})"
 
 
 class PeriodoNeonatal(models.Model):
@@ -581,7 +593,7 @@ class PeriodoNeonatal(models.Model):
         ('Artificial', 'Artificial'),
         ('Mixta', 'Mixta')
     ]
-    
+
     neonatal_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
         'Propositos',
@@ -620,7 +632,7 @@ class PeriodoNeonatal(models.Model):
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) | 
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
                 name='check_periodo_proposito_or_pareja'
@@ -642,6 +654,7 @@ class PeriodoNeonatal(models.Model):
             raise ValidationError("El periodo neonatal no puede estar relacionado con un propósito y una pareja al mismo tiempo.")
         if not self.proposito and not self.pareja:
             raise ValidationError("El periodo neonatal debe estar relacionado con un propósito o una pareja.")
+        super().clean()
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -651,7 +664,7 @@ class PeriodoNeonatal(models.Model):
         if self.proposito:
             return f"Periodo Neonatal de {self.proposito}"
         elif self.pareja:
-            return f"Periodo Neonatal de Pareja {self.pareja}"
+            return f"Periodo Neonatal de Pareja {self.pareja_id}"
         return f"Periodo Neonatal {self.neonatal_id}"
 
 class Propositos(models.Model):
@@ -665,7 +678,7 @@ class Propositos(models.Model):
     ocupacion = models.CharField(max_length=100, null=True, blank=True)
     edad = models.IntegerField(null=True, blank=True)
     identificacion = models.CharField(max_length=20, unique=True)
-    # documento_nacimiento = models.BinaryField(null=True, blank=True)
+    # documento_nacimiento = models.BinaryField(null=True, blank=True) # Keep commented if not used
     direccion = models.CharField(max_length=200, null=True, blank=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
