@@ -557,97 +557,98 @@ def ver_proposito(request, proposito_id):
 
 @login_required
 def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
-    try:
-        # Verificar que la historia existe
-        historia = HistoriasClinicas.objects.get(historia_id=historia_id)
-        
-        if tipo == 'proposito':
-            try:
-                proposito = Propositos.objects.get(proposito_id=objeto_id)
-                pareja = None
-                objeto = proposito
-            except Propositos.DoesNotExist:
-                return render(request, 'error.html', {'mensaje': 'No se encontró el propósito.'})
-        elif tipo == 'pareja':
-            try:
-                pareja = Parejas.objects.get(pareja_id=objeto_id)
-                proposito = None
-                objeto = pareja
-            except Parejas.DoesNotExist:
-                return render(request, 'error.html', {'mensaje': 'No se encontró la pareja.'})
-        else:
-            return render(request, 'error.html', {'mensaje': 'Tipo no válido.'})
-        
-    except HistoriasClinicas.DoesNotExist:
-        return render(request, 'error.html', {'mensaje': 'La historia clínica no existe.'})
+    historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
+    
+    proposito_obj = None
+    pareja_obj = None
+    context_objeto = None # Para pasar al contexto y mostrar info en la plantilla
 
-    # Obtener o crear evaluación genética según el tipo
     if tipo == 'proposito':
-        try:
-            evaluacion = EvaluacionGenetica.objects.get(proposito=proposito)
-        except EvaluacionGenetica.DoesNotExist:
-            evaluacion = EvaluacionGenetica.objects.create(
-                proposito=proposito,
-                pareja=None
-            )
-    else:  # tipo == 'pareja'
-        try:
-            evaluacion = EvaluacionGenetica.objects.get(pareja=pareja)
-        except EvaluacionGenetica.DoesNotExist:
-            evaluacion = EvaluacionGenetica.objects.create(
-                pareja=pareja,
-                proposito=None
-            )
-
-    signos_form = SignosClinicosForm(request.POST or None, instance=evaluacion)
-    diagnostico_formset = DiagnosticoPresuntivoFormSet(
-        request.POST or None,
-        prefix='diagnosticos'
-    )
-    plan_formset = PlanEstudioFormSet(
-        request.POST or None,
-        prefix='planes'
-    )
+        proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id)
+        context_objeto = proposito_obj
+        evaluacion, created = EvaluacionGenetica.objects.get_or_create(
+            proposito=proposito_obj,
+            defaults={'pareja': None}
+        )
+        if not created and evaluacion.pareja is not None: # Asegurar consistencia
+            evaluacion.pareja = None
+            evaluacion.save()
+    elif tipo == 'pareja':
+        pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id)
+        context_objeto = pareja_obj
+        evaluacion, created = EvaluacionGenetica.objects.get_or_create(
+            pareja=pareja_obj,
+            defaults={'proposito': None}
+        )
+        if not created and evaluacion.proposito is not None: # Asegurar consistencia
+            evaluacion.proposito = None
+            evaluacion.save()
+    else:
+        messages.error(request, "Tipo de objeto no válido.")
+        return redirect('alguna_url_de_error_o_indice') # Ajusta esta URL
 
     if request.method == 'POST':
-        if all([
-            signos_form.is_valid(),
-            diagnostico_formset.is_valid(),
-            plan_formset.is_valid()
-        ]):
-            # Guardar signos clínicos
-            signos_form.save()
-            
-            # Guardar diagnósticos (eliminar existentes primero)
-            evaluacion.diagnosticos_presuntivos.all().delete()
+        signos_form = SignosClinicosForm(request.POST, instance=evaluacion)
+        diagnostico_formset = DiagnosticoPresuntivoFormSet(request.POST, prefix='diagnosticos')
+        plan_formset = PlanEstudioFormSet(request.POST, prefix='plans')
+
+        if signos_form.is_valid() and diagnostico_formset.is_valid() and plan_formset.is_valid():
+            signos_form.save() # Guarda/actualiza la instancia de EvaluacionGenetica
+
+            # Guardar diagnósticos presuntivos
+            # Borra los existentes asociados a esta evaluación y crea los nuevos
+            # Esto es más simple que intentar actualizar/crear/borrar individualmente sin IDs de instancia
+            DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion).delete()
             for form in diagnostico_formset:
+                # Solo procesar si el formulario tiene datos y no está marcado para eliminar
                 if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
-                    DiagnosticoPresuntivo.objects.create(
-                        evaluacion=evaluacion,
-                        descripcion=form.cleaned_data['descripcion'],
-                        orden=form.cleaned_data['orden']
-                    )
+                    if form.cleaned_data.get('descripcion'): # Asegurarse que hay descripción
+                        DiagnosticoPresuntivo.objects.create(
+                            evaluacion=evaluacion,
+                            descripcion=form.cleaned_data['descripcion'],
+                            orden=form.cleaned_data.get('orden', 0) # Usar .get con valor por defecto
+                        )
             
             # Guardar planes de estudio
-            evaluacion.planes_estudio.all().delete()
+            PlanEstudio.objects.filter(evaluacion=evaluacion).delete()
             for form in plan_formset:
                 if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
-                    PlanEstudio.objects.create(
-                        evaluacion=evaluacion,
-                        accion=form.cleaned_data['accion'],
-                        fecha_limite=form.cleaned_data['fecha_limite'],
-                        completado=form.cleaned_data['completado']
-                    )
+                    if form.cleaned_data.get('accion'): # Asegurarse que hay acción
+                        PlanEstudio.objects.create(
+                            evaluacion=evaluacion,
+                            accion=form.cleaned_data['accion'],
+                            fecha_limite=form.cleaned_data.get('fecha_limite'), # .get es más seguro
+                            completado=form.cleaned_data.get('completado', False)
+                        )
             
             messages.success(request, "Evaluación guardada exitosamente!")
-            return redirect('index')
+            return redirect('index') # Ajusta esta URL a donde quieras redirigir
+        else:
+            messages.error(request, "Por favor, corrige los errores en el formulario.")
+
+    else: # GET request
+        signos_form = SignosClinicosForm(instance=evaluacion)
+
+        # Pre-llenar formsets con datos existentes para edición
+        diagnosticos_existentes = DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion).order_by('orden')
+        diagnosticos_initial_data = []
+        for d in diagnosticos_existentes:
+            diagnosticos_initial_data.append({'descripcion': d.descripcion, 'orden': d.orden})
+        
+        diagnostico_formset = DiagnosticoPresuntivoFormSet(prefix='diagnosticos', initial=diagnosticos_initial_data if diagnosticos_initial_data else None)
+        # Si no hay datos iniciales y extra=0, no se mostrará ningún form. Si extra=1, se mostrará uno vacío.
+
+        planes_existentes = PlanEstudio.objects.filter(evaluacion=evaluacion) #.order_by('algun_campo_si_es_necesario')
+        planes_initial_data = []
+        for p in planes_existentes:
+            planes_initial_data.append({'accion': p.accion, 'fecha_limite': p.fecha_limite, 'completado': p.completado})
+        
+        plan_formset = PlanEstudioFormSet(prefix='plans', initial=planes_initial_data if planes_initial_data else None)
 
     context = {
         'historia': historia,
         'tipo': tipo,
-        'objeto': objeto,
-        'proposito': proposito if tipo == 'proposito' else None,
-        'pareja': pareja if tipo == 'pareja' else None,
+        'objeto': context_objeto, # Usado para mostrar el nombre del propósito o pareja
         'signos_form': signos_form,
         'diagnostico_formset': diagnostico_formset,
         'plan_formset': plan_formset,

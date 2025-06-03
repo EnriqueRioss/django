@@ -414,6 +414,9 @@ class ExamenFisicoForm(forms.ModelForm):
         return examenfisico
 
 
+from django import forms
+from django.forms import formset_factory
+from .models import EvaluacionGenetica # Asegúrate de importar tu modelo correctamente
 
 class SignosClinicosForm(forms.ModelForm):
     class Meta:
@@ -421,48 +424,46 @@ class SignosClinicosForm(forms.ModelForm):
         fields = ['signos_clinicos']
         widgets = {
             'signos_clinicos': forms.Textarea(attrs={
-                'rows': 2,
+                'rows': 2, # Ajustado de nuevo a 2
                 'class': 'form-control',
                 'placeholder': 'Ej: Microcefalia, hipotonía, fisura palpebral...'
             })
         }
 
 class DiagnosticoPresuntivoForm(forms.Form):
+    # Si necesitas actualizar instancias, añade el campo id aquí:
+    # id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     descripcion = forms.CharField(
         label="Diagnóstico",
         widget=forms.Textarea(attrs={
             'rows': 1,
-            'class': 'form-control',
+            'class': 'form-control diagnostico-descripcion',
             'placeholder': 'Ej: Síndrome de Down'
         })
     )
     orden = forms.IntegerField(
         label="Prioridad",
-        initial=0,
         widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'min': '0'
-        })
+            'class': 'form-control diagnostico-orden',
+            'min': '0',
+        }),
+        required=False, # Es buena práctica hacerlo opcional si puede no tener valor
+        initial=0 # Puedes mantener o quitar el initial si el widget ya pone 0
     )
-    # Cambia HiddenInput a CheckboxInput para ver el checkbox
-    DELETE = forms.BooleanField(
-        label="Eliminar",
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'delete-checkbox'
-        })
-    )
+
 DiagnosticoPresuntivoFormSet = formset_factory(
     DiagnosticoPresuntivoForm,
     extra=1,
-    can_delete=True
+    can_delete=True,
 )
 
 class PlanEstudioForm(forms.Form):
+    # Si necesitas actualizar instancias, añade el campo id aquí:
+    # id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     accion = forms.CharField(
         label="Acción",
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class': 'form-control plan-accion',
             'placeholder': 'Ej: Cariotipo, estudio molecular...'
         })
     )
@@ -470,7 +471,7 @@ class PlanEstudioForm(forms.Form):
         label="Fecha límite",
         widget=forms.DateInput(attrs={
             'type': 'date',
-            'class': 'form-control'
+            'class': 'form-control plan-fecha_limite' # Corregido el nombre de clase
         }),
         required=False
     )
@@ -478,19 +479,12 @@ class PlanEstudioForm(forms.Form):
         label="Completado",
         required=False,
         widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input'
+            'class': 'form-check-input plan-completado'
         })
     )
-    # Cambia HiddenInput a CheckboxInput para ver el checkbox
-    DELETE = forms.BooleanField(
-        label="Eliminar",
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'delete-checkbox'
-        })
-    )
+
 PlanEstudioFormSet = formset_factory(
     PlanEstudioForm,
     extra=1,
-    can_delete=True
+    can_delete=True,
 )
