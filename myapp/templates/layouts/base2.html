@@ -1,3 +1,4 @@
+
 {% load static %}
 
 <!DOCTYPE html>
@@ -6,6 +7,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href= "{% static '/styles/stylesforms.css' %}">
+    <!-- Add your main CSS file that includes .messages styles -->
+    <link rel="stylesheet" href="{% static 'path/to/your/main_styles.css' %}">
     <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -43,11 +46,48 @@
     </header>
 
 
-<div class="content">
-    {% block content %}
+    <div class="main-content-area"> {# Added a wrapper for messages and content #}
+        {% if messages %}
+            <div class="messages-container">
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="message-item {{ message.tags }}"{% endif %}>
+                            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                                <i class="fas fa-times-circle"></i> Error:
+                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                                <i class="fas fa-check-circle"></i> Éxito:
+                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                                <i class="fas fa-exclamation-triangle"></i> Advertencia:
+                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO and not 'POPUP:' in message.message %}
+                                <i class="fas fa-info-circle"></i> Información:
+                            {% endif %}
+                            {% if not 'POPUP:' in message.message %} {# Don't display POPUP messages here #}
+                                {{ message }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
 
 
-    
-    {% endblock %}
-</div>   
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if messages %}
+                {% for message in messages %}
+                    {% if 'POPUP:' in message.message %}
+                        // Use a more styled pop-up/modal library in a real application
+                        alert("{{ message.message|slice:'7:'|escapejs }}"); // Remove "POPUP:" and escape JS
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        });
+        </script>
 </body>
+</html>

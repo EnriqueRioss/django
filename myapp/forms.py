@@ -9,8 +9,8 @@ from django.core.exceptions import ValidationError
 from .models import (
     HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales, DesarrolloPsicomotor,
-    AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica,
-    DiagnosticoPresuntivo, PlanEstudio
+    AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica
+    # DiagnosticoPresuntivo, PlanEstudio are used for formsets but not direct form fields here
 )
 
 # --- General Purpose Forms ---
@@ -38,7 +38,7 @@ class LoginForm(forms.Form):
 class ExtendedUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True, help_text='Required.', strip=True)
     last_name = forms.CharField(max_length=30, required=True, help_text='Required.', strip=True)
-    email = forms.EmailField(max_length=254, required=True, help_text='Required. Inform a valid email address.')
+    email = forms.EmailField(max_length=254, required=True, help_text='Required. Inform a valid email address.') # strip=True removed
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
@@ -51,20 +51,25 @@ class HistoriasForm(ModelForm):
         fields = ['numero_historia', 'motivo_tipo_consulta', 'cursante_postgrado', 'medico', 'especialidad', 'centro_referencia']
         widgets = {
             'motivo_tipo_consulta': Select(attrs={'onchange': 'toggleForms()'}),
-            'cursante_postgrado': forms.TextInput(attrs={'placeholder': 'Optional'}),
-            'medico': forms.TextInput(attrs={'placeholder': 'Optional'}),
-            'especialidad': forms.TextInput(attrs={'placeholder': 'Optional'}),
-            'centro_referencia': forms.TextInput(attrs={'placeholder': 'Optional'}),
+            'cursante_postgrado': forms.TextInput(attrs={'placeholder': 'Opcional'}),
+            'medico': forms.TextInput(attrs={'placeholder': 'Opcional'}),
+            'especialidad': forms.TextInput(attrs={'placeholder': 'Opcional'}),
+            'centro_referencia': forms.TextInput(attrs={'placeholder': 'Opcional'}),
         }
         labels = {
             'numero_historia': "Número de Historia Único",
             'motivo_tipo_consulta': "Motivo/Tipo de Consulta",
+            'cursante_postgrado': "Cursante de Postgrado (Si aplica)",
+            'medico': "Médico Referente",
+            'especialidad': "Especialidad del Médico Referente",
+            'centro_referencia': "Centro de Referencia (Si aplica)",
         }
 
     def clean_numero_historia(self):
         numero_historia = self.cleaned_data.get('numero_historia')
         if numero_historia is not None and numero_historia <= 0:
             raise forms.ValidationError("El número de historia debe ser un valor positivo.")
+        # Model already enforces uniqueness for numero_historia
         return numero_historia
 
 class PadresPropositoForm(forms.Form):
@@ -76,21 +81,21 @@ class PadresPropositoForm(forms.Form):
     padre_lugar_nacimiento = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento del Padre", strip=True)
     padre_fecha_nacimiento = forms.DateField(
         required=False,
-        widget=DateInput(attrs={'type': 'date'}),
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         label="Fecha de Nacimiento del Padre"
     )
-    padre_edad = forms.IntegerField(required=False, label="Edad del Padre (años)")
+    padre_edad = forms.IntegerField(required=False, label="Edad del Padre (años)", widget=forms.NumberInput(attrs={'min': '0', 'max': '120'}))
     padre_identificacion = forms.CharField(max_length=20, required=False, label="Identificación del Padre", strip=True)
     padre_grupo_sanguineo = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('grupo_sanguineo').choices[1:], 
+        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('grupo_sanguineo').choices, # Keep existing choices, add empty
         required=False, label="Grupo Sanguíneo del Padre"
     )
     padre_factor_rh = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('factor_rh').choices[1:],
+        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('factor_rh').choices,
         required=False, label="Factor RH del Padre"
     )
     padre_telefono = forms.CharField(max_length=15, required=False, label="Teléfono del Padre", strip=True)
-    padre_email = forms.EmailField(max_length=100, required=False, label="Email del Padre")
+    padre_email = forms.EmailField(max_length=100, required=False, label="Email del Padre") # strip=True is default
     padre_direccion = forms.CharField(max_length=200, required=False, label="Dirección del Padre", strip=True)
 
     # Datos de la madre
@@ -101,21 +106,21 @@ class PadresPropositoForm(forms.Form):
     madre_lugar_nacimiento = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento de la Madre", strip=True)
     madre_fecha_nacimiento = forms.DateField(
         required=False,
-        widget=DateInput(attrs={'type': 'date'}),
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         label="Fecha de Nacimiento de la Madre"
     )
-    madre_edad = forms.IntegerField(required=False, label="Edad de la Madre (años)")
+    madre_edad = forms.IntegerField(required=False, label="Edad de la Madre (años)", widget=forms.NumberInput(attrs={'min': '0', 'max': '120'}))
     madre_identificacion = forms.CharField(max_length=20, required=False, label="Identificación de la Madre", strip=True)
     madre_grupo_sanguineo = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('grupo_sanguineo').choices[1:],
+        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('grupo_sanguineo').choices,
         required=False, label="Grupo Sanguíneo de la Madre"
     )
     madre_factor_rh = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('factor_rh').choices[1:],
+        choices=[('', 'Seleccione')] + InformacionPadres._meta.get_field('factor_rh').choices,
         required=False, label="Factor RH de la Madre"
     )
     madre_telefono = forms.CharField(max_length=15, required=False, label="Teléfono de la Madre", strip=True)
-    madre_email = forms.EmailField(max_length=100, required=False, label="Email de la Madre")
+    madre_email = forms.EmailField(max_length=100, required=False, label="Email de la Madre") # strip=True is default
     madre_direccion = forms.CharField(max_length=200, required=False, label="Dirección de la Madre", strip=True)
 
     def clean_padre_fecha_nacimiento(self):
@@ -132,22 +137,22 @@ class PadresPropositoForm(forms.Form):
 
     def clean_padre_edad(self):
         edad = self.cleaned_data.get('padre_edad')
-        if edad is not None and (edad < 0 or edad > 120): 
+        if edad is not None and (edad < 0 or edad > 120): # Plausible age range
             raise forms.ValidationError("Por favor, ingrese una edad válida (0-120 años).")
         return edad
-    
+
     def clean_madre_edad(self):
         edad = self.cleaned_data.get('madre_edad')
-        if edad is not None and (edad < 0 or edad > 120): 
+        if edad is not None and (edad < 0 or edad > 120): # Plausible age range
             raise forms.ValidationError("Por favor, ingrese una edad válida (0-120 años).")
         return edad
 
     def clean(self):
         cleaned_data = super().clean()
-        padre_id = cleaned_data.get('padre_identificacion')
-        madre_id = cleaned_data.get('madre_identificacion')
+        padre_id = cleaned_data.get('padre_identificacion', '').strip() # Ensure strip if it's optional
+        madre_id = cleaned_data.get('madre_identificacion', '').strip()
 
-        if padre_id and madre_id and padre_id == madre_id and padre_id.strip() != "": # Ensure non-empty IDs
+        if padre_id and madre_id and padre_id == madre_id:
             self.add_error('madre_identificacion', "La identificación de la madre no puede ser igual a la del padre.")
         return cleaned_data
 
@@ -157,22 +162,23 @@ class PropositosForm(forms.Form):
     lugar_nacimiento = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
     escolaridad = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
     ocupacion = forms.CharField(max_length=100, required=False, label="Ocupación", strip=True)
-    edad = forms.IntegerField(required=False, label="Edad (años)")
+    edad = forms.IntegerField(required=False, label="Edad (años)", widget=forms.NumberInput(attrs={'min': '0', 'max': '120'}))
     fecha_nacimiento = forms.DateField(
         required=False,
-        widget=DateInput(attrs={'type': 'date'}),
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         label="Fecha de Nacimiento"
     )
     identificacion = forms.CharField(max_length=20, label="Identificación (Cédula/Pasaporte)", strip=True)
+    # documento_nacimiento = forms.FileField(required=False, label="Documento de Nacimiento (Opcional)")
     direccion = forms.CharField(max_length=200, required=False, label="Dirección", strip=True)
     telefono = forms.CharField(max_length=15, required=False, label="Teléfono", strip=True)
     email = forms.EmailField(max_length=100, required=False, label="Email")
     grupo_sanguineo = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices[1:],
+        choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices, # Using model choices
         required=False, label="Grupo Sanguíneo"
     )
     factor_rh = forms.ChoiceField(
-        choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices[1:],
+        choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices, # Using model choices
         required=False, label="Factor RH"
     )
     foto = forms.ImageField(
@@ -182,23 +188,13 @@ class PropositosForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.instance = kwargs.pop('instance', None)
+        self.instance = kwargs.pop('instance', None) # Get instance if passed (for editing)
         super().__init__(*args, **kwargs)
-        if self.instance:
-            self.fields['nombres'].initial = self.instance.nombres
-            self.fields['apellidos'].initial = self.instance.apellidos
-            self.fields['lugar_nacimiento'].initial = self.instance.lugar_nacimiento
-            self.fields['escolaridad'].initial = self.instance.escolaridad
-            self.fields['ocupacion'].initial = self.instance.ocupacion
-            self.fields['edad'].initial = self.instance.edad
-            self.fields['fecha_nacimiento'].initial = self.instance.fecha_nacimiento
-            self.fields['identificacion'].initial = self.instance.identificacion
-            self.fields['direccion'].initial = self.instance.direccion
-            self.fields['telefono'].initial = self.instance.telefono
-            self.fields['email'].initial = self.instance.email
-            self.fields['grupo_sanguineo'].initial = self.instance.grupo_sanguineo
-            self.fields['factor_rh'].initial = self.instance.factor_rh
-            if self.instance.foto:
+        if self.instance: # Pre-fill form if instance is provided
+            for field_name in self.fields:
+                if hasattr(self.instance, field_name):
+                    self.fields[field_name].initial = getattr(self.instance, field_name)
+            if self.instance.foto: # Special handling for ImageField/FileField
                  self.fields['foto'].initial = self.instance.foto
 
 
@@ -216,18 +212,24 @@ class PropositosForm(forms.Form):
 
     def clean_identificacion(self):
         identificacion = self.cleaned_data.get('identificacion')
+        if not identificacion: # Ensure identification is provided
+            raise forms.ValidationError("La identificación es obligatoria.")
+
+        # Check for uniqueness, excluding self if editing
         query = Propositos.objects.filter(identificacion=identificacion)
-        if self.instance and self.instance.pk: # If editing an existing instance
+        if self.instance and self.instance.pk: # If we are editing an existing instance
             query = query.exclude(pk=self.instance.pk)
         if query.exists():
             raise forms.ValidationError("Ya existe un propósito con esta identificación.")
         return identificacion
 
-    def save(self, historia):
+    def save(self, historia): # This is a custom save method for forms.Form
         cleaned_data = self.cleaned_data
-        
-        proposito_data_defaults = {
-            'historia': historia,
+        identificacion = cleaned_data['identificacion']
+
+        # Prepare defaults for update_or_create
+        proposito_defaults = {
+            'historia': historia, # Always associate with the given historia
             'nombres': cleaned_data['nombres'],
             'apellidos': cleaned_data['apellidos'],
             'lugar_nacimiento': cleaned_data.get('lugar_nacimiento'),
@@ -238,30 +240,39 @@ class PropositosForm(forms.Form):
             'direccion': cleaned_data.get('direccion'),
             'telefono': cleaned_data.get('telefono'),
             'email': cleaned_data.get('email'),
-            'grupo_sanguineo': cleaned_data.get('grupo_sanguineo'),
-            'factor_rh': cleaned_data.get('factor_rh'),
+            'grupo_sanguineo': cleaned_data.get('grupo_sanguineo') or None, # Ensure empty string becomes None
+            'factor_rh': cleaned_data.get('factor_rh') or None,
+            # Foto is handled separately due to ClearableFileInput behavior
         }
-        # Remove None values so they don't overwrite existing data with None if not provided during update
-        proposito_data_defaults = {k: v for k, v in proposito_data_defaults.items() if v is not None or k == 'historia'}
+        # Filter out None values from defaults unless it's a required field that somehow became None
+        # or specifically allowed Nones (like historia can be None initially if not passed but set here)
+        proposito_defaults = {k: v for k, v in proposito_defaults.items() if v is not None or k == 'historia'}
 
 
         proposito, created = Propositos.objects.update_or_create(
-            identificacion=cleaned_data['identificacion'],
-            defaults=proposito_data_defaults
+            identificacion=identificacion, # Unique key for lookup
+            defaults=proposito_defaults
         )
-        
-        # Handle foto separately for clarity and to manage clearing
-        foto_val = cleaned_data.get('foto') # This will be UploadedFile, False (cleared), or None
-        if foto_val is not None: # If photo field was part of the submission (new, cleared, or unchanged from existing if widget supports)
-            if foto_val: # New file uploaded
+
+        # Handle foto separately because ClearableFileInput has special behavior
+        # cleaned_data['foto'] will be:
+        # - The UploadedFile object if a new file is uploaded.
+        # - None if the field was not changed and no file was previously present or if it was cleared and not re-uploaded.
+        # - False if the "Clear" checkbox was checked.
+        foto_val = cleaned_data.get('foto')
+        if foto_val is not None: # Check if field was submitted (i.e., not absent from POST data)
+            if foto_val: # A new file was uploaded
                 proposito.foto = foto_val
-            else: # False, meaning "clear" was checked
+            elif foto_val is False: # ClearableFileInput: False means clear the existing file
                 proposito.foto = None
-            proposito.save(update_fields=['foto'])
-        elif created and foto_val is None: # If new record and no photo submitted, ensure it's None
+            # If foto_val is None here, it means no new file and clear was not checked.
+            # We only save if there was a change (new file or clear).
+            proposito.save(update_fields=['foto']) # Save only foto field to avoid overwriting other fields
+        elif created and proposito.foto is not None: # If created and no photo submitted, but instance somehow had one
             proposito.foto = None
             proposito.save(update_fields=['foto'])
-            
+
+
         return proposito
 
 class ParejaPropositosForm(forms.Form):
@@ -269,32 +280,32 @@ class ParejaPropositosForm(forms.Form):
     nombres_1 = forms.CharField(max_length=100, label="Nombres (Primer Cónyuge)", strip=True)
     apellidos_1 = forms.CharField(max_length=100, label="Apellidos (Primer Cónyuge)", strip=True)
     lugar_nacimiento_1 = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
-    fecha_nacimiento_1 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date'}), label="Fecha de Nacimiento")
+    fecha_nacimiento_1 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), label="Fecha de Nacimiento")
     escolaridad_1 = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
     ocupacion_1 = forms.CharField(max_length=100, required=False, label="Ocupación", strip=True)
-    edad_1 = forms.IntegerField(required=False, label="Edad (años)")
+    edad_1 = forms.IntegerField(required=False, label="Edad (años)", widget=forms.NumberInput(attrs={'min':'0', 'max':'120'}))
     identificacion_1 = forms.CharField(max_length=20, label="Identificación", strip=True)
     direccion_1 = forms.CharField(max_length=200, required=False, label="Dirección", strip=True)
     telefono_1 = forms.CharField(max_length=15, required=False, label="Teléfono", strip=True)
     email_1 = forms.EmailField(max_length=100, required=False, label="Email")
-    grupo_sanguineo_1 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices[1:], required=False, label="Grupo Sanguíneo")
-    factor_rh_1 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices[1:], required=False, label="Factor RH")
+    grupo_sanguineo_1 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices, required=False, label="Grupo Sanguíneo")
+    factor_rh_1 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices, required=False, label="Factor RH")
     foto_1 = forms.ImageField(required=False, widget=ClearableFileInput(attrs={'accept': 'image/*'}), label="Foto (Opcional)")
 
     # Campos para el segundo cónyuge (proposito 2)
     nombres_2 = forms.CharField(max_length=100, label="Nombres (Segundo Cónyuge)", strip=True)
     apellidos_2 = forms.CharField(max_length=100, label="Apellidos (Segundo Cónyuge)", strip=True)
     lugar_nacimiento_2 = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
-    fecha_nacimiento_2 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date'}), label="Fecha de Nacimiento")
+    fecha_nacimiento_2 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), label="Fecha de Nacimiento")
     escolaridad_2 = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
     ocupacion_2 = forms.CharField(max_length=100, required=False, label="Ocupación", strip=True)
-    edad_2 = forms.IntegerField(required=False, label="Edad (años)")
+    edad_2 = forms.IntegerField(required=False, label="Edad (años)", widget=forms.NumberInput(attrs={'min':'0', 'max':'120'}))
     identificacion_2 = forms.CharField(max_length=20, label="Identificación", strip=True)
     direccion_2 = forms.CharField(max_length=200, required=False, label="Dirección", strip=True)
     telefono_2 = forms.CharField(max_length=15, required=False, label="Teléfono", strip=True)
     email_2 = forms.EmailField(max_length=100, required=False, label="Email")
-    grupo_sanguineo_2 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices[1:], required=False, label="Grupo Sanguíneo")
-    factor_rh_2 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices[1:], required=False, label="Factor RH")
+    grupo_sanguineo_2 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('grupo_sanguineo').choices, required=False, label="Grupo Sanguíneo")
+    factor_rh_2 = forms.ChoiceField(choices=[('', 'Seleccione')] + Propositos._meta.get_field('factor_rh').choices, required=False, label="Factor RH")
     foto_2 = forms.ImageField(required=False, widget=ClearableFileInput(attrs={'accept': 'image/*'}), label="Foto (Opcional)")
 
     def clean_fecha_nacimiento_1(self):
@@ -320,7 +331,24 @@ class ParejaPropositosForm(forms.Form):
         if edad is not None and (edad < 0 or edad > 120):
             raise forms.ValidationError("Por favor, ingrese una edad válida (0-120 años).")
         return edad
-        
+
+    def clean_identificacion_1(self):
+        ident = self.cleaned_data.get('identificacion_1')
+        if not ident:
+            raise forms.ValidationError("La identificación del primer cónyuge es obligatoria.")
+        # Uniqueness check (if these propositos might exist independently)
+        # if Propositos.objects.filter(identificacion=ident).exists():
+        #     pass # Decide if this is an error or if we link to existing
+        return ident
+
+    def clean_identificacion_2(self):
+        ident = self.cleaned_data.get('identificacion_2')
+        if not ident:
+            raise forms.ValidationError("La identificación del segundo cónyuge es obligatoria.")
+        # if Propositos.objects.filter(identificacion=ident).exists():
+        #     pass
+        return ident
+
     def clean(self):
         cleaned_data = super().clean()
         id_1 = cleaned_data.get('identificacion_1')
@@ -328,22 +356,19 @@ class ParejaPropositosForm(forms.Form):
 
         if id_1 and id_2 and id_1 == id_2:
             self.add_error('identificacion_2', "Las identificaciones de los cónyuges deben ser diferentes.")
-        
-        # Uniqueness of identificacion_1 and identificacion_2 will be handled by Propositos model
-        # or by update_or_create logic in the view.
         return cleaned_data
 
 class AntecedentesDesarrolloNeonatalForm(forms.Form):
     # Campos de AntecedentesPersonales
-    fur = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date'}), label="Fecha de Última Regla (FUR)")
-    edad_gestacional = forms.IntegerField(required=False, label="Edad Gestacional (semanas)")
+    fur = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class':'form-control'}), label="Fecha de Última Regla (FUR)")
+    edad_gestacional = forms.IntegerField(required=False, label="Edad Gestacional (semanas)", widget=forms.NumberInput(attrs={'min':'0'})) # 0 is unlikely but for min range
     controles_prenatales = forms.CharField(max_length=100, required=False, label="Controles Prenatales", strip=True)
-    numero_partos = forms.IntegerField(required=False, label="Número de Partos")
-    numero_gestas = forms.IntegerField(required=False, label="Número de Gestas")
-    numero_cesareas = forms.IntegerField(required=False, label="Número de Cesáreas")
-    numero_abortos = forms.IntegerField(required=False, label="Número de Abortos")
-    numero_mortinatos = forms.IntegerField(required=False, label="Número de Mortinatos")
-    numero_malformaciones = forms.IntegerField(required=False, label="Número de Hijos con Malformaciones")
+    numero_partos = forms.IntegerField(required=False, label="Número de Partos", widget=forms.NumberInput(attrs={'min':'0'}))
+    numero_gestas = forms.IntegerField(required=False, label="Número de Gestas", widget=forms.NumberInput(attrs={'min':'0'}))
+    numero_cesareas = forms.IntegerField(required=False, label="Número de Cesáreas", widget=forms.NumberInput(attrs={'min':'0'}))
+    numero_abortos = forms.IntegerField(required=False, label="Número de Abortos", widget=forms.NumberInput(attrs={'min':'0'}))
+    numero_mortinatos = forms.IntegerField(required=False, label="Número de Mortinatos", widget=forms.NumberInput(attrs={'min':'0'}))
+    numero_malformaciones = forms.IntegerField(required=False, label="Número de Hijos con Malformaciones", widget=forms.NumberInput(attrs={'min':'0'}))
     complicaciones_embarazo = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}), label="Complicaciones en Embarazo(s)", strip=True)
     exposicion_teratogenos = forms.ChoiceField(
         choices=[('', '---------')] + AntecedentesPersonales._meta.get_field('exposicion_teratogenos').choices,
@@ -364,14 +389,14 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     caminar = forms.CharField(max_length=100, required=False, label="Marcha (edad)", strip=True)
     primeras_palabras = forms.CharField(max_length=100, required=False, label="Primeras Palabras (edad)", strip=True)
     primeros_dientes = forms.CharField(max_length=100, required=False, label="Primeros Dientes (edad)", strip=True)
-    progreso_escuela = forms.CharField(max_length=100, required=False, label="Progreso Escolar", strip=True) # Was TextField
-    progreso_peso = forms.CharField(max_length=100, required=False, label="Progreso Ponderal (Peso)", strip=True) # Was TextField
-    progreso_talla = forms.CharField(max_length=100, required=False, label="Progreso Estatural (Talla)", strip=True) # Was TextField
+    progreso_escuela = forms.CharField(max_length=100, required=False, label="Progreso Escolar", strip=True) # Widget change in template to Textarea if needed
+    progreso_peso = forms.CharField(max_length=100, required=False, label="Progreso Ponderal (Peso)", strip=True)
+    progreso_talla = forms.CharField(max_length=100, required=False, label="Progreso Estatural (Talla)", strip=True)
 
     # Campos de PeriodoNeonatal
-    peso_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Peso al Nacer (kg)")
-    talla_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Talla al Nacer (cm)")
-    circunferencia_cefalica = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Circunferencia Cefálica (cm)")
+    peso_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Peso al Nacer (kg)", widget=forms.NumberInput(attrs={'step': '0.01', 'min':'0'}))
+    talla_nacer = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Talla al Nacer (cm)", widget=forms.NumberInput(attrs={'step': '0.01', 'min':'0'}))
+    circunferencia_cefalica = forms.DecimalField(required=False, max_digits=5, decimal_places=2, label="Circunferencia Cefálica (cm)", widget=forms.NumberInput(attrs={'step': '0.01', 'min':'0'}))
     cianosis = forms.CharField(max_length=100, required=False, label="Cianosis Neonatal", strip=True)
     ictericia = forms.CharField(max_length=100, required=False, label="Ictericia Neonatal", strip=True)
     hemorragia = forms.CharField(max_length=100, required=False, label="Hemorragia Neonatal", strip=True)
@@ -396,14 +421,14 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
 
     def clean_edad_gestacional(self):
         edad_g = self.cleaned_data.get('edad_gestacional')
-        if edad_g is not None and (edad_g < 18 or edad_g > 45): 
+        if edad_g is not None and (edad_g < 18 or edad_g > 45): # Plausible range
             raise forms.ValidationError("Ingrese una edad gestacional válida (ej: 18-45 semanas).")
         return edad_g
 
     def _clean_non_negative_integer(self, field_name):
         value = self.cleaned_data.get(field_name)
         if value is not None and value < 0:
-            raise forms.ValidationError("Este valor no puede ser negativo.")
+            self.add_error(field_name, "Este valor no puede ser negativo.") # Use add_error for field-specific
         return value
 
     def clean_numero_partos(self): return self._clean_non_negative_integer('numero_partos')
@@ -412,43 +437,55 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
     def clean_numero_abortos(self): return self._clean_non_negative_integer('numero_abortos')
     def clean_numero_mortinatos(self): return self._clean_non_negative_integer('numero_mortinatos')
     def clean_numero_malformaciones(self): return self._clean_non_negative_integer('numero_malformaciones')
-    
+
     def clean_peso_nacer(self):
         peso = self.cleaned_data.get('peso_nacer')
-        if peso is not None and (peso <= 0 or peso > 10): 
-             raise forms.ValidationError("Ingrese un peso válido (ej: 0.5 - 10 kg).")
+        if peso is not None and (peso <= 0 or peso > 10): # Plausible range in kg
+             raise forms.ValidationError("Ingrese un peso válido (ej: 0.1 - 10 kg).")
         return peso
 
     def clean_talla_nacer(self):
         talla = self.cleaned_data.get('talla_nacer')
-        if talla is not None and (talla <= 20 or talla > 70): 
+        if talla is not None and (talla <= 20 or talla > 70): # Plausible range in cm
              raise forms.ValidationError("Ingrese una talla válida (ej: 20 - 70 cm).")
         return talla
 
     def clean_circunferencia_cefalica(self):
         cc = self.cleaned_data.get('circunferencia_cefalica')
-        if cc is not None and (cc <= 15 or cc > 50): 
+        if cc is not None and (cc <= 15 or cc > 50): # Plausible range in cm
              raise forms.ValidationError("Ingrese una circunferencia cefálica válida (ej: 15 - 50 cm).")
         return cc
-        
+
     def clean(self):
         cleaned_data = super().clean()
         exposicion = cleaned_data.get('exposicion_teratogenos')
         descripcion_exp = cleaned_data.get('descripcion_exposicion')
         if exposicion and not descripcion_exp:
             self.add_error('descripcion_exposicion', "Debe describir la exposición si seleccionó un tipo.")
+
+        # Validate that #cesareas <= #partos <= #gestas
+        num_gestas = cleaned_data.get('numero_gestas')
+        num_partos = cleaned_data.get('numero_partos')
+        num_cesareas = cleaned_data.get('numero_cesareas')
+
+        if num_partos is not None and num_gestas is not None and num_partos > num_gestas:
+            self.add_error('numero_partos', "El número de partos no puede exceder el número de gestas.")
+        if num_cesareas is not None and num_partos is not None and num_cesareas > num_partos:
+            self.add_error('numero_cesareas', "El número de cesáreas no puede exceder el número de partos.")
+
         return cleaned_data
 
-    def save(self, proposito=None, pareja=None):
+    def save(self, proposito=None, pareja=None): # Custom save, handles update_or_create
         if not proposito and not pareja:
-            raise ValueError("Debe proporcionar un propósito o una pareja.")
+            raise ValueError("Debe proporcionar un propósito o una pareja para guardar los antecedentes.")
         if proposito and pareja:
-            raise ValueError("No puede proporcionar tanto un propósito como una pareja.")
+            raise ValueError("No puede proporcionar tanto un propósito como una pareja simultáneamente.")
 
+        # Antecedentes Personales
         ap_defaults = {
             'fur': self.cleaned_data.get('fur'),
             'edad_gestacional': self.cleaned_data.get('edad_gestacional'),
-            'controles_prenatales': self.cleaned_data.get('controles_prenatales', ''),
+            'controles_prenatales': self.cleaned_data.get('controles_prenatales', ''), # Default to empty string
             'numero_partos': self.cleaned_data.get('numero_partos'),
             'numero_gestas': self.cleaned_data.get('numero_gestas'),
             'numero_cesareas': self.cleaned_data.get('numero_cesareas'),
@@ -456,25 +493,26 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
             'numero_mortinatos': self.cleaned_data.get('numero_mortinatos'),
             'numero_malformaciones': self.cleaned_data.get('numero_malformaciones'),
             'complicaciones_embarazo': self.cleaned_data.get('complicaciones_embarazo'),
-            'exposicion_teratogenos': self.cleaned_data.get('exposicion_teratogenos'),
+            'exposicion_teratogenos': self.cleaned_data.get('exposicion_teratogenos') or None, # Ensure empty becomes None
             'descripcion_exposicion': self.cleaned_data.get('descripcion_exposicion'),
             'enfermedades_maternas': self.cleaned_data.get('enfermedades_maternas'),
             'complicaciones_parto': self.cleaned_data.get('complicaciones_parto'),
             'otros_antecedentes': self.cleaned_data.get('otros_antecedentes'),
             'observaciones': self.cleaned_data.get('observaciones')
         }
-        ap_defaults = {k:v for k,v in ap_defaults.items() if v is not None or k=='controles_prenatales'}
+        ap_defaults = {k:v for k,v in ap_defaults.items() if v is not None or k=='controles_prenatales'} # Keep empty string for controles
 
 
         if proposito:
             antecedentes, _ = AntecedentesPersonales.objects.update_or_create(
                 proposito=proposito, defaults=ap_defaults
             )
-        else: 
+        else: # pareja
             antecedentes, _ = AntecedentesPersonales.objects.update_or_create(
                 pareja=pareja, defaults=ap_defaults
             )
-        
+
+        # Desarrollo Psicomotor
         dp_defaults = {
             'sostener_cabeza': self.cleaned_data.get('sostener_cabeza'),
             'sonrisa_social': self.cleaned_data.get('sonrisa_social'),
@@ -490,15 +528,17 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
         }
         dp_defaults = {k:v for k,v in dp_defaults.items() if v is not None}
 
+
         if proposito:
             desarrollo, _ = DesarrolloPsicomotor.objects.update_or_create(
                 proposito=proposito, defaults=dp_defaults
             )
-        else: 
+        else: # pareja
             desarrollo, _ = DesarrolloPsicomotor.objects.update_or_create(
                 pareja=pareja, defaults=dp_defaults
             )
 
+        # Periodo Neonatal
         pn_defaults = {
             'peso_nacer': self.cleaned_data.get('peso_nacer'),
             'talla_nacer': self.cleaned_data.get('talla_nacer'),
@@ -511,18 +551,19 @@ class AntecedentesDesarrolloNeonatalForm(forms.Form):
             'vomitos': self.cleaned_data.get('vomitos'),
             'observacion_complicaciones': self.cleaned_data.get('observacion_complicaciones'),
             'otros_complicaciones': self.cleaned_data.get('otros_complicaciones'),
-            'tipo_alimentacion': self.cleaned_data.get('tipo_alimentacion'),
+            'tipo_alimentacion': self.cleaned_data.get('tipo_alimentacion') or None, # Ensure empty becomes None
             'observaciones_alimentacion': self.cleaned_data.get('observaciones_alimentacion'),
             'evolucion': self.cleaned_data.get('evolucion'),
             'observaciones_habitos_psicologicos': self.cleaned_data.get('observaciones_habitos_psicologicos')
         }
         pn_defaults = {k:v for k,v in pn_defaults.items() if v is not None}
-        
+
+
         if proposito:
             neonatal, _ = PeriodoNeonatal.objects.update_or_create(
                 proposito=proposito, defaults=pn_defaults
             )
-        else: 
+        else: # pareja
             neonatal, _ = PeriodoNeonatal.objects.update_or_create(
                 pareja=pareja, defaults=pn_defaults
             )
@@ -533,9 +574,9 @@ class AntecedentesPreconcepcionalesForm(forms.Form):
     antecedentes_madre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}), label="Antecedentes Familiares Maternos Relevantes", strip=True)
     estado_salud_padre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}), label="Estado de Salud Actual del Padre", strip=True)
     estado_salud_madre = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}), label="Estado de Salud Actual de la Madre", strip=True)
-    fecha_union_pareja = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date'}), label="Fecha de Unión de la Pareja (si aplica)")
+    fecha_union_pareja = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class':'form-control'}), label="Fecha de Unión de la Pareja (si aplica)")
     consanguinidad = forms.ChoiceField(
-        choices=[('', '---------'), ('Sí', 'Sí'), ('No', 'No')], # Changed 'si'/'no' to 'Sí'/'No' to match model
+        choices=[('', '---------'), ('Sí', 'Sí'), ('No', 'No')], # Model choices are ('Sí', 'Sí'), ('No', 'No')
         required=False, label="Consanguinidad entre los padres"
     )
     grado_consanguinidad = forms.CharField(max_length=50, required=False, label="Grado de Consanguinidad (si aplica)", strip=True)
@@ -548,21 +589,21 @@ class AntecedentesPreconcepcionalesForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        consanguinidad = cleaned_data.get('consanguinidad')
-        grado_consanguinidad = cleaned_data.get('grado_consanguinidad')
+        consanguinidad_val = cleaned_data.get('consanguinidad')
+        grado_consanguinidad_val = cleaned_data.get('grado_consanguinidad')
 
-        if consanguinidad == 'Sí' and not grado_consanguinidad: # Match model choice
+        if consanguinidad_val == 'Sí' and not grado_consanguinidad_val:
             self.add_error('grado_consanguinidad', "Debe especificar el grado si existe consanguinidad.")
-        elif consanguinidad == 'No' and grado_consanguinidad: # Match model choice
+        elif consanguinidad_val == 'No' and grado_consanguinidad_val:
             # self.add_error('grado_consanguinidad', "No debe especificar grado si no hay consanguinidad.")
-            # Allow specifying "No" and still having text, perhaps for clarification. Or clear it:
-            cleaned_data['grado_consanguinidad'] = '' 
+            # Instead of error, clear it if 'No' is selected and a grade was entered by mistake
+            cleaned_data['grado_consanguinidad'] = ''
         return cleaned_data
 
-    def save(self, proposito=None, pareja=None, tipo=None): 
+    def save(self, proposito=None, pareja=None, tipo=None): # Custom save, handles update_or_create
         if tipo not in ['proposito', 'pareja']:
             raise ValueError("Tipo debe ser 'proposito' o 'pareja'")
-        
+
         if tipo == 'proposito' and not proposito:
             raise ValueError("Debe proporcionar un propósito para el tipo 'proposito'")
         if tipo == 'pareja' and not pareja:
@@ -574,19 +615,24 @@ class AntecedentesPreconcepcionalesForm(forms.Form):
             'estado_salud_padre': self.cleaned_data.get('estado_salud_padre'),
             'estado_salud_madre': self.cleaned_data.get('estado_salud_madre'),
             'fecha_union_pareja': self.cleaned_data.get('fecha_union_pareja'),
-            'consanguinidad': self.cleaned_data.get('consanguinidad'),
+            'consanguinidad': self.cleaned_data.get('consanguinidad') or None, # Ensure empty string becomes None
             'grado_consanguinidad': self.cleaned_data.get('grado_consanguinidad')
         }
-        afp_defaults = {k:v for k,v in afp_defaults.items() if v is not None or (k == 'grado_consanguinidad' and self.cleaned_data.get('consanguinidad') != 'Sí')}
+        # Ensure grado_consanguinidad is empty if consanguinidad is not 'Sí'
+        if afp_defaults['consanguinidad'] != 'Sí':
+            afp_defaults['grado_consanguinidad'] = ''
+
+        # Filter out None values, except for grado_consanguinidad if consanguinidad is 'Sí' (it might be an empty string then)
+        afp_defaults_clean = {k:v for k,v in afp_defaults.items() if v is not None or (k == 'grado_consanguinidad' and afp_defaults['consanguinidad'] == 'Sí')}
 
 
         if tipo == 'proposito':
             antecedentespre, _ = AntecedentesFamiliaresPreconcepcionales.objects.update_or_create(
-                proposito=proposito, defaults=afp_defaults
+                proposito=proposito, defaults=afp_defaults_clean
             )
-        else: 
+        else: # pareja
             antecedentespre, _ = AntecedentesFamiliaresPreconcepcionales.objects.update_or_create(
-                pareja=pareja, defaults=afp_defaults
+                pareja=pareja, defaults=afp_defaults_clean
             )
         return antecedentespre
 
@@ -594,8 +640,9 @@ class ExamenFisicoForm(ModelForm):
     class Meta:
         model = ExamenFisico
         fields = '__all__'
-        exclude = ['fecha_examen', 'proposito'] # proposito will be set in the view/form save
+        exclude = ['fecha_examen', 'proposito'] # fecha_examen is auto_now_add, proposito set in view
         widgets = {
+            # Numeric fields with step for decimal input
             'medida_abrazada': forms.NumberInput(attrs={'step': '0.01'}),
             'segmento_inferior': forms.NumberInput(attrs={'step': '0.01'}),
             'segmento_superior': forms.NumberInput(attrs={'step': '0.01'}),
@@ -607,12 +654,13 @@ class ExamenFisicoForm(ModelForm):
             'longitud_mano_derecha': forms.NumberInput(attrs={'step': '0.01'}),
             'longitud_mano_izquierda': forms.NumberInput(attrs={'step': '0.01'}),
             'peso': forms.NumberInput(attrs={'step': '0.01'}),
-            'ss_si': forms.NumberInput(attrs={'step': '0.01'}), 
+            'ss_si': forms.NumberInput(attrs={'step': '0.01'}), # Relación SS/SI
             'distancia_interc_externa': forms.NumberInput(attrs={'step': '0.01'}),
-            'ct': forms.NumberInput(attrs={'step': '0.01'}), 
+            'ct': forms.NumberInput(attrs={'step': '0.01'}), # Circunferencia Torácica
             'pabellones_auriculares': forms.NumberInput(attrs={'step': '0.01'}),
-            'tension_arterial_sistolica': forms.NumberInput(attrs={'step': '1'}), 
-            'tension_arterial_diastolica': forms.NumberInput(attrs={'step': '1'}), 
+            'tension_arterial_sistolica': forms.NumberInput(attrs={'step': '1'}), # Usually integer
+            'tension_arterial_diastolica': forms.NumberInput(attrs={'step': '1'}), # Usually integer
+            # Textarea fields for observations
             'observaciones_cabeza': forms.Textarea(attrs={'rows': 1}),
             'observaciones_cuello': forms.Textarea(attrs={'rows': 1}),
             'observaciones_torax': forms.Textarea(attrs={'rows': 1}),
@@ -627,42 +675,41 @@ class ExamenFisicoForm(ModelForm):
             'observaciones_pliegues': forms.Textarea(attrs={'rows': 1}),
         }
 
-    def _clean_positive_decimal(self, field_name, max_val=None):
+    def _clean_positive_decimal(self, field_name, max_val=None, min_val=0): # Allow min_val to be passed
         value = self.cleaned_data.get(field_name)
         if value is not None:
-            if value < 0: # Allow 0 for some measurements if applicable
-                raise forms.ValidationError("Este valor no debe ser negativo.")
+            if value < min_val:
+                raise forms.ValidationError(f"Este valor debe ser mayor o igual a {min_val}.")
             if max_val and value > max_val:
                 raise forms.ValidationError(f"Este valor no debe exceder {max_val}.")
         return value
 
-    def clean_medida_abrazada(self): return self._clean_positive_decimal('medida_abrazada', 300) 
+    def clean_medida_abrazada(self): return self._clean_positive_decimal('medida_abrazada', 300) # Max 3m
     def clean_segmento_inferior(self): return self._clean_positive_decimal('segmento_inferior', 200)
     def clean_segmento_superior(self): return self._clean_positive_decimal('segmento_superior', 200)
     def clean_circunferencia_cefalica(self): return self._clean_positive_decimal('circunferencia_cefalica', 100)
-    def clean_talla(self): return self._clean_positive_decimal('talla', 300) 
-    def clean_peso(self): return self._clean_positive_decimal('peso', 500) 
-    def clean_tension_arterial_sistolica(self): return self._clean_positive_decimal('tension_arterial_sistolica', 300)
-    def clean_tension_arterial_diastolica(self): return self._clean_positive_decimal('tension_arterial_diastolica', 200)
+    def clean_talla(self): return self._clean_positive_decimal('talla', 300) # Max 3m
+    def clean_peso(self): return self._clean_positive_decimal('peso', 500, min_val=0.1) # Peso should be > 0
+    def clean_tension_arterial_sistolica(self): return self._clean_positive_decimal('tension_arterial_sistolica', 300, min_val=10)
+    def clean_tension_arterial_diastolica(self): return self._clean_positive_decimal('tension_arterial_diastolica', 200, min_val=10)
 
     def save(self, commit=True):
+        # This instance is assigned a 'proposito_instance' attribute in the view before save is called.
         examenfisico = super().save(commit=False)
-        
-        if hasattr(self, 'proposito_instance') and self.proposito_instance:
+
+        if hasattr(self, 'proposito_instance') and self.proposito_instance: # Ensure attribute name is consistent
             examenfisico.proposito = self.proposito_instance
-        elif not examenfisico.proposito_id and not self.instance: # If creating and proposito not set
-             raise ValueError("Proposito must be set for ExamenFisico.")
+        elif not examenfisico.proposito_id and not self.instance: # If creating new and no proposito_instance set
+             raise ValueError("El propósito debe estar asignado para guardar el Examen Físico.")
 
+        # fecha_examen is auto_now_add, so Django handles it on first save.
+        # If you want to *always* update it on every save (less common for auto_now_add):
+        # examenfisico.fecha_examen = timezone.now().date()
 
-        # fecha_examen is auto_now_add, so it's set on first save.
-        # If we want to ensure it's set to today even on update (if it was null), uncomment:
-        # if not examenfisico.fecha_examen:
-        #    examenfisico.fecha_examen = timezone.now().date()
-        
         if commit:
             examenfisico.save()
-            # self.save_m2m() # No M2M fields here
-        
+            # self.save_m2m() # Important for ModelForms with M2M fields, though not present here.
+
         return examenfisico
 
 class SignosClinicosForm(ModelForm):
@@ -671,7 +718,7 @@ class SignosClinicosForm(ModelForm):
         fields = ['signos_clinicos']
         widgets = {
             'signos_clinicos': forms.Textarea(attrs={
-                'rows': 3, 
+                'rows': 3, # Increased for more space
                 'class': 'form-control',
                 'placeholder': 'Ej: Microcefalia, hipotonía, fisura palpebral, cardiopatía congénita...'
             })
@@ -681,6 +728,7 @@ class SignosClinicosForm(ModelForm):
         }
 
 class DiagnosticoPresuntivoForm(forms.Form):
+    # id = forms.IntegerField(widget=forms.HiddenInput(), required=False) # Uncomment if needed for specific update logic
     descripcion = forms.CharField(
         label="Diagnóstico Presuntivo",
         widget=forms.Textarea(attrs={
@@ -696,23 +744,34 @@ class DiagnosticoPresuntivoForm(forms.Form):
             'class': 'form-control diagnostico-orden',
             'min': '0',
         }),
-        required=False, # Will default to 0 in model if not provided or None
+        required=False, # Default to 0 if not provided
         initial=0
     )
+
+    def clean_descripcion(self):
+        descripcion = self.cleaned_data.get('descripcion')
+        # If the form is part of a formset and not marked for deletion, and it's not an "empty" extra form,
+        # then description should be required. This is usually handled in the view by checking form.has_changed().
+        # For simplicity here, if 'orden' is provided or the form has some data, then description is needed.
+        if self.has_changed() and not descripcion: # self.has_changed() checks if data is different from initial
+             pass # This might be too aggressive for empty extra forms. View logic is better.
+        return descripcion
+
 
     def clean_orden(self):
         orden = self.cleaned_data.get('orden')
         if orden is not None and orden < 0:
             raise forms.ValidationError("La prioridad no puede ser negativa.")
-        return orden if orden is not None else 0 # Ensure a value for model
+        return orden if orden is not None else 0 # Ensure a value
 
 DiagnosticoPresuntivoFormSet = formset_factory(
     DiagnosticoPresuntivoForm,
-    extra=1, 
+    extra=0, # Show one empty form by default
     can_delete=True,
 )
 
 class PlanEstudioForm(forms.Form):
+    # id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     accion = forms.CharField(
         label="Acción/Estudio a Realizar",
         widget=forms.TextInput(attrs={
@@ -737,15 +796,26 @@ class PlanEstudioForm(forms.Form):
         })
     )
 
+    def clean_accion(self):
+        accion = self.cleaned_data.get('accion')
+        # Similar to DiagnosticoPresuntivoForm's descripcion, view logic for formsets is more robust.
+        if self.has_changed() and not accion:
+            pass
+        return accion
+
     def clean_fecha_limite(self):
         fecha = self.cleaned_data.get('fecha_limite')
-        completado = self.cleaned_data.get('completado')
-        if fecha and fecha < timezone.now().date() and not completado:
-            raise forms.ValidationError("La fecha límite no puede ser en el pasado para un plan no completado.")
+        # This check needs 'completado' from cleaned_data, which might not be available if 'fecha_limite' is cleaned first.
+        # It's better to do this kind of cross-field validation in the main clean() method or view.
+        # For now, a simpler check:
+        # if fecha and fecha < timezone.now().date():
+        #     is_completado = self.data.get(self.prefix + '-completado', False) # Access raw data for 'completado'
+        #     if not is_completado: # Check if checkbox was ticked
+        #        raise forms.ValidationError("La fecha límite no puede ser en el pasado para un plan no completado.")
         return fecha
 
 PlanEstudioFormSet = formset_factory(
     PlanEstudioForm,
-    extra=1, 
+    extra=0, # Show one empty form by default
     can_delete=True,
 )

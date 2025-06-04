@@ -505,7 +505,7 @@ hr{
 }
 */
 
-
+/*--------- css del ultimo formulario de diagnosticos ----------*/
 .diagnostico-item {
     display: flex;
     align-items: center;
@@ -520,4 +520,82 @@ hr{
 }
 .form-row input[type="text"] {
     width: 100%;
+}
+
+
+/*--------- css para los mensajes de error ----------*/
+.messages-container {
+    width: 80%;
+    margin: 15px auto;
+    padding: 0;
+}
+
+ul.messages {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+li.message-item {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+}
+
+li.message-item i { /* For FontAwesome icons */
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+li.message-item.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+li.message-item.success i { color: #155724; }
+
+li.message-item.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+li.message-item.error i { color: #721c24; }
+
+
+li.message-item.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+li.message-item.info i { color: #0c5460; }
+
+li.message-item.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+li.message-item.warning i { color: #856404; }
+
+/* For field-specific errors */
+.field-errors {
+    color: #721c24; /* Similar to bootstrap's text-danger */
+    font-size: 0.875em;
+    margin-top: .25rem;
+}
+.field-errors span {
+    display: block;
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #dc3545; /* Bootstrap's danger color */
+}
+
+.form-group .alert-danger { /* If using alerts for field errors from formset */
+    font-size: 0.875em;
+    padding: 0.5rem 0.75rem;
 }

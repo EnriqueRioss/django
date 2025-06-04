@@ -1,4 +1,4 @@
-# Django Core imports
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login, authenticate, logout
@@ -12,8 +12,8 @@ from django.contrib.auth.forms import AuthenticationForm # Standard Django auth 
 # App-specific imports
 from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
-    Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal, 
-    AntecedentesFamiliaresPreconcepcionales, 
+    Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal,
+    AntecedentesFamiliaresPreconcepcionales,
     EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio
 )
 from .forms import (
@@ -22,8 +22,8 @@ from .forms import (
     ExamenFisicoForm, ParejaPropositosForm, SignosClinicosForm,
     DiagnosticoPresuntivoFormSet, PlanEstudioFormSet, LoginForm
 )
-from .models import Project, Task
-from .forms import CreateNewTask, CreateNewProject
+from .models import Project, Task # For example views
+from .forms import CreateNewTask, CreateNewProject # For example views
 
 
 # --- Main Clinical Views ---
@@ -34,10 +34,9 @@ def crear_historia(request):
         form = HistoriasForm(request.POST)
         if form.is_valid():
             try:
-                genetista = request.user.genetistas 
+                genetista = request.user.genetistas # Assumes related_name 'genetistas' on User model
             except Genetistas.DoesNotExist: # Check correct related name or attribute
-                # Fallback: Try to get Genetistas based on user directly if OneToOne is to User
-                try:
+                try: # Fallback for user directly linked to Genetistas
                     genetista = Genetistas.objects.get(user=request.user)
                 except Genetistas.DoesNotExist:
                     messages.error(request, 'El usuario actual no tiene un perfil de genetista asociado.')
@@ -45,27 +44,31 @@ def crear_historia(request):
 
             historia = form.save(commit=False)
             historia.genetista = genetista
-            historia.save()
-            messages.success(request, f"Historia Clínica N° {historia.numero_historia} creada exitosamente.")
-            
-            motivo = form.cleaned_data['motivo_tipo_consulta']
-            redirect_map = {
-                'Proposito-Diagnóstico': ('paciente_crear', {'historia_id': historia.historia_id}),
-                'Pareja-Asesoramiento Prenupcial': ('pareja_crear', {'historia_id': historia.historia_id}),
-                'Pareja-Preconcepcional': ('pareja_crear', {'historia_id': historia.historia_id}),
-                'Pareja-Prenatal': ('pareja_crear', {'historia_id': historia.historia_id}),
-            }
-            if motivo in redirect_map:
-                view_name, kwargs = redirect_map[motivo]
-                return redirect(view_name, **kwargs)
-            else:
-                messages.warning(request, "Motivo de consulta no especificado para redirección, volviendo al inicio.")
-                return redirect('index') 
+            try:
+                historia.save()
+                messages.success(request, f"Historia Clínica N° {historia.numero_historia} creada exitosamente.")
+
+                motivo = form.cleaned_data['motivo_tipo_consulta']
+                redirect_map = {
+                    'Proposito-Diagnóstico': ('paciente_crear', {'historia_id': historia.historia_id}),
+                    'Pareja-Asesoramiento Prenupcial': ('pareja_crear', {'historia_id': historia.historia_id}),
+                    'Pareja-Preconcepcional': ('pareja_crear', {'historia_id': historia.historia_id}),
+                    'Pareja-Prenatal': ('pareja_crear', {'historia_id': historia.historia_id}),
+                }
+                if motivo in redirect_map:
+                    view_name, kwargs = redirect_map[motivo]
+                    return redirect(view_name, **kwargs)
+                else:
+                    messages.warning(request, "Motivo de consulta no especificado para redirección, volviendo al inicio.")
+                    return redirect('index')
+            except IntegrityError: # Catch unique constraint violation for numero_historia
+                 messages.error(request, f"Ya existe una historia clínica con el número '{historia.numero_historia}'. Por favor, use un número diferente.")
+                 return render(request, "historia_clinica.html", {'form1': form}) # Return form with error
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
-    else: 
+            messages.error(request, "No se pudo crear la historia. Por favor, corrija los errores indicados.")
+    else: # GET
         form = HistoriasForm()
-    
+
     return render(request, "historia_clinica.html", {'form1': form})
 
 @login_required
@@ -73,48 +76,48 @@ def crear_paciente(request, historia_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
     existing_proposito = None
 
-    # Attempt to find an existing Proposito for this historia if it's singular for this context
-    # This logic might need refinement based on how Propositos are uniquely tied to Historias in "Proposito-Diagnóstico"
+    # Attempt to find an existing Proposito if editing.
+    # This is a simplified approach; for multiple Propositos per historia, a selection mechanism would be needed.
     if historia.motivo_tipo_consulta == 'Proposito-Diagnóstico':
-        potential_propositos = Propositos.objects.filter(historia=historia)
-        if potential_propositos.count() == 1:
-            existing_proposito = potential_propositos.first()
-        elif potential_propositos.count() > 1 and request.method == 'GET': # Only message on GET
-            messages.warning(request, "Múltiples propósitos existen para esta historia. La edición específica debe hacerse desde otro listado o interfaz.")
-
+        existing_proposito = Propositos.objects.filter(historia=historia).first()
 
     if request.method == 'POST':
         form = PropositosForm(request.POST, request.FILES, instance=existing_proposito)
         if form.is_valid():
             try:
-                proposito = form.save(historia=historia) # Form's save now handles update_or_create
-                messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {'actualizado' if existing_proposito and existing_proposito.pk == proposito.pk else 'creado'} exitosamente.")
+                proposito = form.save(historia=historia) # Form's save handles update_or_create
+                action_verb = 'actualizado' if existing_proposito and existing_proposito.pk == proposito.pk else 'creado'
+                messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {action_verb} exitosamente.")
                 return redirect('padres_proposito_crear', historia_id=historia.historia_id, proposito_id=proposito.proposito_id)
-            except IntegrityError as e: 
-                messages.error(request, f"Error de integridad al guardar el paciente: {e}. Verifique que la identificación no esté duplicada o contacte soporte.")
+            except IntegrityError as e:
+                messages.error(request, f"Error de integridad al guardar el paciente: {e}. Verifique que la identificación no esté duplicada.")
+                # Form's clean_identificacion should ideally catch this.
             except Exception as e:
                 messages.error(request, f"Error inesperado al guardar el paciente: {e}")
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudo guardar el paciente. Por favor, corrija los errores indicados.")
     else: # GET
-        form = PropositosForm(instance=existing_proposito)
+        form = PropositosForm(instance=existing_proposito) # Pass instance for pre-filling
         if existing_proposito:
             messages.info(request, f"Editando información para el propósito: {existing_proposito.nombres} {existing_proposito.apellidos}")
-    
+
     return render(request, "Crear_paciente.html", {'form': form, 'historia': historia, 'editing': bool(existing_proposito)})
 
 @login_required
 def crear_pareja(request, historia_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
+    # This view focuses on creating a new Pareja and its Propositos.
+    # If Propositos with given IDs exist, they are updated.
 
     if request.method == 'POST':
         form = ParejaPropositosForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    
-                    def get_proposito_data_from_form(form_cleaned_data, prefix_num, historia_obj):
-                        return {
+                    # Helper to update or create a Proposito from form data
+                    def get_or_create_proposito_from_form(form_cleaned_data, prefix_num, historia_obj):
+                        identificacion = form_cleaned_data[f'identificacion_{prefix_num}']
+                        proposito_data = {
                             'historia': historia_obj,
                             'nombres': form_cleaned_data[f'nombres_{prefix_num}'],
                             'apellidos': form_cleaned_data[f'apellidos_{prefix_num}'],
@@ -126,73 +129,52 @@ def crear_pareja(request, historia_id):
                             'direccion': form_cleaned_data.get(f'direccion_{prefix_num}'),
                             'telefono': form_cleaned_data.get(f'telefono_{prefix_num}'),
                             'email': form_cleaned_data.get(f'email_{prefix_num}'),
-                            'grupo_sanguineo': form_cleaned_data.get(f'grupo_sanguineo_{prefix_num}'),
-                            'factor_rh': form_cleaned_data.get(f'factor_rh_{prefix_num}'),
+                            'grupo_sanguineo': form_cleaned_data.get(f'grupo_sanguineo_{prefix_num}') or None,
+                            'factor_rh': form_cleaned_data.get(f'factor_rh_{prefix_num}') or None,
                         }
+                        proposito_defaults = {k: v for k, v in proposito_data.items() if v is not None or k == 'historia'}
+                        proposito, created = Propositos.objects.update_or_create(
+                            identificacion=identificacion,
+                            defaults=proposito_defaults
+                        )
+                        foto_val = form_cleaned_data.get(f'foto_{prefix_num}')
+                        if foto_val is not None:
+                            if foto_val: proposito.foto = foto_val
+                            elif foto_val is False: proposito.foto = None # Handle clear
+                            proposito.save(update_fields=['foto'])
+                        elif created and proposito.foto is not None:
+                            proposito.foto = None
+                            proposito.save(update_fields=['foto'])
+                        return proposito
 
-                    # Proposito 1
-                    proposito1_all_data = get_proposito_data_from_form(form.cleaned_data, '1', historia)
-                    identificacion1 = form.cleaned_data['identificacion_1']
-                    photo1_val = form.cleaned_data.get('foto_1')
-                    proposito1_defaults = {k: v for k, v in proposito1_all_data.items() if v is not None or k == 'historia'}
-                    
-                    proposito1, created1 = Propositos.objects.update_or_create(
-                        identificacion=identificacion1,
-                        defaults=proposito1_defaults
-                    )
-                    if photo1_val is not None: 
-                        if photo1_val: proposito1.foto = photo1_val
-                        else: proposito1.foto = None
-                        proposito1.save(update_fields=['foto'])
-                    elif created1 and photo1_val is None: # Ensure None if created and no photo
-                        proposito1.foto = None
-                        proposito1.save(update_fields=['foto'])
+                    proposito1 = get_or_create_proposito_from_form(form.cleaned_data, '1', historia)
+                    proposito2 = get_or_create_proposito_from_form(form.cleaned_data, '2', historia)
 
-                    # Proposito 2
-                    proposito2_all_data = get_proposito_data_from_form(form.cleaned_data, '2', historia)
-                    identificacion2 = form.cleaned_data['identificacion_2']
-                    photo2_val = form.cleaned_data.get('foto_2')
-                    proposito2_defaults = {k: v for k, v in proposito2_all_data.items() if v is not None or k == 'historia'}
+                    if proposito1.pk == proposito2.pk: # Should be caught by form clean
+                        raise IntegrityError("Los dos miembros de la pareja no pueden ser la misma persona.")
 
-                    proposito2, created2 = Propositos.objects.update_or_create(
-                        identificacion=identificacion2,
-                        defaults=proposito2_defaults
-                    )
-                    if photo2_val is not None:
-                        if photo2_val: proposito2.foto = photo2_val
-                        else: proposito2.foto = None
-                        proposito2.save(update_fields=['foto'])
-                    elif created2 and photo2_val is None:
-                        proposito2.foto = None
-                        proposito2.save(update_fields=['foto'])
-                    
-                    if proposito1.pk == proposito2.pk:
-                        raise IntegrityError("Los dos miembros de la pareja no pueden ser la misma persona (misma identificación).")
-
-                    # Sort by PK for consistent Pareja lookup/creation
+                    # Ensure consistent order for unique_together constraint in Parejas model
                     p_min, p_max = sorted([proposito1, proposito2], key=lambda p: p.pk)
-                    
                     pareja, pareja_created = Parejas.objects.get_or_create(
-                        proposito_id_1=p_min, 
+                        proposito_id_1=p_min,
                         proposito_id_2=p_max
+                        # Add any other defaults for Pareja if needed
                     )
-                
-                messages.success(request, f"Pareja ({proposito1.nombres} y {proposito2.nombres}) {'creada' if pareja_created else 'localizada/actualizada'} exitosamente.")
-                return redirect('antecedentes_personales_crear', 
+
+                action_verb = 'creada' if pareja_created else 'localizada/actualizada'
+                messages.success(request, f"Pareja ({proposito1.nombres} y {proposito2.nombres}) {action_verb} exitosamente.")
+                return redirect('antecedentes_personales_crear',
                                  historia_id=historia.historia_id,
                                  tipo="pareja",
                                  objeto_id=pareja.pareja_id)
             except IntegrityError as e:
-                 messages.error(request, f"Error de integridad al guardar la pareja: {e}. Verifique las identificaciones y que no sean la misma persona.")
+                 messages.error(request, f"Error de integridad al guardar la pareja: {e}. Verifique las identificaciones.")
             except Exception as e:
                 messages.error(request, f"Error inesperado al guardar la pareja: {e}")
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudo guardar la pareja. Por favor, corrija los errores indicados.")
     else: # GET
         form = ParejaPropositosForm()
-        # Pre-filling ParejaPropositosForm on GET is complex as it involves two Propositos.
-        # Usually, for "create" views, it's an empty form. If this view were also for "edit pareja",
-        # then pre-filling logic would be needed, fetching the Pareja and its two Propositos.
 
     return render(request, 'Crear_pareja.html', {'form': form, 'historia': historia})
 
@@ -206,90 +188,69 @@ def padres_proposito(request, historia_id, proposito_id):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    padre_defaults = {
-                        'nombres': form.cleaned_data['padre_nombres'],
-                        'apellidos': form.cleaned_data['padre_apellidos'],
-                        'escolaridad': form.cleaned_data.get('padre_escolaridad'),
-                        'ocupacion': form.cleaned_data.get('padre_ocupacion'),
-                        'lugar_nacimiento': form.cleaned_data.get('padre_lugar_nacimiento'),
-                        'fecha_nacimiento': form.cleaned_data.get('padre_fecha_nacimiento'),
-                        'edad': form.cleaned_data.get('padre_edad'),
-                        'identificacion': form.cleaned_data.get('padre_identificacion'),
-                        'grupo_sanguineo': form.cleaned_data.get('padre_grupo_sanguineo') or None,
-                        'factor_rh': form.cleaned_data.get('padre_factor_rh') or None,
-                        'telefono': form.cleaned_data.get('padre_telefono'),
-                        'email': form.cleaned_data.get('padre_email'),
-                        'direccion': form.cleaned_data.get('padre_direccion')
-                    }
-                    padre_defaults = {k:v for k,v in padre_defaults.items() if v is not None or k in ['nombres','apellidos']}
+                    padre_defaults = {k[len('padre_'):]: v for k, v in form.cleaned_data.items() if k.startswith('padre_')}
+                    # Ensure required fields like nombres/apellidos are present even if None
+                    padre_defaults_clean = {k:v for k,v in padre_defaults.items() if v is not None or k in ['nombres','apellidos']}
+                    padre_defaults_clean['grupo_sanguineo'] = padre_defaults_clean.get('grupo_sanguineo') or None
+                    padre_defaults_clean['factor_rh'] = padre_defaults_clean.get('factor_rh') or None
 
 
                     InformacionPadres.objects.update_or_create(
                         proposito=proposito, tipo='Padre',
-                        defaults=padre_defaults
+                        defaults=padre_defaults_clean
                     )
 
-                    madre_defaults = {
-                        'nombres': form.cleaned_data['madre_nombres'],
-                        'apellidos': form.cleaned_data['madre_apellidos'],
-                        'escolaridad': form.cleaned_data.get('madre_escolaridad'),
-                        'ocupacion': form.cleaned_data.get('madre_ocupacion'),
-                        'lugar_nacimiento': form.cleaned_data.get('madre_lugar_nacimiento'),
-                        'fecha_nacimiento': form.cleaned_data.get('madre_fecha_nacimiento'),
-                        'edad': form.cleaned_data.get('madre_edad'),
-                        'identificacion': form.cleaned_data.get('madre_identificacion'),
-                        'grupo_sanguineo': form.cleaned_data.get('madre_grupo_sanguineo') or None,
-                        'factor_rh': form.cleaned_data.get('madre_factor_rh') or None,
-                        'telefono': form.cleaned_data.get('madre_telefono'),
-                        'email': form.cleaned_data.get('madre_email'),
-                        'direccion': form.cleaned_data.get('madre_direccion')
-                    }
-                    madre_defaults = {k:v for k,v in madre_defaults.items() if v is not None or k in ['nombres','apellidos']}
+                    madre_defaults = {k[len('madre_'):]: v for k, v in form.cleaned_data.items() if k.startswith('madre_')}
+                    madre_defaults_clean = {k:v for k,v in madre_defaults.items() if v is not None or k in ['nombres','apellidos']}
+                    madre_defaults_clean['grupo_sanguineo'] = madre_defaults_clean.get('grupo_sanguineo') or None
+                    madre_defaults_clean['factor_rh'] = madre_defaults_clean.get('factor_rh') or None
 
                     InformacionPadres.objects.update_or_create(
                         proposito=proposito, tipo='Madre',
-                        defaults=madre_defaults
+                        defaults=madre_defaults_clean
                     )
                 messages.success(request, "Información de los padres guardada/actualizada exitosamente.")
-                return redirect('antecedentes_personales_crear', 
+                return redirect('antecedentes_personales_crear',
                                 historia_id=historia_id,
                                 tipo='proposito',
                                 objeto_id=proposito_id)
             except Exception as e:
                 messages.error(request, f"Error al guardar la información de los padres: {e}")
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudo guardar la información de los padres. Por favor, corrija los errores indicados.")
     else: # GET
         padre = InformacionPadres.objects.filter(proposito=proposito, tipo='Padre').first()
         madre = InformacionPadres.objects.filter(proposito=proposito, tipo='Madre').first()
         initial_data = {}
         if padre:
-            for f in InformacionPadres._meta.fields:
-                if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre, f.name):
-                    initial_data[f'padre_{f.name}'] = getattr(padre, f.name)
+            initial_data.update({f'padre_{f.name}': getattr(padre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre, f.name)})
         if madre:
-            for f in InformacionPadres._meta.fields:
-                if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre, f.name):
-                    initial_data[f'madre_{f.name}'] = getattr(madre, f.name)
+            initial_data.update({f'madre_{f.name}': getattr(madre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre, f.name)})
         form = PadresPropositoForm(initial=initial_data if initial_data else None)
-        
+        if initial_data:
+            messages.info(request, "Editando información de los padres.")
+
     return render(request, "Padres_proposito.html", {'form': form, 'historia': historia, 'proposito': proposito})
 
 @login_required
 def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
     proposito_obj, pareja_obj, context_object_name = None, None, ""
-    editing = False
+    editing = False # To change messages like "guardados" vs "actualizados"
 
     if tipo == 'proposito':
         proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id, historia=historia)
         context_object_name = f"{proposito_obj.nombres} {proposito_obj.apellidos}"
-        if AntecedentesPersonales.objects.filter(proposito=proposito_obj).exists():
+        if AntecedentesPersonales.objects.filter(proposito=proposito_obj).exists() or \
+           DesarrolloPsicomotor.objects.filter(proposito=proposito_obj).exists() or \
+           PeriodoNeonatal.objects.filter(proposito=proposito_obj).exists():
             editing = True
     elif tipo == 'pareja':
-        pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id, proposito_id_1__historia=historia) # Assuming proposito_id_1 is always part of this historia
+        pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id, proposito_id_1__historia=historia)
         context_object_name = f"Pareja ID: {pareja_obj.pareja_id}"
-        if AntecedentesPersonales.objects.filter(pareja=pareja_obj).exists():
+        if AntecedentesPersonales.objects.filter(pareja=pareja_obj).exists() or \
+           DesarrolloPsicomotor.objects.filter(pareja=pareja_obj).exists() or \
+           PeriodoNeonatal.objects.filter(pareja=pareja_obj).exists():
             editing = True
     else:
         messages.error(request, 'Tipo de objeto no válido.')
@@ -301,21 +262,21 @@ def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
             try:
                 target_proposito = proposito_obj if tipo == 'proposito' else None
                 target_pareja = pareja_obj if tipo == 'pareja' else None
-                
-                form.save(proposito=target_proposito, pareja=target_pareja) # Form's save now handles update_or_create
-                
-                messages.success(request, f"Antecedentes personales y desarrollo {'actualizados' if editing else 'guardados'} para {context_object_name}.")
-                
+
+                form.save(proposito=target_proposito, pareja=target_pareja) # Form's save handles update_or_create
+                action_verb = "actualizados" if editing else "guardados"
+                messages.success(request, f"Antecedentes personales y desarrollo {action_verb} para {context_object_name}.")
+
                 redirect_to = 'antecedentes_preconcepcionales_crear'
                 redirect_kwargs = {'historia_id': historia.historia_id, 'tipo': tipo, 'objeto_id': objeto_id}
                 return redirect(redirect_to, **redirect_kwargs)
             except Exception as e:
                 messages.error(request, f'Error al guardar antecedentes: {str(e)}')
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudieron guardar los antecedentes. Por favor, corrija los errores indicados.")
     else: # GET
         initial_data = {}
-        if editing:
+        if editing: # Pre-fill form if editing
             ap_instance, dp_instance, pn_instance = None, None, None
             if tipo == 'proposito' and proposito_obj:
                 ap_instance = AntecedentesPersonales.objects.filter(proposito=proposito_obj).first()
@@ -326,20 +287,15 @@ def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
                 dp_instance = DesarrolloPsicomotor.objects.filter(pareja=pareja_obj).first()
                 pn_instance = PeriodoNeonatal.objects.filter(pareja=pareja_obj).first()
 
-            if ap_instance:
-                initial_data.update({f.name: getattr(ap_instance, f.name) for f in AntecedentesPersonales._meta.fields if hasattr(ap_instance, f.name) and f.name not in ['antecedente_id', 'proposito', 'pareja']})
-            if dp_instance:
-                initial_data.update({f.name: getattr(dp_instance, f.name) for f in DesarrolloPsicomotor._meta.fields if hasattr(dp_instance, f.name) and f.name not in ['desarrollo_id', 'proposito', 'pareja']})
-            if pn_instance:
-                initial_data.update({f.name: getattr(pn_instance, f.name) for f in PeriodoNeonatal._meta.fields if hasattr(pn_instance, f.name) and f.name not in ['neonatal_id', 'proposito', 'pareja']})
-            
-            if initial_data:
-                 messages.info(request, f"Editando antecedentes personales para {context_object_name}.")
+            if ap_instance: initial_data.update({f.name: getattr(ap_instance, f.name) for f in AntecedentesPersonales._meta.fields if hasattr(ap_instance, f.name) and f.name not in ['antecedente_id', 'proposito', 'pareja']})
+            if dp_instance: initial_data.update({f.name: getattr(dp_instance, f.name) for f in DesarrolloPsicomotor._meta.fields if hasattr(dp_instance, f.name) and f.name not in ['desarrollo_id', 'proposito', 'pareja']})
+            if pn_instance: initial_data.update({f.name: getattr(pn_instance, f.name) for f in PeriodoNeonatal._meta.fields if hasattr(pn_instance, f.name) and f.name not in ['neonatal_id', 'proposito', 'pareja']})
 
+            if initial_data: messages.info(request, f"Editando antecedentes personales para {context_object_name}.")
         form = AntecedentesDesarrolloNeonatalForm(initial=initial_data if initial_data else None)
-        
+
     context = {
-        'form': form, 'historia': historia, 'tipo': tipo, 
+        'form': form, 'historia': historia, 'tipo': tipo,
         'objeto': proposito_obj if tipo == 'proposito' else pareja_obj,
         'context_object_name': context_object_name,
         'editing': editing
@@ -365,29 +321,35 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         return redirect('index')
 
     if request.method == 'POST':
-        form = AntecedentesPreconcepcionalesForm(request.POST)
+        form = AntecedentesPreconcepcionalesForm(request.POST) # No instance passed directly, custom save handles it
         if form.is_valid():
             try:
                 target_proposito = proposito_obj if tipo == 'proposito' else None
                 target_pareja = pareja_obj if tipo == 'pareja' else None
 
-                form.save(proposito=target_proposito, pareja=target_pareja, tipo=tipo) # Form's save now handles update_or_create
-                
-                messages.success(request, f"Antecedentes preconcepcionales {'actualizados' if instance_to_edit else 'guardados'} para {context_object_name}.")
-                
-                redirect_to = 'evaluacion_genetica_detalle' 
-                redirect_kwargs = {'historia_id': historia.historia_id, 'tipo': tipo, 'objeto_id': objeto_id}
-                return redirect(redirect_to, **redirect_kwargs)
+                form.save(proposito=target_proposito, pareja=target_pareja, tipo=tipo) # Form save handles update_or_create
+                action_verb = "actualizados" if instance_to_edit else "guardados"
+                messages.success(request, f"Antecedentes preconcepcionales {action_verb} para {context_object_name}.")
+
+                # Determine next step based on tipo
+                if tipo == 'proposito' and proposito_obj:
+                     # For Proposito, next step after preconcepcionales is usually ExamenFisico
+                    return redirect('examen_fisico_crear_editar', proposito_id=proposito_obj.proposito_id)
+                elif tipo == 'pareja' and pareja_obj:
+                    # For Pareja, next step after preconcepcionales is EvaluacionGenetica
+                    return redirect('evaluacion_genetica_detalle', historia_id=historia.historia_id, tipo="pareja", objeto_id=pareja_obj.pareja_id)
+                else: # Fallback
+                    return redirect('index')
+
             except Exception as e:
                 messages.error(request, f'Error al guardar antecedentes preconcepcionales: {str(e)}')
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudieron guardar los Antecedentes Preconcepcionales. Por favor, corrija los errores indicados.")
     else: # GET
         initial_data = {}
         if instance_to_edit:
             initial_data = {f.name: getattr(instance_to_edit, f.name) for f in AntecedentesFamiliaresPreconcepcionales._meta.fields if hasattr(instance_to_edit, f.name) and f.name not in ['antecedente_familiar_id', 'proposito', 'pareja']}
-            if initial_data:
-                 messages.info(request, f"Editando antecedentes preconcepcionales para {context_object_name}.")
+            if initial_data: messages.info(request, f"Editando antecedentes preconcepcionales para {context_object_name}.")
         form = AntecedentesPreconcepcionalesForm(initial=initial_data if initial_data else None)
 
     context = {
@@ -408,16 +370,16 @@ def crear_examen_fisico(request, proposito_id):
 
     if request.method == 'POST':
         form = ExamenFisicoForm(request.POST, instance=examen_existente)
-        form.proposito_instance = proposito # Pass proposito to form's custom save logic
-        
+        form.proposito_instance = proposito # Pass proposito to form for its save method
+
         if form.is_valid():
-            form.save() 
-            messages.success(request, f"Examen físico para {proposito.nombres} {'actualizado' if examen_existente else 'guardado'} exitosamente.")
-            # Determine next step, e.g., back to proposito detail or to evaluation if that's the flow
+            form.save()
+            action_verb = "actualizado" if examen_existente else "guardado"
+            messages.success(request, f"Examen físico para {proposito.nombres} {action_verb} exitosamente.")
+            # Next step is Evaluacion Genetica for this proposito
             return redirect('evaluacion_genetica_detalle', historia_id=proposito.historia.historia_id, tipo="proposito", objeto_id=proposito.proposito_id)
-            # return redirect('proposito_detalle', proposito_id=proposito.proposito_id) # Or previous redirect
         else:
-            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            messages.error(request, "No se pudo guardar el Examen Físico. Por favor, corrija los errores indicados.")
     else: # GET
         form = ExamenFisicoForm(instance=examen_existente)
         if examen_existente:
@@ -432,59 +394,54 @@ def crear_examen_fisico(request, proposito_id):
 @login_required
 def ver_proposito(request, proposito_id):
     proposito = get_object_or_404(Propositos, pk=proposito_id)
-    try:
-        examen_fisico = ExamenFisico.objects.get(proposito=proposito)
-    except ExamenFisico.DoesNotExist:
-        examen_fisico = None
+    examen_fisico = ExamenFisico.objects.filter(proposito=proposito).first()
     padres_info = InformacionPadres.objects.filter(proposito=proposito)
     antecedentes_personales = AntecedentesPersonales.objects.filter(proposito=proposito).first()
     desarrollo_psicomotor = DesarrolloPsicomotor.objects.filter(proposito=proposito).first()
     periodo_neonatal = PeriodoNeonatal.objects.filter(proposito=proposito).first()
     antecedentes_familiares = AntecedentesFamiliaresPreconcepcionales.objects.filter(proposito=proposito).first()
     evaluacion_genetica = EvaluacionGenetica.objects.filter(proposito=proposito).first()
+    diagnosticos = []
+    planes_estudio = []
+    if evaluacion_genetica:
+        diagnosticos = DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion_genetica).order_by('orden')
+        planes_estudio = PlanEstudio.objects.filter(evaluacion=evaluacion_genetica).order_by('pk')
 
 
     return render(request, "ver_proposito.html", {
         'proposito': proposito,
         'examen_fisico': examen_fisico,
-        'padres_info': padres_info,
+        'padres_info': {p.tipo: p for p in padres_info},
         'antecedentes_personales': antecedentes_personales,
         'desarrollo_psicomotor': desarrollo_psicomotor,
         'periodo_neonatal': periodo_neonatal,
         'antecedentes_familiares': antecedentes_familiares,
         'evaluacion_genetica': evaluacion_genetica,
-        # Add other related data as needed
+        'diagnosticos_presuntivos': diagnosticos,
+        'planes_estudio': planes_estudio,
     })
 
 @login_required
-def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id): # Renamed from `evaluacion_genetica_detalle` for clarity if this is edit view
+def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
     proposito_obj, pareja_obj, context_object_name = None, None, ""
-    evaluacion_defaults = {} # Not strictly needed for get_or_create if defaults are simple
 
     if tipo == 'proposito':
         proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id, historia=historia)
         context_object_name = f"Propósito: {proposito_obj.nombres} {proposito_obj.apellidos}"
         evaluacion, created = EvaluacionGenetica.objects.get_or_create(
-            proposito=proposito_obj, 
-            defaults={'pareja': None} # Ensure pareja is None if creating for proposito
+            proposito=proposito_obj, defaults={'pareja': None} # Ensure 'pareja' is None if linking to 'proposito'
         )
-        if not created and evaluacion.pareja is not None: 
-            evaluacion.pareja = None
-            evaluacion.proposito = proposito_obj 
-            evaluacion.save()
-
+        if not created and evaluacion.pareja is not None: # Correct inconsistent data if found
+            evaluacion.pareja = None; evaluacion.proposito = proposito_obj; evaluacion.save()
     elif tipo == 'pareja':
         pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id, proposito_id_1__historia=historia)
         context_object_name = f"Pareja ID: {pareja_obj.pareja_id} ({pareja_obj.proposito_id_1.nombres} y {pareja_obj.proposito_id_2.nombres})"
         evaluacion, created = EvaluacionGenetica.objects.get_or_create(
-            pareja=pareja_obj,
-            defaults={'proposito': None} # Ensure proposito is None if creating for pareja
+            pareja=pareja_obj, defaults={'proposito': None} # Ensure 'proposito' is None if linking to 'pareja'
         )
-        if not created and evaluacion.proposito is not None: 
-            evaluacion.proposito = None
-            evaluacion.pareja = pareja_obj 
-            evaluacion.save()
+        if not created and evaluacion.proposito is not None: # Correct inconsistent data
+            evaluacion.proposito = None; evaluacion.pareja = pareja_obj; evaluacion.save()
     else:
         messages.error(request, "Tipo de objeto no válido para la evaluación genética.")
         return redirect('index')
@@ -496,105 +453,106 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id): # Renamed 
 
         if signos_form.is_valid() and diagnostico_formset.is_valid() and plan_formset.is_valid():
             with transaction.atomic():
-                evaluacion_instance = signos_form.save() # EvaluacionGenetica instance
+                evaluacion_instance = signos_form.save() # This is the EvaluacionGenetica instance
 
+                # Clear old and save new Diagnosticos Presuntivos
                 DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion_instance).delete()
-                for form_diag in diagnostico_formset:
-                    if form_diag.is_valid() and form_diag.cleaned_data and not form_diag.cleaned_data.get('DELETE', False):
-                        if form_diag.cleaned_data.get('descripcion'):
+                for form_data_diag in diagnostico_formset.cleaned_data: # Iterate over cleaned_data list of dicts
+                    if form_data_diag and not form_data_diag.get('DELETE', False): # Check if form has data and not marked for deletion
+                        if form_data_diag.get('descripcion'): # Ensure description is present
                             DiagnosticoPresuntivo.objects.create(
                                 evaluacion=evaluacion_instance,
-                                descripcion=form_diag.cleaned_data['descripcion'],
-                                orden=form_diag.cleaned_data.get('orden', 0)
+                                descripcion=form_data_diag['descripcion'],
+                                orden=form_data_diag.get('orden', 0) # Use .get with default
                             )
-                
+
+                # Clear old and save new Planes de Estudio
                 PlanEstudio.objects.filter(evaluacion=evaluacion_instance).delete()
-                for form_plan in plan_formset:
-                    if form_plan.is_valid() and form_plan.cleaned_data and not form_plan.cleaned_data.get('DELETE', False):
-                        if form_plan.cleaned_data.get('accion'):
+                for form_data_plan in plan_formset.cleaned_data: # Iterate over cleaned_data
+                    if form_data_plan and not form_data_plan.get('DELETE', False):
+                        if form_data_plan.get('accion'): # Ensure accion is present
                             PlanEstudio.objects.create(
                                 evaluacion=evaluacion_instance,
-                                accion=form_plan.cleaned_data['accion'],
-                                fecha_limite=form_plan.cleaned_data.get('fecha_limite'),
-                                completado=form_plan.cleaned_data.get('completado', False)
+                                accion=form_data_plan['accion'],
+                                fecha_limite=form_data_plan.get('fecha_limite'), # .get is safer
+                                completado=form_data_plan.get('completado', False)
                             )
-            
+
             messages.success(request, "Evaluación genética guardada exitosamente.")
-            # Redirect to a summary or next step
+            messages.info(request, "POPUP:Historia Clínica Genética completada y guardada exitosamente.") # For the final pop-up
+
             if tipo == 'proposito' and proposito_obj:
                  return redirect('index')
             # else if tipo == 'pareja', maybe a pareja detail view or back to historia
-            return redirect('index') 
+            return redirect('index') # Fallback redirect
         else:
-            error_messages = []
-            if not signos_form.is_valid(): error_messages.append(f"Errores en Signos Clínicos: {signos_form.errors.as_ul()}")
-            if not diagnostico_formset.is_valid(): error_messages.append(f"Errores en Diagnósticos: {diagnostico_formset.non_form_errors().as_ul()} {diagnostico_formset.errors}")
-            if not plan_formset.is_valid(): error_messages.append(f"Errores en Plan de Estudio: {plan_formset.non_form_errors().as_ul()} {plan_formset.errors}")
-            messages.error(request, "Por favor, corrija los errores en los formularios. " + " | ".join(error_messages))
-
+            error_msg_list = []
+            if not signos_form.is_valid(): error_msg_list.append(f"Errores en Signos Clínicos: {signos_form.errors.as_ul()}")
+            if not diagnostico_formset.is_valid(): error_msg_list.append(f"Errores en Diagnósticos Presuntivos: {diagnostico_formset.non_form_errors().as_ul()} {diagnostico_formset.errors}")
+            if not plan_formset.is_valid(): error_msg_list.append(f"Errores en Plan de Estudio: {plan_formset.non_form_errors().as_ul()} {plan_formset.errors}")
+            messages.error(request, "No se pudo guardar la Evaluación Genética. Por favor, corrija los errores indicados. " + " ".join(error_msg_list))
     else: # GET
         signos_form = SignosClinicosForm(instance=evaluacion)
-        
-        diagnosticos_initial = [{'descripcion': d.descripcion, 'orden': d.orden} 
+
+        diagnosticos_initial = [{'descripcion': d.descripcion, 'orden': d.orden}
                                 for d in DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion).order_by('orden')]
-        diagnostico_formset = DiagnosticoPresuntivoFormSet(prefix='diagnosticos', initial=diagnosticos_initial or None) # Ensure at least one empty if none
+        # Ensure at least one empty form if no initial data for formsets with extra=1
+        diagnostico_formset = DiagnosticoPresuntivoFormSet(prefix='diagnosticos', initial=diagnosticos_initial or [{'orden':0}])
+
 
         planes_initial = [{'accion': p.accion, 'fecha_limite': p.fecha_limite, 'completado': p.completado}
-                          for p in PlanEstudio.objects.filter(evaluacion=evaluacion).order_by('pk')] 
-        plan_formset = PlanEstudioFormSet(prefix='plans', initial=planes_initial or None)
+                          for p in PlanEstudio.objects.filter(evaluacion=evaluacion).order_by('pk')] # Use a consistent order
+        plan_formset = PlanEstudioFormSet(prefix='plans', initial=planes_initial or [{}])
+
+        if created:
+            messages.info(request, "Iniciando nueva evaluación genética.")
+        else:
+            messages.info(request, f"Editando evaluación genética para {context_object_name}.")
+
 
     context = {
-        'historia': historia,
-        'tipo': tipo,
-        'objeto': proposito_obj or pareja_obj,
-        'context_object_name': context_object_name,
-        'signos_form': signos_form,
-        'diagnostico_formset': diagnostico_formset,
-        'plan_formset': plan_formset,
-        'evaluacion_instance': evaluacion 
+        'historia': historia, 'tipo': tipo, 'objeto': proposito_obj or pareja_obj,
+        'context_object_name': context_object_name, 'signos_form': signos_form,
+        'diagnostico_formset': diagnostico_formset, 'plan_formset': plan_formset,
+        'evaluacion_instance': evaluacion # For template to know if it's create/edit context
     }
     return render(request, 'diagnosticos_plan.html', context)
 
 # --- AJAX Views ---
-@login_required 
+@login_required
 def buscar_propositos(request):
     query = request.GET.get('q', '').strip()
-    propositos_qs = Propositos.objects.none() 
+    propositos_qs = Propositos.objects.none()
 
     if request.user.is_authenticated:
         try:
-            genetista = request.user.genetistas # Corrected from Genetistas.DoesNotExist
-        except Genetistas.DoesNotExist:
+            genetista = request.user.genetistas
+        except Genetistas.DoesNotExist: # Fallback for direct link
              try:
                 genetista = Genetistas.objects.get(user=request.user)
              except Genetistas.DoesNotExist:
-                return JsonResponse({'propositos': [], 'error': 'Perfil de genetista no encontrado.'}, status=403)
-
+                return JsonResponse({'propositos': [], 'error': 'Perfil de genetista no encontrado.'}, status=403) # Or handle differently
 
         if query:
             propositos_qs = Propositos.objects.select_related('historia').filter(
-                Q(nombres__icontains=query) | 
+                Q(nombres__icontains=query) |
                 Q(apellidos__icontains=query) |
                 Q(identificacion__icontains=query),
-                historia__genetista=genetista # Filter by the current genetista
-            ).order_by('-historia__fecha_ingreso')[:10] 
-        else:
+                historia__genetista=genetista # Ensure propositos are linked to the genetista's historias
+            ).order_by('-historia__fecha_ingreso')[:10]
+        else: # Return recent if no query
             propositos_qs = Propositos.objects.select_related('historia').filter(
                 historia__genetista=genetista
             ).order_by('-historia__fecha_ingreso')[:5]
-    
+
     resultados = [{
-        'proposito_id': p.proposito_id,
-        'nombres': p.nombres,
-        'apellidos': p.apellidos,
-        'edad': p.edad,
-        'direccion': p.direccion or "N/A",
-        'identificacion': p.identificacion,
-        'foto_url': p.foto.url if p.foto else None, 
+        'proposito_id': p.proposito_id, 'nombres': p.nombres, 'apellidos': p.apellidos,
+        'edad': p.edad, 'direccion': p.direccion or "N/A", 'identificacion': p.identificacion,
+        'foto_url': p.foto.url if p.foto else None,
         'fecha_ingreso': p.historia.fecha_ingreso.strftime("%d/%m/%Y %H:%M") if p.historia and p.historia.fecha_ingreso else "--",
-        'historia_numero': p.historia.numero_historia if p.historia else "N/A"
+        'historia_numero': p.historia.numero_historia if p.historia else "N/A" # Add historia number
     } for p in propositos_qs]
-    
+
     return JsonResponse({'propositos': resultados})
 
 
@@ -605,50 +563,57 @@ def signup(request):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    user = form.save() 
-                    Genetistas.objects.create(user=user) 
-                
+                    user = form.save()
+                    Genetistas.objects.create(user=user) # Create Genetistas profile
                 login(request, user)
                 messages.success(request, "Registro exitoso. ¡Bienvenido!")
-                return redirect('index') 
-            except IntegrityError: 
+                return redirect('index')
+            except IntegrityError: # Should be rare if username check is done by form
                 messages.error(request, "El nombre de usuario ya existe o ha ocurrido un error de base de datos.")
             except Exception as e:
                 messages.error(request, f"Un error inesperado ocurrió: {e}")
         else:
-            # Specific form errors will be displayed by the template
-            messages.error(request, "Por favor, corrija los errores en el formulario de registro.")
-    else: 
+            messages.error(request, "No se pudo completar el registro. Por favor, corrija los errores indicados.")
+    else: # GET
         form = ExtendedUserCreationForm()
     return render(request, "signup.html", {'form': form})
-     
+
 def login_medico(request):
     if request.user.is_authenticated:
-        return redirect('index') 
+        return redirect('index') # Or dashboard
 
     if request.method == 'POST':
-        form = LoginForm(request.POST) 
+        form = LoginForm(request.POST) # Using your custom LoginForm
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                try: # Ensure user has a genetista profile
-                    _ = user.genetistas # Or Genetistas.objects.get(user=user)
+                try:
+                    # Check if user has a Genetista profile
+                    _ = user.genetistas # Assumes related_name='genetistas' from User to Genetista
                     login(request, user)
                     messages.info(request, f"Bienvenido de nuevo, {user.username}.")
                     next_url = request.GET.get('next')
                     return redirect(next_url or 'index')
                 except Genetistas.DoesNotExist:
-                    messages.error(request, "Este usuario no tiene un perfil de genetista asociado.")
+                     try: # Fallback for direct link
+                         _ = Genetistas.objects.get(user=user)
+                         login(request, user)
+                         messages.info(request, f"Bienvenido de nuevo, {user.username}.")
+                         next_url = request.GET.get('next')
+                         return redirect(next_url or 'index')
+                     except Genetistas.DoesNotExist:
+                        messages.error(request, "Este usuario no tiene un perfil de genetista asociado.")
             else:
                 messages.error(request, "Nombre de usuario o contraseña incorrectos.")
-        # No else needed for form invalid, template will show errors
-    else: 
-        form = LoginForm() 
-    
+        else:
+             messages.error(request, "Por favor, ingrese un nombre de usuario y contraseña válidos.")
+    else: # GET
+        form = LoginForm()
+
     return render(request, "login.html", {'form': form})
-   
+
 def signout(request):
     logout(request)
     messages.success(request, "Has cerrado sesión exitosamente.")
@@ -658,6 +623,7 @@ def signout(request):
 # --- Other/Management Views ---
 @login_required
 def reports_view(request):
+    # Add data gathering logic for reports
     return render(request, 'reports.html')
 
 @login_required
@@ -665,42 +631,55 @@ def gestion_usuarios_view(request):
     # if not request.user.is_superuser:
     #     messages.error(request, "Acceso denegado.")
     #     return redirect('index')
-    # users = User.objects.all().select_related('genetistas') # Example
+    # users = User.objects.all().select_related('genetistas') # Example query
     # context = {'users': users}
     return render(request, 'gestion_usuarios.html') #, context)
 
 # --- Example/Tutorial Views (Consider removing or separating) ---
-def index(request): 
+def index(request): # This is the main index/dashboard
     if request.user.is_authenticated:
         try:
-            genetista = request.user.genetistas # or Genetistas.objects.get(user=request.user)
+            genetista = request.user.genetistas
             ultimos_propositos = Propositos.objects.filter(historia__genetista=genetista).order_by('-historia__fecha_ingreso')[:5]
             context = {'ultimos_propositos': ultimos_propositos}
             return render(request, "index.html", context)
-        except Genetistas.DoesNotExist:
-            # Handle case where authenticated user is not a genetista
-            # This might happen if a superuser logs in without a Genetistas profile
-            logout(request) # Log them out to avoid confusion
-            messages.error(request, "Usuario autenticado pero sin perfil de genetista. Sesión cerrada.")
-            return redirect('login')
+        except Genetistas.DoesNotExist: # Fallback for direct access or if related_name is different
+            try:
+                genetista = Genetistas.objects.get(user=request.user)
+                ultimos_propositos = Propositos.objects.filter(historia__genetista=genetista).order_by('-historia__fecha_ingreso')[:5]
+                context = {'ultimos_propositos': ultimos_propositos}
+                return render(request, "index.html", context)
+            except Genetistas.DoesNotExist:
+                # Handle users authenticated but without a Genetista profile
+                if request.user.is_superuser:
+                     # Superusers might not have a genetista profile but can access admin
+                     messages.info(request, "Sesión de Superusuario iniciada. No hay datos de genetista para mostrar en el dashboard.")
+                     return render(request, "index.html", {'title': "Panel de Administración"})
 
+                # For other authenticated users without a genetista profile, log them out or show error
+                logout(request) # Force logout
+                messages.error(request, "Usuario autenticado pero sin perfil de genetista. Sesión cerrada.")
+                return redirect('login')
+
+
+    # For unauthenticated users, show a generic landing page
     return render(request, "index.html", {'title': "Sistema de Gestión de Historias Clínicas Genéticas"})
 
 
 def hello(request, username):
-    return JsonResponse({"message": f"Hello {username}"}) 
+    return JsonResponse({"message": f"Hello {username}"}) # Example JSON response
 
 def about(request):
     return render(request, "about.html", {'username': request.user.username if request.user.is_authenticated else "Invitado"})
 
-@login_required 
+@login_required # Assuming projects/tasks are for logged-in users
 def projects(request):
-    projects_list = Project.objects.all() 
+    projects_list = Project.objects.all() # Ensure Project model is relevant
     return render(request, "projects.html", {'projects': projects_list})
 
 @login_required
 def tasks(request):
-    tasks_list = Task.objects.all() 
+    tasks_list = Task.objects.all() # Ensure Task model is relevant
     return render(request, "tasks.html", {'tasks': tasks_list})
 
 @login_required
@@ -708,10 +687,17 @@ def create_task(request):
     if request.method == 'POST':
         form = CreateNewTask(request.POST)
         if form.is_valid():
-            # Example: Task.objects.create(...)
+            # Assuming a default project_id=1 for simplicity, adjust as needed
+            # project_instance = get_object_or_404(Project, id=1)
+            # Task.objects.create(
+            #     title=form.cleaned_data['title'],
+            #     description=form.cleaned_data['description'],
+            #     project=project_instance
+            # )
             messages.success(request, "Tarea creada (ejemplo).")
-            return redirect('tasks') # Use URL name
-        # No else for form invalid, template shows errors
+            return redirect('task_list') # Use URL name
+        else:
+            messages.error(request, "Error en el formulario de tarea (ejemplo).")
     else:
         form = CreateNewTask()
     return render(request, 'create_task.html', {'form': form})
@@ -721,15 +707,17 @@ def create_project(request):
     if request.method == 'POST':
         form = CreateNewProject(request.POST)
         if form.is_valid():
-            # Example: Project.objects.create(...)
+            # Project.objects.create(name=form.cleaned_data['name'])
             messages.success(request, "Proyecto creado (ejemplo).")
-            return redirect('projects') # Use URL name
+            return redirect('project_list') # Use URL name
+        else:
+            messages.error(request, "Error en el formulario de proyecto (ejemplo).")
     else:
         form = CreateNewProject()
     return render(request, 'create_project.html', {'form': form})
 
 @login_required
 def project_detail(request, id):
-    project_instance = get_object_or_404(Project, id=id) 
+    project_instance = get_object_or_404(Project, id=id) # Ensure Project model is relevant
     project_tasks = Task.objects.filter(project=project_instance)
     return render(request, 'detail.html', {'project': project_instance, 'tasks': project_tasks})

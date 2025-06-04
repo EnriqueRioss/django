@@ -1,105 +1,194 @@
 {% extends 'layouts/base2.html' %}
-
-
 {% load static %}
- 
+
 {%block content%}
- 
-<head>  
-    <title>Datos del Proposito</title>
+
+<head>
+    <title>Datos del Propósito</title>
     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
 </head>
 
 <div class="form-container">
-    <h1>Propósito-Diagnóstico</h1><br><br>
-    
+    <h1>Propósito-Diagnóstico</h1>
+    <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
+    {% if editing %}
+        <p class="editing-info"><em>Modo Edición: Actualizando datos del propósito.</em></p>
+    {% endif %}
+    <br><br>
+
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger non-field-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div id="proposito-diagnostico-section">
             <div class="section-liner">
                 <h3>Datos del Propósito</h3>
             </div>
             <br><br>
-            
+
             <div class="form-group-medio">
                 <div class="half-width">
-                    <label for="nombres_proposito">Nombres</label>
+                    <label for="{{ form.nombres.id_for_label }}">Nombres</label>
                     {{ form.nombres }}
+                    {% if form.nombres.errors %}
+                        <div class="field-errors">
+                            {% for error in form.nombres.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="half-width">
-                    <label for="apellidos_proposito">Apellidos</label>
+                    <label for="{{ form.apellidos.id_for_label }}">Apellidos</label>
                     {{ form.apellidos }}
+                    {% if form.apellidos.errors %}
+                        <div class="field-errors">
+                            {% for error in form.apellidos.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-group-medio">
                 <div class="half-width">
-                    <label for="lugar_nacimiento_proposito">Lugar de Nacimiento</label>
+                    <label for="{{ form.lugar_nacimiento.id_for_label }}">Lugar de Nacimiento</label>
                     {{ form.lugar_nacimiento }}
+                    {% if form.lugar_nacimiento.errors %}
+                        <div class="field-errors">
+                            {% for error in form.lugar_nacimiento.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="half-width">
-                    <label for="fecha_nacimiento_proposito">Fecha de Nacimiento</label>
+                    <label for="{{ form.fecha_nacimiento.id_for_label }}">Fecha de Nacimiento</label>
                     {{ form.fecha_nacimiento }}
+                    {% if form.fecha_nacimiento.errors %}
+                        <div class="field-errors">
+                            {% for error in form.fecha_nacimiento.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-group">
-                <label for="escolaridad_proposito">Escolaridad</label>
+                <label for="{{ form.escolaridad.id_for_label }}">Escolaridad</label>
                 {{ form.escolaridad }}
+                {% if form.escolaridad.errors %}
+                    <div class="field-errors">
+                        {% for error in form.escolaridad.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            
+
             <div class="form-group">
-                <label for="ocupacion_proposito">Ocupación</label>
+                <label for="{{ form.ocupacion.id_for_label }}">Ocupación</label>
                 {{ form.ocupacion }}
+                {% if form.ocupacion.errors %}
+                    <div class="field-errors">
+                        {% for error in form.ocupacion.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            
+
             <div class="form-group-medio">
                 <div class="half-width">
-                    <label for="edad_proposito">Edad</label>
+                    <label for="{{ form.edad.id_for_label }}">Edad</label>
                     {{ form.edad }}
+                    {% if form.edad.errors %}
+                        <div class="field-errors">
+                            {% for error in form.edad.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="half-width">
-                    <label for="identificacion_proposito">Identificación</label>
+                    <label for="{{ form.identificacion.id_for_label }}">Identificación</label>
                     {{ form.identificacion }}
+                    {% if form.identificacion.errors %}
+                        <div class="field-errors">
+                            {% for error in form.identificacion.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-group-medio">
                 <div class="half-width">
-                    <label for="grupo_sanguineo_proposito">Grupo Sanguíneo</label>
+                    <label for="{{ form.grupo_sanguineo.id_for_label }}">Grupo Sanguíneo</label>
                     {{ form.grupo_sanguineo }}
+                    {% if form.grupo_sanguineo.errors %}
+                        <div class="field-errors">
+                            {% for error in form.grupo_sanguineo.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="half-width">
-                    <label for="factor_rh_proposito">Factor RH</label>
+                    <label for="{{ form.factor_rh.id_for_label }}">Factor RH</label>
                     {{ form.factor_rh }}
+                    {% if form.factor_rh.errors %}
+                        <div class="field-errors">
+                            {% for error in form.factor_rh.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             
+            {# If documento_nacimiento is re-enabled in forms.py, add it here #}
+            {#
             <div class="form-group">
                 <label for="{{ form.documento_nacimiento.id_for_label }}">Documento de Nacimiento</label>
                 {{ form.documento_nacimiento }}
+                {% if form.documento_nacimiento.errors %}
+                    <div class="field-errors">
+                        {% for error in form.documento_nacimiento.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            
+            #}
+
             <div class="form-group-medio">
                 <div class="half-width">
-                    <label for="telefono_proposito">Teléfono</label>
+                    <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
                     {{ form.telefono }}
+                    {% if form.telefono.errors %}
+                        <div class="field-errors">
+                            {% for error in form.telefono.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="half-width">
-                    <label for="email_proposito">Email</label>
+                    <label for="{{ form.email.id_for_label }}">Email</label>
                     {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="field-errors">
+                            {% for error in form.email.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-group">
-                <label for="direccion_proposito">Dirección</label>
+                <label for="{{ form.direccion.id_for_label }}">Dirección</label>
                 {{ form.direccion }}
+                {% if form.direccion.errors %}
+                    <div class="field-errors">
+                        {% for error in form.direccion.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            
+
             <div class="form-group">
-                <label for="Foto_Proposito">Foto del Proposito</label>
+                <label for="{{ form.foto.id_for_label }}">Foto del Proposito</label>
                 {{ form.foto }}
+                {% if form.foto.errors %}
+                    <div class="field-errors">
+                        {% for error in form.foto.errors %}<span>{{ error }}</span>{% endfor %}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
