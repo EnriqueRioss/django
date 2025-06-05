@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -63,23 +65,22 @@ class ExamenFisico(models.Model):
 
 class Parejas(models.Model):
     pareja_id = models.AutoField(primary_key=True)
-    proposito_id_1 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_1') # Changed related_name
-    proposito_id_2 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_2') # Changed related_name
+    proposito_id_1 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_1')
+    proposito_id_2 = models.ForeignKey('Propositos', on_delete=models.CASCADE, related_name='parejas_como_2')
 
     class Meta:
         unique_together = (('proposito_id_1', 'proposito_id_2'),)
 
     def clean(self):
-        if self.proposito_id_1_id and self.proposito_id_2_id: # Check if IDs are set
+        if self.proposito_id_1_id and self.proposito_id_2_id:
             if self.proposito_id_1_id == self.proposito_id_2_id:
                 raise ValidationError("Un propósito no puede formar una pareja consigo mismo.")
-            # Ensure consistent ordering for unique_together
             if self.proposito_id_1_id > self.proposito_id_2_id:
                 self.proposito_id_1, self.proposito_id_2 = self.proposito_id_2, self.proposito_id_1
         super().clean()
 
     def save(self, *args, **kwargs):
-        self.clean() # Call clean before saving
+        self.clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -123,16 +124,16 @@ class AntecedentesFamiliaresPreconcepcionales(models.Model):
                     models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
-                name='check_proposito_or_pareja_familiares' # Renamed for clarity
+                name='check_proposito_or_pareja_familiares'
             ),
             models.UniqueConstraint(
                 fields=['proposito'],
-                name='unique_antecedente_familiar_proposito', # Renamed
+                name='unique_antecedente_familiar_proposito',
                 condition=models.Q(proposito__isnull=False)
             ),
             models.UniqueConstraint(
                 fields=['pareja'],
-                name='unique_antecedente_familiar_pareja', # Renamed
+                name='unique_antecedente_familiar_pareja',
                 condition=models.Q(pareja__isnull=False)
             )
         ]
@@ -143,9 +144,7 @@ class AntecedentesFamiliaresPreconcepcionales(models.Model):
         if not self.proposito and not self.pareja:
             raise ValidationError("Los antecedentes familiares deben estar relacionados con un propósito o una pareja.")
         if self.consanguinidad == 'No' and self.grado_consanguinidad:
-            # Optionally clear grado_consanguinidad if consanguinidad is No
-            # self.grado_consanguinidad = ""
-            pass # Or raise error if it should be empty
+            self.grado_consanguinidad = "" # Clear it if 'No'
         if self.consanguinidad == 'Sí' and not self.grado_consanguinidad:
              raise ValidationError("Debe especificar el grado de consanguinidad si seleccionó 'Sí'.")
 
@@ -239,8 +238,8 @@ class Autorizaciones(models.Model):
     autorizacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
     autorizacion_examenes = models.BooleanField(null=True, blank=True)
-    archivo_autorizacion = models.FileField(null=True, blank=True) # Consider upload_to
-    padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True) # OneToOneField might be better if padre can only authorize once
+    archivo_autorizacion = models.FileField(null=True, blank=True) 
+    padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"Autorizacion {self.autorizacion_id} para {self.proposito if self.proposito else 'N/A'}"
@@ -311,7 +310,7 @@ class DesarrolloPsicomotor(models.Model):
 
 
 class EvaluacionGenetica(models.Model):
-    evaluacion_id = models.AutoField(primary_key=True) # Added primary key
+    evaluacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
         'Propositos',
         on_delete=models.CASCADE,
@@ -373,7 +372,7 @@ class EvaluacionGenetica(models.Model):
 
 
 class DiagnosticoPresuntivo(models.Model):
-    diagnostico_id = models.AutoField(primary_key=True) # Added primary key
+    diagnostico_id = models.AutoField(primary_key=True)
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
         on_delete=models.CASCADE,
@@ -396,7 +395,7 @@ class DiagnosticoPresuntivo(models.Model):
         return f"Diagnóstico {self.orden}: {self.descripcion[:50]}..."
 
 class PlanEstudio(models.Model):
-    plan_id = models.AutoField(primary_key=True) # Added primary key
+    plan_id = models.AutoField(primary_key=True)
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
         on_delete=models.CASCADE,
@@ -427,14 +426,14 @@ class PlanEstudio(models.Model):
 
 class EvolucionDesarrollo(models.Model):
     evolucion_id = models.AutoField(primary_key=True)
-    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True) # Could be OneToOne if only one per Proposito
+    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True)
     fecha = models.DateField(blank=True, null=True)
     historial_enfermedades = models.TextField(null=True, blank=True)
     hospitalizaciones = models.TextField(null=True, blank=True)
     cirugias = models.TextField(null=True, blank=True)
     convulsiones = models.TextField(null=True, blank=True)
     otros_antecedentes = models.TextField(null=True, blank=True)
-    resultados_examenes = models.FileField(null=True, blank=True) # Consider upload_to
+    resultados_examenes = models.FileField(null=True, blank=True)
 
     def __str__(self):
         return f"Evolucion Desarrollo {self.evolucion_id} para {self.proposito if self.proposito else 'N/A'}"
@@ -484,7 +483,7 @@ class Genealogia(models.Model):
                     models.Q(proposito__isnull=False, pareja__isnull=True) |
                     models.Q(proposito__isnull=True, pareja__isnull=False)
                 ),
-                name='genealogia_proposito_or_pareja' # Renamed for clarity
+                name='genealogia_proposito_or_pareja'
             )
         ]
 
@@ -500,19 +499,58 @@ class Genealogia(models.Model):
 
         if self.tipo_familiar == 'pareja' and not self.pareja:
             raise ValidationError("El tipo 'pareja' debe estar asociado a un registro de Pareja.")
-        # if self.tipo_familiar == 'proposito' and not self.proposito:
-            # This validation is complex: 'proposito' type might refer to the subject Proposito itself.
-            # It depends on how you're structuring the genealogia tree input.
-            # If this Genealogia entry *is* for the main Proposito, then self.proposito should be set.
-            # If 'proposito' means "a relative of the main Proposito", this check is fine.
-
 
 class Genetistas(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='genetistas') # Added related_name
-    genetista_id = models.AutoField(primary_key=True)
+    ROL_CHOICES = [
+        ('GEN', 'Genetista'),
+        ('ADM', 'Administrador'),
+        ('LEC', 'Lector')
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='genetistas')
+    genetista_id = models.AutoField(primary_key=True) # This is not standard if user is OneToOneField, user.pk would be the ID. Keeping if it's your convention.
+    rol = models.CharField(max_length=3, choices=ROL_CHOICES, default='GEN', verbose_name="Rol del Usuario")
+    associated_genetista = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lectores_asociados',
+        help_text="Si el rol es Lector, genetista (con rol 'Genetista') al que está asociado."
+    )
+
+    def clean(self):
+        super().clean()
+        if self.rol == 'LEC': # Lector
+            if not self.associated_genetista:
+                raise ValidationError({'associated_genetista': "Un Lector debe estar asociado a un Genetista."})
+            if self.associated_genetista == self:
+                raise ValidationError({'associated_genetista': "Un Lector no puede estar asociado a sí mismo."})
+            if self.associated_genetista and self.associated_genetista.rol != 'GEN':
+                raise ValidationError({'associated_genetista': "El Lector solo puede asociarse a un perfil con rol 'Genetista'."})
+        elif self.rol in ['GEN', 'ADM']: # Not a Lector
+            if self.associated_genetista:
+                # Clear it if role changed from Lector, or raise error
+                self.associated_genetista = None
+                # raise ValidationError({'associated_genetista': "Solo los Lectores pueden tener un genetista asociado."})
+        
+        # Ensure a User cannot be their own associated_genetista through a chain if that's a concern
+        # (e.g. A is GEN, B is LEC for A, C is LEC for B. If B's role changes to GEN, C's association to B is fine)
+        # The current checks are direct.
+
+    def save(self, *args, **kwargs):
+        self.full_clean() # Ensure clean is called before saving
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Genetista: {self.user.username}"
+        return f"{self.get_rol_display()}: {self.user.username}"
+
+@receiver(post_save, sender=User)
+def create_or_update_genetista_profile(sender, instance, created, **kwargs):
+    if created:
+        Genetistas.objects.get_or_create(user=instance) # Defaults to 'GEN' rol
+    elif not hasattr(instance, 'genetistas'): # If user exists but profile somehow missing
+        Genetistas.objects.get_or_create(user=instance)
+
 
 class HistorialCambios(models.Model):
     cambio_id = models.AutoField(primary_key=True)
@@ -528,7 +566,7 @@ class HistoriasClinicas(models.Model):
     numero_historia = models.IntegerField(unique=True)
     fecha_ingreso = models.DateTimeField(auto_now_add=True)
     motivo_tipo_consulta = models.CharField(max_length=35, choices=[('Pareja-Asesoramiento Prenupcial', 'Pareja-Asesoramiento Prenupcial'), ('Pareja-Preconcepcional', 'Pareja-Preconcepcional'), ('Pareja-Prenatal', 'Pareja-Prenatal'), ('Proposito-Diagnóstico', 'Proposito-Diagnóstico')])
-    genetista = models.ForeignKey('Genetistas', on_delete=models.CASCADE, null=True, blank=True)
+    genetista = models.ForeignKey('Genetistas', on_delete=models.SET_NULL, null=True, blank=True) # Changed to SET_NULL
     cursante_postgrado = models.CharField(max_length=100, null=True, blank=True)
     centro_referencia = models.CharField(max_length=100, null=True, blank=True)
     medico = models.CharField(max_length=100, null=True, blank=True)
@@ -568,10 +606,9 @@ class InformacionPadres(models.Model):
         ]
 
     def clean(self):
-        # The UniqueConstraint handles most of this. This is a softer check.
         if self.proposito and self.tipo:
             existing = InformacionPadres.objects.filter(proposito=self.proposito, tipo=self.tipo)
-            if self.pk: # If instance is already saved (updating)
+            if self.pk:
                 existing = existing.exclude(pk=self.pk)
             if existing.exists():
                 raise ValidationError(f'Ya existe un registro de "{self.tipo}" para este propósito.')
@@ -678,7 +715,6 @@ class Propositos(models.Model):
     ocupacion = models.CharField(max_length=100, null=True, blank=True)
     edad = models.IntegerField(null=True, blank=True)
     identificacion = models.CharField(max_length=20, unique=True)
-    # documento_nacimiento = models.BinaryField(null=True, blank=True) # Keep commented if not used
     direccion = models.CharField(max_length=200, null=True, blank=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField(max_length=100, null=True, blank=True)
