@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Genético</title>
+    <style>
+        @page {
+            size: A4 landscape; /* Or portrait */
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Poppins', sans-serif; /* Ensure WeasyPrint can find this font or use a default */
+            font-size: 10pt;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #265073; /* --primary-darkerblue */
+            margin-bottom: 20px;
+        }
+        .filter-criteria {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #d3d2d2; /* --liner-gray */
+            background-color: #f9f9f9;
+            font-size: 9pt;
+        }
+        .filter-criteria p {
+            margin: 5px 0;
+        }
+        .filter-criteria strong {
+            color: #0766AD; /* --buttons-blue */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #b3b3b3; /* --border-gray */
+            padding: 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #AED3F2; /* --primary-lightblue */
+            color: #265073; /* --primary-darkerblue */
+            font-weight: bold;
+        }
+        tr:nth-child(even) td {
+            /* background-color: #F3F3F3; --background-color */
+        }
+        .pareja-row td {
+            /* background-color: #e6f2ff; /* Lighter blue for couple rows */
+        }
+        .pareja-second-member {
+             border-bottom: 2px solid #265073 !important; /* --primary-darkerblue */
+        }
+        .footer {
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .logo-header { /* Example for a logo */
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .logo-header img {
+            max-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <!--
+    <div class="logo-header">
+        {% if site_url and settings.STATIC_URL %}
+        <img src="{{ site_url }}{% static 'path/to/your/logo.png' %}" alt="Logo">
+        {% endif %}
+    </div>
+    -->
+    <h1>Reporte de Historias Clínicas Genéticas</h1>
+
+    <div class="filter-criteria">
+        <h3>Filtros Aplicados:</h3>
+        <p><strong>Paciente/ID:</strong> {{ filter_criteria.buscar_paciente|default:"Todos" }}</p>
+        {% if filter_criteria.fecha_desde and filter_criteria.fecha_hasta %}
+        <p><strong>Rango de Fechas:</strong> Desde {{ filter_criteria.fecha_desde }} hasta {{ filter_criteria.fecha_hasta }}</p>
+        {% else %}
+        <p><strong>Rango de Fechas:</strong> {{ filter_criteria.rango_fechas|default:"Cualquiera" }}</p>
+        {% endif %}
+        <p><strong>Tipo de Registro:</strong> {{ filter_criteria.tipo_registro|default:"Todos" }}</p>
+        <p><strong>Genetista:</strong> {{ filter_criteria.genetista|default:"Todos" }}</p>
+    </div>
+
+    {% if results %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID Historia</th>
+                <th>Paciente/Miembro</th>
+                <th>Edad</th>
+                <th>Tipo</th>
+                <th>Genetista</th>
+                <th>Fecha Ingreso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in results %}
+            <tr class="{% if item.is_pareja_member %}pareja-row {% if item.is_first_member %}pareja-first-member{% else %}pareja-second-member{% endif %}{% endif %}">
+                <td>{{ item.id_historia }}</td>
+                <td>{{ item.nombre_completo }}</td>
+                <td>{{ item.edad|default:"N/A" }}</td>
+                <td>{{ item.tipo_display }}</td>
+                <td>{{ item.genetista }}</td>
+                <td>{{ item.fecha_ingreso|date:"d-m-Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No se encontraron registros con los filtros aplicados.</p>
+    {% endif %}
+
+    <div class="footer">
+        Generado el {% now "d/m/Y H:i" %} - Sistema de Gestión de Historias Clínicas Genéticas
+    </div>
+</body>
+</html>

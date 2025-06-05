@@ -1,0 +1,196 @@
+1. forms.LoginForm (Formulario de Inicio de Sesión)
+* username:
+* Requerido (implícito por Django).
+* Longitud máxima de 150 caracteres.
+* Elimina espacios en blanco al inicio y al final.
+* password:
+* Requerido (implícito por Django).
+* Elimina espacios en blanco al inicio y al final.
+2. forms.ExtendedUserCreationForm (Formulario de Registro Extendido)
+* username:
+* Requerido.
+* Validaciones estándar de Django para nombres de usuario (caracteres permitidos, unicidad).
+* first_name:
+* Requerido.
+* Longitud máxima de 30 caracteres.
+* Elimina espacios en blanco al inicio y al final.
+* last_name:
+* Requerido.
+* Longitud máxima de 30 caracteres.
+* Elimina espacios en blanco al inicio y al final.
+* email:
+* Requerido.
+* Debe ser una dirección de correo electrónico válida.
+* Longitud máxima de 254 caracteres.
+* Elimina espacios en blanco al inicio y al final (por defecto en EmailField).
+* password1 / password2:
+* Validaciones estándar de Django para contraseñas (longitud mínima, complejidad si está configurada, deben coincidir).
+3. forms.HistoriasForm (Formulario de Creación/Edición de Historias Clínicas)
+* numero_historia:
+* Requerido.
+* Debe ser un número entero.
+* Debe ser un valor positivo (mayor que 0).
+* Debe ser único en la base de datos (controlado por el modelo HistoriasClinicas).
+* motivo_tipo_consulta:
+* Requerido.
+* Debe ser una de las opciones predefinidas.
+* cursante_postgrado, medico, especialidad, centro_referencia:
+* Opcionales.
+* Longitud máxima definida en el modelo.
+* Eliminan espacios en blanco al inicio y al final si se ingresa texto.
+4. forms.PadresPropositoForm (Formulario de Información de Padres del Propósito)
+* General (para ambos, padre y madre):
+* nombres, apellidos:
+* Requeridos.
+* Longitud máxima de 100 caracteres.
+* Eliminan espacios en blanco al inicio y al final.
+* escolaridad, ocupacion, lugar_nacimiento, identificacion, telefono, direccion:
+* Opcionales.
+* Longitud máxima según el modelo.
+* Eliminan espacios en blanco al inicio y al final.
+* fecha_nacimiento:
+* Opcional.
+* Debe ser una fecha válida.
+* No puede ser una fecha futura.
+* edad:
+* Opcional.
+* Debe ser un número entero.
+* Debe estar en un rango plausible (0-120 años).
+* grupo_sanguineo, factor_rh:
+* Opcionales.
+* Deben ser una de las opciones predefinidas.
+* email:
+* Opcional.
+* Debe ser una dirección de correo electrónico válida si se ingresa.
+* Validación a nivel de formulario (clean):
+* La identificación del padre y de la madre no pueden ser iguales si ambas se proporcionan.
+5. forms.PropositosForm (Formulario de Creación/Edición de Propósitos/Pacientes)
+* nombres, apellidos:
+* Requeridos.
+* Longitud máxima de 100 caracteres.
+* Eliminan espacios en blanco al inicio y al final.
+* lugar_nacimiento, escolaridad, ocupacion, direccion, telefono:
+* Opcionales.
+* Longitud máxima según el modelo.
+* Eliminan espacios en blanco al inicio y al final.
+* edad:
+* Opcional.
+* Debe ser un número entero.
+* Debe estar en un rango plausible (0-120 años).
+* fecha_nacimiento:
+* Opcional.
+* Debe ser una fecha válida.
+* No puede ser una fecha futura.
+* identificacion:
+* Requerida.
+* Longitud máxima de 20 caracteres.
+* Elimina espacios en blanco al inicio y al final.
+* Debe ser única en la base de datos (controlado por el modelo y reforzado en clean_identificacion del formulario para creación/edición).
+* email:
+* Opcional.
+* Debe ser una dirección de correo electrónico válida si se ingresa.
+* grupo_sanguineo, factor_rh:
+* Opcionales.
+* Deben ser una de las opciones predefinidas.
+* foto:
+* Opcional.
+* Debe ser un archivo de imagen válido si se sube.
+6. forms.ParejaPropositosForm (Formulario de Creación/Edición de Parejas)
+* General (para ambos cónyuges, _1 y _2):
+* Campos individuales (nombres, apellidos, lugar_nacimiento, fecha_nacimiento, escolaridad, ocupacion, edad, identificacion, direccion, telefono, email, grupo_sanguineo, factor_rh, foto) tienen las mismas validaciones que los campos correspondientes en PropositosForm.
+* identificacion_1, identificacion_2: Son explícitamente requeridas en sus métodos clean_.
+* Validación a nivel de formulario (clean):
+* Las identificaciones de los dos cónyuges deben ser diferentes.
+7. forms.AntecedentesDesarrolloNeonatalForm (Formulario Combinado)
+* Parte AntecedentesPersonales:
+* fur:
+* Opcional.
+* Debe ser una fecha válida.
+* No puede ser una fecha futura.
+* edad_gestacional:
+* Opcional.
+* Debe ser un número entero.
+* Debe estar en un rango plausible (ej. 18-45 semanas).
+* controles_prenatales: Opcional, cadena de texto.
+* numero_partos, numero_gestas, numero_cesareas, numero_abortos, numero_mortinatos, numero_malformaciones:
+* Opcionales.
+* Deben ser números enteros.
+* No pueden ser negativos.
+* complicaciones_embarazo, descripcion_exposicion, enfermedades_maternas, complicaciones_parto, otros_antecedentes, observaciones:
+* Opcionales, campos de texto.
+* exposicion_teratogenos:
+* Opcional.
+* Debe ser una de las opciones predefinidas.
+* Parte DesarrolloPsicomotor:
+* Todos los campos (sostener_cabeza, sonrisa_social, etc.) son opcionales, cadenas de texto para describir la edad o etapa.
+* Parte PeriodoNeonatal:
+* peso_nacer, talla_nacer, circunferencia_cefalica:
+* Opcionales.
+* Deben ser números decimales.
+* Deben estar en rangos plausibles (ej. peso > 0 y < 10 kg).
+* cianosis, ictericia, hemorragia, infecciones, convulsiones, vomitos: Opcionales, cadenas de texto.
+* observacion_complicaciones, otros_complicaciones, observaciones_alimentacion, evolucion, observaciones_habitos_psicologicos: Opcionales, campos de texto.
+* tipo_alimentacion:
+* Opcional.
+* Debe ser una de las opciones predefinidas.
+* Validación a nivel de formulario (clean):
+* Si se selecciona exposicion_teratogenos, se debe proporcionar descripcion_exposicion.
+* Validaciones de consistencia obstétrica:
+* numero_partos no puede ser mayor que numero_gestas.
+* numero_cesareas no puede ser mayor que numero_partos.
+8. forms.AntecedentesPreconcepcionalesForm (Formulario de Antecedentes Preconcepcionales)
+* antecedentes_padre, antecedentes_madre, estado_salud_padre, estado_salud_madre:
+* Opcionales, campos de texto.
+* fecha_union_pareja:
+* Opcional.
+* Debe ser una fecha válida.
+* No puede ser una fecha futura.
+* consanguinidad:
+* Opcional.
+* Debe ser 'Sí' o 'No' si se selecciona.
+* grado_consanguinidad:
+* Opcional, cadena de texto.
+* Validación a nivel de formulario (clean):
+* Si consanguinidad es 'Sí', entonces grado_consanguinidad es requerido.
+* Si consanguinidad es 'No', grado_consanguinidad se limpia (se borra su contenido si se había ingresado).
+9. forms.ExamenFisicoForm (Formulario de Examen Físico - ModelForm)
+* General: La mayoría de los campos son numéricos decimales y opcionales.
+* medida_abrazada, segmento_inferior, segmento_superior, circunferencia_cefalica, talla, peso, tension_arterial_sistolica, tension_arterial_diastolica:
+* Si se ingresan, deben ser valores positivos (o dentro de un rango mínimo/máximo especificado, ej. peso > 0.1 kg, TA sistólica > 10).
+* Valores máximos plausibles (ej. talla < 300cm).
+* Todos los campos observaciones_*:
+* Opcionales, campos de texto.
+* proposito: Requerido (manejado en la vista y el save del formulario).
+* fecha_examen: Se asigna automáticamente (manejado en el save del formulario o por auto_now_add del modelo).
+10. forms.SignosClinicosForm (Formulario de Signos Clínicos - ModelForm)
+* signos_clinicos:
+* Opcional (según blank=True, null=True en el modelo EvaluacionGenetica).
+* Campo de texto para descripción libre.
+11. forms.DiagnosticoPresuntivoForm (Formulario para Formset de Diagnósticos)
+* descripcion:
+* Cadena de texto.
+* Se vuelve requerida si el formulario dentro del formset ha cambiado (lógica en la vista al procesar el formset).
+* orden:
+* Opcional (default 0).
+* Debe ser un número entero.
+* No puede ser negativo.
+12. forms.PlanEstudioForm (Formulario para Formset de Plan de Estudio)
+* accion:
+* Cadena de texto.
+* Se vuelve requerida si el formulario dentro del formset ha cambiado.
+* fecha_limite:
+* Opcional.
+* Debe ser una fecha válida.
+* No puede ser una fecha pasada si el plan no está marcado como completado.
+* completado:
+* Opcional, booleano (checkbox).
+
+
+
+
+
+
+faltantes:
+edad y fecha de naciemiento (preferiblemente eliminar edad)
+duplicidad de identificaciones
+fechas en plan de estudio en el pasado 

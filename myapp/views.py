@@ -8,8 +8,14 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.forms import AuthenticationForm # Standard Django auth form
-
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.db.models import Q
+from .forms import ReportSearchForm # Add this
+from .models import HistoriasClinicas, Propositos, Genetistas, Parejas # Add Parejas
 # App-specific imports
+
+
 from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
     Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal,
@@ -25,6 +31,46 @@ from .forms import (
 from .models import Project, Task # For example views
 from .forms import CreateNewTask, CreateNewProject # For example views
 
+# Conditional import for WeasyPrint
+try:
+    from weasyprint import HTML, CSS
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    WEASYPRINT_AVAILABLE = False
+    print("Warning: WeasyPrint is not installed. PDF export will not be available.")
+
+
+# --- Helper for PDF Generation ---
+def generate_report_pdf(filter_criteria, results, request):
+    if not WEASYPRINT_AVAILABLE:
+        return HttpResponse("PDF generation library (WeasyPrint) not installed.", status=501)
+
+    context = {
+        'filter_criteria': filter_criteria,
+        'results': results,
+        'site_url': request.build_absolute_uri('/')[:-1] # For static files in PDF if needed
+    }
+    html_string = render_to_string('reports/report_pdf_template.html', context)
+    
+    # Define base_url for WeasyPrint to find static files if your PDF template uses them
+    # This assumes your static files are served from settings.STATIC_URL
+    # and your CSS is appropriately linked in report_pdf_template.html
+    # html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
+    
+    # More robust way to handle static files for WeasyPrint if CSS is complex:
+    # Collect static CSS content or link directly if WeasyPrint can access it.
+    # For simplicity, we'll assume basic styling or inline styles in report_pdf_template.html for now.
+    
+    # Example of adding CSS (ensure the path is correct or CSS is inlined in template)
+    # css_path = os.path.join(settings.STATIC_ROOT, 'styles/reports_pdf.css') # You'd create this CSS
+    # main_css = CSS(filename=css_path) if os.path.exists(css_path) else None
+    # pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[main_css] if main_css else [])
+
+    pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_genetico.pdf"'
+    return response
 
 # --- Main Clinical Views ---
 
@@ -623,8 +669,132 @@ def signout(request):
 # --- Other/Management Views ---
 @login_required
 def reports_view(request):
-    # Add data gathering logic for reports
-    return render(request, 'reports.html')
+    form = ReportSearchForm(request.GET or None)
+    results = []
+    filter_criteria_for_pdf = {}
+
+    if form.is_valid():
+        buscar_paciente = form.cleaned_data.get('buscar_paciente')
+        date_range_cleaned = form.cleaned_data.get('date_range') # This is (fecha_desde, fecha_hasta) or None
+        tipo_registro = form.cleaned_data.get('tipo_registro')
+        genetista_instance = form.cleaned_data.get('genetista')
+
+        # Prepare filter criteria for PDF metadata
+        filter_criteria_for_pdf['buscar_paciente'] = buscar_paciente or "Todos"
+        if date_range_cleaned:
+            filter_criteria_for_pdf['fecha_desde'] = date_range_cleaned[0].strftime('%d/%m/%Y')
+            filter_criteria_for_pdf['fecha_hasta'] = date_range_cleaned[1].strftime('%d/%m/%Y')
+        else:
+            filter_criteria_for_pdf['rango_fechas'] = "Cualquiera"
+        filter_criteria_for_pdf['tipo_registro'] = dict(form.fields['tipo_registro'].choices).get(tipo_registro, "Todos")
+        filter_criteria_for_pdf['genetista'] = genetista_instance.user.get_full_name() if genetista_instance else "Todos"
+
+
+        # Start with a base queryset
+        historias_qs = HistoriasClinicas.objects.select_related('genetista__user').prefetch_related('propositos_set').distinct()
+
+        query_filters = Q()
+
+        if buscar_paciente:
+            query_filters &= (
+                Q(propositos__nombres__icontains=buscar_paciente) |
+                Q(propositos__apellidos__icontains=buscar_paciente) |
+                Q(propositos__identificacion__icontains=buscar_paciente)
+            )
+
+        if date_range_cleaned:
+            fecha_desde, fecha_hasta = date_range_cleaned
+            query_filters &= Q(fecha_ingreso__date__gte=fecha_desde)
+            query_filters &= Q(fecha_ingreso__date__lte=fecha_hasta)
+
+        if genetista_instance:
+            query_filters &= Q(genetista=genetista_instance)
+
+        if tipo_registro == 'proposito':
+            # Assuming 'Proposito-Diagnóstico' is the key for single proposito histories
+            query_filters &= Q(motivo_tipo_consulta='Proposito-Diagnóstico')
+        elif tipo_registro == 'pareja':
+            # Assuming 'Pareja-' prefix for couple related histories
+            query_filters &= Q(motivo_tipo_consulta__startswith='Pareja-')
+        
+        historias_qs = historias_qs.filter(query_filters).order_by('-fecha_ingreso', 'numero_historia')
+
+        # Process queryset for template
+        processed_results = []
+        for historia in historias_qs:
+            propositos_en_historia = list(historia.propositos_set.all())
+            genetista_nombre = historia.genetista.user.get_full_name() if historia.genetista and historia.genetista.user else 'N/A'
+
+            # Check if the current historia matches the 'tipo_registro' filter if one was applied.
+            # If no tipo_registro filter, display based on historia's nature.
+            display_as_pareja = historia.motivo_tipo_consulta.startswith('Pareja-')
+            display_as_proposito = historia.motivo_tipo_consulta == 'Proposito-Diagnóstico'
+
+            if tipo_registro == 'pareja' and not display_as_pareja:
+                continue # Skip if filtering for parejas but this isn't one
+            if tipo_registro == 'proposito' and not display_as_proposito:
+                continue # Skip if filtering for propositos but this isn't one
+
+            if display_as_pareja and len(propositos_en_historia) >= 1: # Need at least one to show, ideally 2
+                # For a "Pareja" type historia, its propositos are the members
+                miembro1 = propositos_en_historia[0]
+                miembro2 = propositos_en_historia[1] if len(propositos_en_historia) > 1 else None
+
+                processed_results.append({
+                    'id_historia': historia.numero_historia,
+                    'nombre_completo': f"{miembro1.nombres} {miembro1.apellidos}",
+                    'edad': miembro1.edad,
+                    'tipo_display': 'Pareja',
+                    'genetista': genetista_nombre,
+                    'fecha_ingreso': historia.fecha_ingreso,
+                    'is_pareja_member': True,
+                    'is_first_member': True,
+                    'pareja_historia_id': historia.pk 
+                })
+                if miembro2:
+                    processed_results.append({
+                        'id_historia': historia.numero_historia,
+                        'nombre_completo': f"{miembro2.nombres} {miembro2.apellidos}",
+                        'edad': miembro2.edad,
+                        'tipo_display': 'Pareja',
+                        'genetista': genetista_nombre,
+                        'fecha_ingreso': historia.fecha_ingreso,
+                        'is_pareja_member': True,
+                        'is_first_member': False,
+                        'pareja_historia_id': historia.pk
+                    })
+                elif len(propositos_en_historia) == 1 and display_as_pareja: # Pareja history but only one proposito listed
+                     # Optionally log or handle this case of incomplete pareja data
+                    pass
+
+            elif display_as_proposito and len(propositos_en_historia) >= 1:
+                proposito_individual = propositos_en_historia[0]
+                processed_results.append({
+                    'id_historia': historia.numero_historia,
+                    'nombre_completo': f"{proposito_individual.nombres} {proposito_individual.apellidos}",
+                    'edad': proposito_individual.edad,
+                    'tipo_display': 'Propósito',
+                    'genetista': genetista_nombre,
+                    'fecha_ingreso': historia.fecha_ingreso,
+                    'is_pareja_member': False,
+                    'pareja_historia_id': None # Not part of a grouped pareja display
+                })
+        
+        results = processed_results
+
+        if 'export_pdf' in request.GET:
+            return generate_report_pdf(filter_criteria_for_pdf, results, request)
+
+    # Pass genetistas to the form for dropdown population even if form is not submitted yet
+    # The ModelChoiceField in ReportSearchForm handles this automatically via its queryset.
+
+    context = {
+        'form': form,
+        'results': results,
+        'has_searched': bool(request.GET), # True if any GET parameters exist (form submitted)
+    }
+    return render(request, 'reports/reports.html', context) # Adjusted template path
+
 
 @login_required
 def gestion_usuarios_view(request):
@@ -664,6 +834,40 @@ def index(request): # This is the main index/dashboard
 
     # For unauthenticated users, show a generic landing page
     return render(request, "index.html", {'title': "Sistema de Gestión de Historias Clínicas Genéticas"})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def hello(request, username):

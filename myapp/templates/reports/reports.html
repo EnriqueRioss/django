@@ -1,0 +1,185 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <title>REPORTES | IIG - LUZ</title>
+    <link rel="stylesheet" href="{% static 'styles/reports.css' %}"> <!-- Ensure your static path is correct -->
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Additional styles for pareja rows if needed, or use existing CSS classes */
+        .pareja-row.pareja-first-member {
+            /* Style for the first member of a couple */
+        }
+        .pareja-row.pareja-second-member {
+            border-bottom: 2px solid var(--primary-darkerblue) !important; /* Example: thicker border after a couple */
+        }
+        .pareja-row td {
+             /* background-color: #f0f8ff; Light AliceBlue for couples */
+        }
+    </style>
+</head>
+
+<div class="main-content">
+    <main class="barra-content">
+        <header class="content-header">
+            <div class="breadcrumb">
+                <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+                <span class="breadcrumb-separator">></span>
+                <span class="breadcrumb-item active">Reportes</span>
+            </div>
+        </header>
+
+        <div class="reports-content">
+            <div class="contenido-header">
+                <div class="header-content">
+                    <h1>Reportes Genéticos</h1>
+                    <p>Análisis y reportes de historias clínicas genéticas</p>
+                </div>
+                <div class="header-actions">
+                    <button type="submit" form="reports-filter-form" name="export_pdf" class="btn-outline" {% if not results and has_searched %}disabled{% endif %}>
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                    <a href="{% url 'reports_dashboard' %}" class="btn-primary">
+                        <i class="fas fa-file-alt"></i>
+                        Nuevo Reporte
+                    </a>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
+                    <p>Utiliza los filtros para encontrar información específica</p>
+                </div>
+                <div class="card-content">
+                    <form method="GET" action="{% url 'reports_dashboard' %}" id="reports-filter-form">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="{{ form.buscar_paciente.id_for_label }}">Buscar Paciente</label>
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    {{ form.buscar_paciente }}
+                                </div>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="{{ form.date_range.id_for_label }}">Rango de Fechas</label>
+                                {{ form.date_range }}
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="{{ form.tipo_registro.id_for_label }}">Tipo de Registro</label>
+                                {{ form.tipo_registro }}
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="{{ form.genetista.id_for_label }}">Genetista</label>
+                                {{ form.genetista }}
+                            </div>
+                            
+                            <!-- Diagnóstico filter (structurally present but functionality disabled in view) -->
+                            <div class="filter-group" style="display: none;"> <!-- Hidden for now -->
+                                <label for="diagnostico-select-disabled">Diagnóstico</label>
+                                <select name="diagnostico_disabled" id="diagnostico-select-disabled" disabled>
+                                    <option value="">Seleccionar diagnóstico</option>
+                                    <option value="Sindrome-de-marfan">Sindrome de Marfan</option>
+                                    <option value="Fibrosis-quistica">Fibrosis Quistica</option>
+                                    <option value="huntintong">Huntington</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-actions">
+                                <button type="submit" class="btn-buscar">
+                                    <i class="fas fa-search"></i>
+                                    Buscar
+                                </button>
+                                <a href="{% url 'reports_dashboard' %}" class="btn-limpiar" id="limpiar-filtros-btn-link">Limpiar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if has_searched %}
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Resultados de Búsqueda</h2>
+                    <p>{{ results|length }} registro{{ results|pluralize }} encontrado{{ results|pluralize }}</p>
+                </div>
+                <div class="card-content">
+                    {% if results %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID Historia</th>
+                                    <th>Paciente/Miembro</th>
+                                    <th>Edad</th>
+                                    <th>Tipo</th> <!-- Was Diagnóstico -->
+                                    <th>Genetista</th>
+                                    <th>Fecha Ingreso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in results %}
+                                <tr class="{% if item.is_pareja_member %}pareja-row {% if item.is_first_member %}pareja-first-member{% else %}pareja-second-member{% endif %}{% endif %}">
+                                    <td>{{ item.id_historia }}</td>
+                                    <td>{{ item.nombre_completo }}</td>
+                                    <td>{{ item.edad|default:"N/A" }}</td>
+                                    <td>{{ item.tipo_display }}</td>
+                                    <td>{{ item.genetista }}</td>
+                                    <td>{{ item.fecha_ingreso|date:"d-m-Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p>No se encontraron registros con los filtros aplicados.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateRangePicker = flatpickr("#date-range", {
+            mode: "range",
+            dateFormat: "d/m/Y",
+            locale: "es",
+            allowInput: true, // Allows manual input, validation handled by Django form
+            // defaultDate: ["20/01/2024", "09/02/2024"], // Example, remove if not needed or set from form initial
+        });
+
+        // The "Limpiar" button is now an <a> tag linking to the base URL,
+        // which effectively resets the form and clears results.
+        // If you need JavaScript-based clearing without reload:
+        /*
+        const limpiarBtn = document.getElementById('limpiar-filtros-btn-js'); // Add this ID to a button
+        if(limpiarBtn) {
+            limpiarBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                document.getElementById('reports-filter-form').reset();
+                if (dateRangePicker) {
+                    dateRangePicker.clear();
+                }
+                // Optionally, clear results table if displayed via JS, or redirect
+                // window.location.href = "{% url 'reports_dashboard' %}"; // Redirect to clear state
+            });
+        }
+        */
+    });
+</script>
+
+<script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+{% endblock %}
