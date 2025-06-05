@@ -4,6 +4,7 @@ from django.forms import ModelForm, Select, DateInput, ClearableFileInput, forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from datetime import datetime
 
 
 
@@ -820,34 +821,41 @@ PlanEstudioFormSet = formset_factory(
     extra=0, # Show one empty form by default
     can_delete=True,
 )
-
-
 class ReportSearchForm(forms.Form):
     buscar_paciente = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Nombre o ID del paciente', 'id': 'buscar-paciente-input'}) # Ensure ID is unique if 'buscar-paciente' is used elsewhere
+        label="Buscar Paciente",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Nombre o ID del paciente',
+            'id': 'buscar-paciente-input' # Ensure this ID is unique if 'buscar-paciente' is used elsewhere
+        })
     )
     date_range = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': 'date-range-input', 'id': 'date-range', 'placeholder': 'Seleccionar rango de fechas'})
+        label="Rango de Fechas",
+        widget=forms.TextInput(attrs={
+            'id': 'date-range-flatpickr', # This ID will be targeted by Flatpickr
+            'class': 'date-range-input', # Keep existing class if needed for styling
+            'placeholder': 'Seleccionar rango de fechas'
+        })
     )
-    TIPO_REGISTRO_CHOICES = [
-        ('', 'Todos los Tipos'),
-        ('proposito', 'Propósito'),
-        ('pareja', 'Pareja'),
-    ]
     tipo_registro = forms.ChoiceField(
-        choices=TIPO_REGISTRO_CHOICES,
-        required=False
+        choices=[('', 'Todos los Tipos'), ('proposito', 'Propósito (Individual)'), ('pareja', 'Pareja')],
+        required=False,
+        label="Tipo de Registro",
+        widget=forms.Select(attrs={'id': 'tipo-registro-select'})
     )
     genetista = forms.ModelChoiceField(
-        queryset=Genetistas.objects.select_related('user').all(), # Populate with actual genetistas
+        queryset=Genetistas.objects.all().select_related('user').order_by('user__last_name', 'user__first_name'),
         required=False,
+        label="Genetista",
         empty_label="Todos los Genetistas",
         widget=forms.Select(attrs={'id': 'genetista-select'})
     )
-    # The 'diagnostico' field from the template is intentionally omitted here
-    # as per the requirement that its filter is disabled for now.
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['genetista'].label_from_instance = lambda obj: obj.user.get_full_name() or obj.user.username
 
     def clean_date_range(self):
         date_range_str = self.cleaned_data.get('date_range')
@@ -855,16 +863,17 @@ class ReportSearchForm(forms.Form):
             try:
                 parts = date_range_str.split(' a ')
                 if len(parts) == 2:
-                    fecha_desde_str, fecha_hasta_str = parts[0], parts[1]
-                    # Assuming flatpickr format "d/m/Y"
-                    fecha_desde = timezone.datetime.strptime(fecha_desde_str, '%d/%m/%Y').date()
-                    fecha_hasta = timezone.datetime.strptime(fecha_hasta_str, '%d/%m/%Y').date()
+                    fecha_desde_str, fecha_hasta_str = parts
+                    # Flatpickr default format "d/m/Y"
+                    fecha_desde = datetime.strptime(fecha_desde_str.strip(), '%d/%m/%Y').date()
+                    fecha_hasta = datetime.strptime(fecha_hasta_str.strip(), '%d/%m/%Y').date()
                     if fecha_desde > fecha_hasta:
                         raise forms.ValidationError("La fecha 'desde' no puede ser posterior a la fecha 'hasta'.")
-                    return fecha_desde, fecha_hasta
-                elif len(parts) == 1 and parts[0] != "": # Single date selected in range mode
-                    fecha = timezone.datetime.strptime(parts[0], '%d/%m/%Y').date()
-                    return fecha, fecha # Treat single date as range of one day
+                    return {'desde': fecha_desde, 'hasta': fecha_hasta}
+                elif len(parts) == 1 and parts[0].strip(): # Single date selected in range mode
+                    fecha = datetime.strptime(parts[0].strip(), '%d/%m/%Y').date()
+                    return {'desde': fecha, 'hasta': fecha}
             except ValueError:
-                raise forms.ValidationError("Formato de fecha inválido. Use DD/MM/YYYY a DD/MM/YYYY.")
+                raise forms.ValidationError("Formato de rango de fecha inválido. Use DD/MM/YYYY o DD/MM/YYYY a DD/MM/YYYY.")
         return None
+

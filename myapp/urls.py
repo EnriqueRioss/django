@@ -45,6 +45,7 @@ urlpatterns = [
 
     # Reports & Management
     path('reports/', views.reports_view, name="reports_dashboard"),
+     path('reports/export/<str:export_format>/', views.export_report_data, name='export_report_data'),
     path('gestion-usuarios/', views.gestion_usuarios_view, name="gestion_usuarios_dashboard"), # Added trailing slash for consistency
 
 ]

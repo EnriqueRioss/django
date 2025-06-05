@@ -13,6 +13,17 @@ from django.template.loader import render_to_string
 from django.db.models import Q
 from .forms import ReportSearchForm # Add this
 from .models import HistoriasClinicas, Propositos, Genetistas, Parejas # Add Parejas
+
+from django.http import HttpResponse, JsonResponse # Added JsonResponse
+import csv
+from datetime import datetime
+
+# For PDF (basic example with ReportLab)
+from io import BytesIO
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 # App-specific imports
 
 
@@ -671,129 +682,236 @@ def signout(request):
 def reports_view(request):
     form = ReportSearchForm(request.GET or None)
     results = []
-    filter_criteria_for_pdf = {}
+    applied_filters_display = {}
+    search_attempted = False
 
     if form.is_valid():
-        buscar_paciente = form.cleaned_data.get('buscar_paciente')
-        date_range_cleaned = form.cleaned_data.get('date_range') # This is (fecha_desde, fecha_hasta) or None
+        search_attempted = True
+        query_paciente = form.cleaned_data.get('buscar_paciente')
+        date_range_val = form.cleaned_data.get('date_range') # This is a dict {'desde': ..., 'hasta': ...} or None
         tipo_registro = form.cleaned_data.get('tipo_registro')
-        genetista_instance = form.cleaned_data.get('genetista')
+        genetista_obj = form.cleaned_data.get('genetista')
 
-        # Prepare filter criteria for PDF metadata
-        filter_criteria_for_pdf['buscar_paciente'] = buscar_paciente or "Todos"
-        if date_range_cleaned:
-            filter_criteria_for_pdf['fecha_desde'] = date_range_cleaned[0].strftime('%d/%m/%Y')
-            filter_criteria_for_pdf['fecha_hasta'] = date_range_cleaned[1].strftime('%d/%m/%Y')
-        else:
-            filter_criteria_for_pdf['rango_fechas'] = "Cualquiera"
-        filter_criteria_for_pdf['tipo_registro'] = dict(form.fields['tipo_registro'].choices).get(tipo_registro, "Todos")
-        filter_criteria_for_pdf['genetista'] = genetista_instance.user.get_full_name() if genetista_instance else "Todos"
+        # Start with all propositos linked to a historia (essential for genetista and fecha_ingreso)
+        # Ensure historia__genetista__user is accessible for display
+        propositos_qs = Propositos.objects.filter(historia__isnull=False) \
+                                          .select_related('historia', 'historia__genetista', 'historia__genetista__user') \
+                                          .order_by('historia__numero_historia', 'apellidos', 'nombres')
 
 
-        # Start with a base queryset
-        historias_qs = HistoriasClinicas.objects.select_related('genetista__user').prefetch_related('propositos_set').distinct()
-
-        query_filters = Q()
-
-        if buscar_paciente:
-            query_filters &= (
-                Q(propositos__nombres__icontains=buscar_paciente) |
-                Q(propositos__apellidos__icontains=buscar_paciente) |
-                Q(propositos__identificacion__icontains=buscar_paciente)
+        if query_paciente:
+            propositos_qs = propositos_qs.filter(
+                Q(nombres__icontains=query_paciente) |
+                Q(apellidos__icontains=query_paciente) |
+                Q(identificacion__icontains=query_paciente)
             )
-
-        if date_range_cleaned:
-            fecha_desde, fecha_hasta = date_range_cleaned
-            query_filters &= Q(fecha_ingreso__date__gte=fecha_desde)
-            query_filters &= Q(fecha_ingreso__date__lte=fecha_hasta)
-
-        if genetista_instance:
-            query_filters &= Q(genetista=genetista_instance)
-
-        if tipo_registro == 'proposito':
-            # Assuming 'Proposito-Diagnóstico' is the key for single proposito histories
-            query_filters &= Q(motivo_tipo_consulta='Proposito-Diagnóstico')
-        elif tipo_registro == 'pareja':
-            # Assuming 'Pareja-' prefix for couple related histories
-            query_filters &= Q(motivo_tipo_consulta__startswith='Pareja-')
+            applied_filters_display['Paciente'] = query_paciente
         
-        historias_qs = historias_qs.filter(query_filters).order_by('-fecha_ingreso', 'numero_historia')
+        if date_range_val:
+            fecha_desde = date_range_val.get('desde')
+            fecha_hasta = date_range_val.get('hasta')
+            if fecha_desde:
+                propositos_qs = propositos_qs.filter(historia__fecha_ingreso__date__gte=fecha_desde)
+                applied_filters_display['Fecha Desde'] = fecha_desde.strftime('%d/%m/%Y')
+            if fecha_hasta:
+                propositos_qs = propositos_qs.filter(historia__fecha_ingreso__date__lte=fecha_hasta)
+                applied_filters_display['Fecha Hasta'] = fecha_hasta.strftime('%d/%m/%Y')
 
-        # Process queryset for template
-        processed_results = []
-        for historia in historias_qs:
-            propositos_en_historia = list(historia.propositos_set.all())
-            genetista_nombre = historia.genetista.user.get_full_name() if historia.genetista and historia.genetista.user else 'N/A'
-
-            # Check if the current historia matches the 'tipo_registro' filter if one was applied.
-            # If no tipo_registro filter, display based on historia's nature.
-            display_as_pareja = historia.motivo_tipo_consulta.startswith('Pareja-')
-            display_as_proposito = historia.motivo_tipo_consulta == 'Proposito-Diagnóstico'
-
-            if tipo_registro == 'pareja' and not display_as_pareja:
-                continue # Skip if filtering for parejas but this isn't one
-            if tipo_registro == 'proposito' and not display_as_proposito:
-                continue # Skip if filtering for propositos but this isn't one
-
-            if display_as_pareja and len(propositos_en_historia) >= 1: # Need at least one to show, ideally 2
-                # For a "Pareja" type historia, its propositos are the members
-                miembro1 = propositos_en_historia[0]
-                miembro2 = propositos_en_historia[1] if len(propositos_en_historia) > 1 else None
-
-                processed_results.append({
-                    'id_historia': historia.numero_historia,
-                    'nombre_completo': f"{miembro1.nombres} {miembro1.apellidos}",
-                    'edad': miembro1.edad,
-                    'tipo_display': 'Pareja',
-                    'genetista': genetista_nombre,
-                    'fecha_ingreso': historia.fecha_ingreso,
-                    'is_pareja_member': True,
-                    'is_first_member': True,
-                    'pareja_historia_id': historia.pk 
-                })
-                if miembro2:
-                    processed_results.append({
-                        'id_historia': historia.numero_historia,
-                        'nombre_completo': f"{miembro2.nombres} {miembro2.apellidos}",
-                        'edad': miembro2.edad,
-                        'tipo_display': 'Pareja',
-                        'genetista': genetista_nombre,
-                        'fecha_ingreso': historia.fecha_ingreso,
-                        'is_pareja_member': True,
-                        'is_first_member': False,
-                        'pareja_historia_id': historia.pk
-                    })
-                elif len(propositos_en_historia) == 1 and display_as_pareja: # Pareja history but only one proposito listed
-                     # Optionally log or handle this case of incomplete pareja data
-                    pass
-
-            elif display_as_proposito and len(propositos_en_historia) >= 1:
-                proposito_individual = propositos_en_historia[0]
-                processed_results.append({
-                    'id_historia': historia.numero_historia,
-                    'nombre_completo': f"{proposito_individual.nombres} {proposito_individual.apellidos}",
-                    'edad': proposito_individual.edad,
-                    'tipo_display': 'Propósito',
-                    'genetista': genetista_nombre,
-                    'fecha_ingreso': historia.fecha_ingreso,
-                    'is_pareja_member': False,
-                    'pareja_historia_id': None # Not part of a grouped pareja display
-                })
+        if genetista_obj:
+            propositos_qs = propositos_qs.filter(historia__genetista=genetista_obj)
+            applied_filters_display['Genetista'] = genetista_obj.user.get_full_name() or genetista_obj.user.username
         
-        results = processed_results
+        # Temporary list to hold fully processed items before final filtering by tipo_registro
+        temp_results = []
+        
+        for p in propositos_qs:
+            historia = p.historia # Should exist due to initial filter
+            
+            # Check if this proposito is part of any pareja
+            # Using related_name from Parejas model: 'parejas_como_1', 'parejas_como_2'
+            is_in_pareja_as_1 = Parejas.objects.filter(proposito_id_1=p).exists()
+            is_in_pareja_as_2 = Parejas.objects.filter(proposito_id_2=p).exists()
+            is_pareja_member = is_in_pareja_as_1 or is_in_pareja_as_2
 
-        if 'export_pdf' in request.GET:
-            return generate_report_pdf(filter_criteria_for_pdf, results, request)
+            item_tipo = 'Pareja' if is_pareja_member else 'Propósito'
+            
+            # Apply tipo_registro filter
+            if tipo_registro == 'proposito' and is_pareja_member:
+                continue 
+            if tipo_registro == 'pareja' and not is_pareja_member:
+                continue
 
-    # Pass genetistas to the form for dropdown population even if form is not submitted yet
-    # The ModelChoiceField in ReportSearchForm handles this automatically via its queryset.
+            genetista_user = historia.genetista.user if historia.genetista else None
+            genetista_name = genetista_user.get_full_name() or genetista_user.username if genetista_user else "N/A"
+
+            temp_results.append({
+                'id_historia': historia.numero_historia,
+                'paciente_nombre': f"{p.nombres} {p.apellidos}",
+                'paciente_id': p.proposito_id,
+                'edad': p.edad if p.edad is not None else 'N/A',
+                'tipo': item_tipo,
+                'genetista_nombre': genetista_name,
+                'fecha_ingreso': historia.fecha_ingreso.strftime('%d-%m-%Y') if historia.fecha_ingreso else 'N/A',
+                'is_pareja_member_css_class': 'pareja-row' if is_pareja_member else ''
+            })
+        
+        results = temp_results
+
+        if tipo_registro:
+             applied_filters_display['Tipo de Registro'] = dict(form.fields['tipo_registro'].choices).get(tipo_registro)
 
     context = {
         'form': form,
         'results': results,
-        'has_searched': bool(request.GET), # True if any GET parameters exist (form submitted)
+        'search_attempted': search_attempted,
+        'applied_filters_display': applied_filters_display, # For PDF/CSV export
     }
-    return render(request, 'reports/reports.html', context) # Adjusted template path
+    return render(request, 'reports.html', context)
+
+
+def export_report_data(request, export_format):
+    # Use the same form to validate and parse GET parameters
+    form = ReportSearchForm(request.GET or None)
+    
+    if not form.is_valid():
+        return HttpResponse("Filtros inválidos para exportación.", status=400)
+
+    # Re-run search logic (same as in reports_view)
+    query_paciente = form.cleaned_data.get('buscar_paciente')
+    date_range_val = form.cleaned_data.get('date_range')
+    tipo_registro = form.cleaned_data.get('tipo_registro')
+    genetista_obj = form.cleaned_data.get('genetista')
+
+    propositos_qs = Propositos.objects.filter(historia__isnull=False) \
+                                      .select_related('historia', 'historia__genetista', 'historia__genetista__user') \
+                                      .order_by('historia__numero_historia', 'apellidos', 'nombres')
+    
+    applied_filters_display = {} # For PDF header
+
+    if query_paciente:
+        propositos_qs = propositos_qs.filter(
+            Q(nombres__icontains=query_paciente) |
+            Q(apellidos__icontains=query_paciente) |
+            Q(identificacion__icontains=query_paciente)
+        )
+        applied_filters_display['Paciente'] = query_paciente
+    
+    if date_range_val:
+        fecha_desde = date_range_val.get('desde')
+        fecha_hasta = date_range_val.get('hasta')
+        if fecha_desde:
+            propositos_qs = propositos_qs.filter(historia__fecha_ingreso__date__gte=fecha_desde)
+            applied_filters_display['Fecha Desde'] = fecha_desde.strftime('%d/%m/%Y')
+        if fecha_hasta:
+            propositos_qs = propositos_qs.filter(historia__fecha_ingreso__date__lte=fecha_hasta)
+            applied_filters_display['Fecha Hasta'] = fecha_hasta.strftime('%d/%m/%Y')
+
+    if genetista_obj:
+        propositos_qs = propositos_qs.filter(historia__genetista=genetista_obj)
+        applied_filters_display['Genetista'] = genetista_obj.user.get_full_name() or genetista_obj.user.username
+
+    report_data = []
+    for p in propositos_qs:
+        historia = p.historia
+        is_in_pareja_as_1 = Parejas.objects.filter(proposito_id_1=p).exists()
+        is_in_pareja_as_2 = Parejas.objects.filter(proposito_id_2=p).exists()
+        is_pareja_member = is_in_pareja_as_1 or is_in_pareja_as_2
+        item_tipo = 'Pareja' if is_pareja_member else 'Propósito'
+
+        if tipo_registro == 'proposito' and is_pareja_member:
+            continue
+        if tipo_registro == 'pareja' and not is_pareja_member:
+            continue
+        
+        genetista_user = historia.genetista.user if historia.genetista else None
+        genetista_name = genetista_user.get_full_name() or genetista_user.username if genetista_user else "N/A"
+
+        report_data.append({
+            'ID Historia': historia.numero_historia,
+            'Paciente': f"{p.nombres} {p.apellidos}",
+            'Edad': p.edad if p.edad is not None else 'N/A',
+            'Tipo': item_tipo,
+            'Genetista': genetista_name,
+            'Fecha Ingreso': historia.fecha_ingreso.strftime('%d-%m-%Y') if historia.fecha_ingreso else 'N/A',
+        })
+    if tipo_registro:
+        applied_filters_display['Tipo de Registro'] = dict(form.fields['tipo_registro'].choices).get(tipo_registro)
+
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="reporte_genetico_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        writer = csv.writer(response)
+        # Write applied filters as metadata (optional for CSV, better for PDF)
+        writer.writerow(['Filtros Aplicados:'])
+        for key, value in applied_filters_display.items():
+             writer.writerow([f"{key}:", value])
+        writer.writerow([]) # Empty_row
+
+        header = ['ID Historia', 'Paciente', 'Edad', 'Tipo', 'Genetista', 'Fecha Ingreso']
+        writer.writerow(header)
+        for item in report_data:
+            writer.writerow([item[col] for col in header])
+        return response
+
+    elif export_format == 'pdf':
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=18)
+        elements = []
+        styles = getSampleStyleSheet()
+
+        elements.append(Paragraph("Reporte de Historias Clínicas Genéticas", styles['h1']))
+        elements.append(Spacer(1, 0.2*72)) # 0.2 inch space
+
+        if applied_filters_display:
+            elements.append(Paragraph("Filtros Aplicados:", styles['h3']))
+            for key, value in applied_filters_display.items():
+                elements.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+            elements.append(Spacer(1, 0.2*72))
+        
+        header = ['ID Historia', 'Paciente', 'Edad', 'Tipo', 'Genetista', 'Fecha Ingreso']
+        table_data = [header]
+        for item in report_data:
+            table_data.append([
+                str(item['ID Historia']), 
+                item['Paciente'], 
+                str(item['Edad']), 
+                item['Tipo'], 
+                item['Genetista'], 
+                item['Fecha Ingreso']
+            ])
+
+        if not report_data: # No data found
+            table_data.append(["No se encontraron registros con los filtros aplicados.", "", "", "", "", ""])
+
+
+        # Basic table style
+        # Column widths (approximate, adjust as needed for landscape)
+        # Total width for letter landscape is 11*72 = 792. Margins 30+30 = 60. Usable = 732
+        col_widths = [0.8*72, 2.5*72, 0.5*72, 1.0*72, 1.5*72, 1.0*72] 
+        
+        table = Table(table_data, colWidths=col_widths)
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0,0), (-1,-1), 8), # Smaller font for more data
+        ])
+        table.setStyle(style)
+        elements.append(table)
+
+        doc.build(elements)
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="reporte_genetico_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+        return response
+
+    return HttpResponse("Formato de exportación no soportado.", status=400)
 
 
 @login_required

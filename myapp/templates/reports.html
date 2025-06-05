@@ -1,0 +1,220 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <title>REPORTES | IIG - LUZ</title>
+    <link rel="stylesheet" href="{% static '/styles/reports.css' %}">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Optional: Style for pareja-row if you want visual distinction beyond CSS file */
+        .pareja-row {
+            background-color: #f0f8ff; /* AliceBlue, example color */
+        }
+        .filter-group select, .filter-group input[type="text"] {
+            width: 100%; /* Ensure form elements take full width of their group */
+        }
+         /* Ensure buttons in filter-actions align well */
+        .filter-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end; /* Align buttons to the bottom */
+            padding-top: 1.7rem; /* Adjust as needed if labels cause misalignment */
+        }
+    </style>
+</head>
+
+<div class="main-content">
+    <main class="barra-content">
+        <header class="content-header">
+            <div class="breadcrumb">
+                <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+                <span class="breadcrumb-separator">></span>
+                <span class="breadcrumb-item active">Reportes</span>
+            </div>
+        </header>
+
+        <!-- Contenido del reporte-->
+        <div class="reports-content">
+            <!-- Header -->
+            <div class="contenido-header">
+                <div class="header-content">
+                    <h1>Reportes Genéticos</h1>
+                    <p>Análisis y reportes de historias clínicas genéticas</p>
+                </div>
+                <div class="header-actions">
+                    {% comment %} For Export, direct GET to the export URL is simpler than hidden form for this case {% endcomment %}
+                    <button class="btn-outline" id="btn-export-pdf">
+                        <i class="fas fa-download"></i>
+                        Exportar PDF
+                    </button>
+                     <button class="btn-outline" id="btn-export-csv">
+                        <i class="fas fa-file-csv"></i>
+                        Exportar CSV
+                    </button>
+                    <a href="{% url 'reports_dashboard' %}" class="btn-primary">
+                        <i class="fas fa-file-alt"></i>
+                        Nuevo Reporte
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
+                    <p>Utiliza los filtros para encontrar información específica</p>
+                </div>
+                <div class="card-content">
+                    <form method="GET" action="{% url 'reports_dashboard' %}" id="report-search-form">
+                        {% csrf_token %} {# Though for GET form, CSRF is not strictly needed, good practice if it ever becomes POST #}
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="{{ form.buscar_paciente.id_for_label }}">{{ form.buscar_paciente.label }}</label>
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    {{ form.buscar_paciente }}
+                                </div>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="{{ form.date_range.id_for_label }}">{{ form.date_range.label }}</label>
+                                <div class="date-range-picker">
+                                    {{ form.date_range }}
+                                </div>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="{{ form.tipo_registro.id_for_label }}">{{ form.tipo_registro.label }}</label>
+                                {{ form.tipo_registro }}
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="{{ form.genetista.id_for_label }}">{{ form.genetista.label }}</label>
+                                {{ form.genetista }}
+                            </div>
+                            
+                            {% comment %} Diagnóstico filter is disabled as per requirement
+                            <div class="filter-group">
+                                <label>Diagnóstico</label>
+                                <select name="diagnóstico_disabled" id="diagnóstico_disabled" disabled>
+                                    <option value="">Seleccionar diagnóstico (Deshabilitado)</option>
+                                </select>
+                            </div>
+                            {% endcomment %}
+
+                            <div class="filter-actions">
+                                <button type="submit" class="btn-buscar">
+                                    <i class="fas fa-search"></i>
+                                    Buscar
+                                </button>
+                                <a href="#" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if search_attempted %}
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Resultados de Búsqueda</h2>
+                    {% if results %}
+                        <p>{{ results|length }} registro(s) encontrado(s).</p>
+                    {% else %}
+                        <p>No se encontraron registros con los filtros aplicados.</p>
+                    {% endif %}
+                </div>
+                <div class="card-content">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID Historia</th>
+                                    <th>Paciente</th>
+                                    <th>Edad</th>
+                                    <th>Tipo</th>
+                                    <th>Genetista</th>
+                                    <th>Fecha Ingreso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in results %}
+                                <tr class="{{ item.is_pareja_member_css_class }}">
+                                    <td>{{ item.id_historia }}</td>
+                                    <td>{{ item.paciente_nombre }}</td>
+                                    <td>{{ item.edad }}</td>
+                                    <td>{{ item.tipo }}</td>
+                                    <td>{{ item.genetista_nombre }}</td>
+                                    <td>{{ item.fecha_ingreso }}</td>
+                                </tr>
+                                {% empty %}
+                                    {% if search_attempted %}
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;">No se encontraron registros.</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </main>
+</div>
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize the date range picker
+        var flatpickrInstance = flatpickr("#date-range-flatpickr", { // Target the ID from the form widget
+            mode: "range",
+            dateFormat: "d/m/Y", // Format used in Python clean method
+            locale: "es",
+            // defaultDate: ["20/01/2024", "09/02/2024"], // Example, remove if not needed or get from query params
+            allowInput: true // Allows manual input, validation is good
+        });
+
+        // Limpiar button functionality
+        const btnLimpiar = document.getElementById('btn-limpiar-filters');
+        if (btnLimpiar) {
+            btnLimpiar.addEventListener('click', function (e) {
+                e.preventDefault();
+                const searchForm = document.getElementById('report-search-form');
+                if (searchForm) {
+                    searchForm.reset(); // Resets standard form fields
+                }
+                if (flatpickrInstance) {
+                    flatpickrInstance.clear(); // Clears the flatpickr date
+                }
+                // Optionally, you might want to clear URL parameters and reload
+                // window.location.href = "{% url 'reports_dashboard' %}"; 
+            });
+        }
+
+        // Export buttons functionality
+        function setupExportButton(buttonId, exportFormat) {
+            const exportButton = document.getElementById(buttonId);
+            if (exportButton) {
+                exportButton.addEventListener('click', function() {
+                    const form = document.getElementById('report-search-form');
+                    const params = new URLSearchParams(new FormData(form)).toString();
+                    const exportUrl = `{% url 'export_report_data' export_format='TEMP_FORMAT' %}?${params}`.replace('TEMP_FORMAT', exportFormat);
+                    window.open(exportUrl, '_blank');
+                });
+            }
+        }
+        setupExportButton('btn-export-pdf', 'pdf');
+        setupExportButton('btn-export-csv', 'csv');
+
+    });
+</script>
+
+<script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+{% endblock %}
