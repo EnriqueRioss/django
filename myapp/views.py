@@ -9,8 +9,11 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from functools import wraps
+from django.urls import reverse 
 import csv
 from datetime import datetime
+
+
 
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, landscape
@@ -399,13 +402,13 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         context_object_name = f"{proposito_obj.nombres} {proposito_obj.apellidos}"
         instance_to_edit = AntecedentesFamiliaresPreconcepcionales.objects.filter(proposito=proposito_obj).first()
     elif tipo == 'pareja':
-        pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id)
+        pareja_obj = get_object_or_404(Parejas.objects.select_related('proposito_id_1', 'proposito_id_2'), pareja_id=objeto_id)
         if user_gen_profile.rol == 'GEN':
             p1_hist_gen = pareja_obj.proposito_id_1.historia.genetista if pareja_obj.proposito_id_1.historia else None
             p2_hist_gen = pareja_obj.proposito_id_2.historia.genetista if pareja_obj.proposito_id_2 and pareja_obj.proposito_id_2.historia else None
             if not (p1_hist_gen == user_gen_profile or p2_hist_gen == user_gen_profile) :
                  raise PermissionDenied("No tiene permiso para esta acción sobre la pareja.")
-        context_object_name = f"Pareja ID: {pareja_obj.pareja_id}"
+        context_object_name = f"Pareja: {pareja_obj.proposito_id_1.nombres} y {pareja_obj.proposito_id_2.nombres}"
         instance_to_edit = AntecedentesFamiliaresPreconcepcionales.objects.filter(pareja=pareja_obj).first()
     else:
         messages.error(request, 'Tipo de objeto no válido.')
@@ -415,16 +418,36 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         form = AntecedentesPreconcepcionalesForm(request.POST) 
         if form.is_valid():
             try:
+                # Guardar los datos primero, independientemente del botón presionado
                 target_proposito = proposito_obj if tipo == 'proposito' else None
                 target_pareja = pareja_obj if tipo == 'pareja' else None
                 form.save(proposito=target_proposito, pareja=target_pareja, tipo=tipo) 
+                
                 action_verb = "actualizados" if instance_to_edit else "guardados"
-                messages.success(request, f"Antecedentes preconcepcionales {action_verb} para {context_object_name}.")
-                if tipo == 'proposito' and proposito_obj:
+                messages.success(request, f"Antecedentes preconcepcionales {action_verb}.")
+
+                # --- INICIO DE MODIFICACIÓN: Lógica de redirección basada en el botón ---
+                if 'save_and_exam_proposito' in request.POST:
                     return redirect('examen_fisico_crear_editar', proposito_id=proposito_obj.proposito_id)
-                elif tipo == 'pareja' and pareja_obj:
-                    return redirect('evaluacion_genetica_detalle', historia_id=historia.historia_id, tipo="pareja", objeto_id=pareja_obj.pareja_id)
-                else: return redirect('index')
+                
+                elif 'save_and_exam_p1' in request.POST:
+                    # Usamos HttpResponseRedirect con reverse para añadir el query param
+                    redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': pareja_obj.proposito_id_1.proposito_id}) + f"?pareja_id={pareja_obj.pareja_id}"
+                    return HttpResponseRedirect(redirect_url)
+                
+                elif 'save_and_exam_p2' in request.POST:
+                    redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': pareja_obj.proposito_id_2.proposito_id}) + f"?pareja_id={pareja_obj.pareja_id}"
+                    return HttpResponseRedirect(redirect_url)
+
+                # Acción por defecto (botón principal de "Continuar")
+                else:
+                    if tipo == 'proposito' and proposito_obj:
+                        return redirect('evaluacion_genetica_detalle', historia_id=historia.historia_id, tipo="proposito", objeto_id=proposito_obj.proposito_id)
+                    elif tipo == 'pareja' and pareja_obj:
+                        return redirect('evaluacion_genetica_detalle', historia_id=historia.historia_id, tipo="pareja", objeto_id=pareja_obj.pareja_id)
+                
+                # --- FIN DE MODIFICACIÓN ---
+
             except Exception as e:
                 messages.error(request, f'Error al guardar antec. preconcepcionales: {str(e)}')
         else:
@@ -439,6 +462,8 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
     context = {'form': form, 'historia': historia, 'tipo': tipo, 'objeto': proposito_obj or pareja_obj, 'context_object_name': context_object_name, 'editing': bool(instance_to_edit)}
     return render(request, 'antecedentes_preconcepcionales.html', context)
 
+
+
 @login_required
 @genetista_or_admin_required
 def crear_examen_fisico(request, proposito_id):
@@ -448,7 +473,23 @@ def crear_examen_fisico(request, proposito_id):
         raise PermissionDenied("No tiene permiso para modificar el examen físico de este propósito.")
 
     examen_existente = ExamenFisico.objects.filter(proposito=proposito).first()
-
+    
+    pareja = None
+    otro_proposito = None
+    # Necesitamos el ID del propósito que falta para saber si ya no hay más exámenes que hacer
+    otro_proposito_id_faltante = None
+    pareja_id = request.GET.get('pareja_id') or request.POST.get('pareja_id')
+    if pareja_id:
+        pareja = get_object_or_404(Parejas.objects.select_related('proposito_id_1', 'proposito_id_2'), pk=pareja_id)
+        if proposito.pk == pareja.proposito_id_1.pk:
+            otro_proposito = pareja.proposito_id_2
+        else:
+            otro_proposito = pareja.proposito_id_1
+        
+        # Verificamos si el 'otro_proposito' ya tiene un examen físico
+        if otro_proposito and not ExamenFisico.objects.filter(proposito=otro_proposito).exists():
+             otro_proposito_id_faltante = otro_proposito.proposito_id
+    
     if request.method == 'POST':
         form = ExamenFisicoForm(request.POST, instance=examen_existente)
         form.proposito_instance = proposito 
@@ -456,13 +497,33 @@ def crear_examen_fisico(request, proposito_id):
             form.save()
             action_verb = "actualizado" if examen_existente else "guardado"
             messages.success(request, f"Examen físico para {proposito.nombres} {action_verb}.")
-            return redirect('evaluacion_genetica_detalle', historia_id=proposito.historia.historia_id, tipo="proposito", objeto_id=proposito.proposito_id)
+
+            if 'save_and_go_to_other' in request.POST and otro_proposito:
+                messages.info(request, f"Ahora puede completar el examen para {otro_proposito.nombres}.")
+                # Se necesita el pareja_id para mantener el contexto
+                redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': otro_proposito.proposito_id}) + f"?pareja_id={pareja.pareja_id}"
+                return HttpResponseRedirect(redirect_url)
+            
+            # Botón principal "Guardar y Continuar"
+            if pareja:
+                return redirect('evaluacion_genetica_detalle', historia_id=proposito.historia.historia_id, tipo="pareja", objeto_id=pareja.pareja_id)
+            else:
+                return redirect('evaluacion_genetica_detalle', historia_id=proposito.historia.historia_id, tipo="proposito", objeto_id=proposito.proposito_id)
         else:
             messages.error(request, "No se pudo guardar Examen Físico. Corrija errores.")
     else: 
         form = ExamenFisicoForm(instance=examen_existente)
         if examen_existente: messages.info(request, f"Editando examen físico para {proposito.nombres}.")
-    return render(request, 'examen_fisico.html', {'form': form, 'proposito': proposito, 'editing': bool(examen_existente)})
+
+    context = {
+        'form': form, 
+        'proposito': proposito, 
+        'editing': bool(examen_existente),
+        'pareja': pareja,
+        'otro_proposito': otro_proposito,
+        'otro_proposito_id_faltante': otro_proposito_id_faltante
+    }
+    return render(request, 'examen_fisico.html', context)
 
 @login_required
 @all_roles_required # All roles can view, but data scoped inside
@@ -545,8 +606,11 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
                 PlanEstudio.objects.filter(evaluacion=evaluacion_instance).delete()
                 for form_data_plan in plan_formset.cleaned_data: 
                     if form_data_plan and not form_data_plan.get('DELETE', False) and form_data_plan.get('accion'): 
-                        PlanEstudio.objects.create(evaluacion=evaluacion_instance, accion=form_data_plan['accion'], fecha_limite=form_data_plan.get('fecha_limite'), completado=form_data_plan.get('completado', False))
-            messages.success(request, "Evaluación genética guardada.")
+                        PlanEstudio.objects.create(
+                            evaluacion=evaluacion_instance, 
+                            accion=form_data_plan['accion'],
+                            asesoramiento_evoluciones=form_data_plan.get('asesoramiento_evoluciones') # Añadir este campo
+                        )
             messages.info(request, "POPUP:Historia Clínica Genética completada y guardada.") 
             return redirect('index')
         else:
@@ -560,7 +624,7 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
         signos_form = SignosClinicosForm(instance=evaluacion)
         diagnosticos_initial = [{'descripcion': d.descripcion, 'orden': d.orden} for d in DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion).order_by('orden')]
         diagnostico_formset = DiagnosticoPresuntivoFormSet(prefix='diagnosticos', initial=diagnosticos_initial or [{'orden':0}])
-        planes_initial = [{'accion': p.accion, 'fecha_limite': p.fecha_limite, 'completado': p.completado} for p in PlanEstudio.objects.filter(evaluacion=evaluacion).order_by('pk')] 
+        planes_initial = [{'accion': p.accion, 'asesoramiento_evoluciones': p.asesoramiento_evoluciones} for p in PlanEstudio.objects.filter(evaluacion=evaluacion).order_by('pk')]
         plan_formset = PlanEstudioFormSet(prefix='plans', initial=planes_initial or [{}])
         if created: messages.info(request, "Iniciando nueva evaluación genética.")
         else: messages.info(request, f"Editando evaluación para {context_object_name}.")
@@ -1069,8 +1133,100 @@ def pacientes_redirect_view(request):
     
 
 @login_required
+@admin_required # Asegura que solo los administradores puedan acceder
 def gestion_pacientes_view(request):
-    return  render (request, "gestion_pacientes.html")
+    # --- 1. Cálculo de estadísticas para las tarjetas ---
+    total_pacientes = Propositos.objects.count()
+    pacientes_activos = Propositos.objects.filter(estado=Propositos.ESTADO_ACTIVO).count()
+    pacientes_inactivos = Propositos.objects.filter(estado=Propositos.ESTADO_INACTIVO).count()
+    historias_clinicas_count = HistoriasClinicas.objects.count()
+    analisis_pendientes_count = PlanEstudio.objects.filter(completado=False).count()
+
+    # Estadísticas basadas en fecha (ej. "nuevos este mes")
+    now = timezone.now()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    nuevos_pacientes_mes = Propositos.objects.filter(historia__fecha_ingreso__gte=start_of_month).count()
+    nuevas_historias_mes = HistoriasClinicas.objects.filter(fecha_ingreso__gte=start_of_month).count()
+
+    # Porcentajes
+    porcentaje_activos = (pacientes_activos / total_pacientes * 100) if total_pacientes > 0 else 0
+
+    # --- 2. Lógica para la lista de pacientes y filtros ---
+    
+    # Usaremos el ReportSearchForm que ya es bastante completo
+    form = ReportSearchForm(request.GET or None, user=request.user)
+    pacientes_qs = Propositos.objects.none()
+    search_attempted = bool(request.GET)
+
+    if form.is_valid():
+        query_paciente = form.cleaned_data.get('buscar_paciente')
+        date_range_val = form.cleaned_data.get('date_range') # No está en el HTML, pero el form lo soporta
+        # El HTML tiene un filtro de estado, pero el form no. Lo manejaremos manualmente.
+        estado_filter = request.GET.get('estado', '') # El name del select de estado en el HTML
+        genetista_obj_from_form = form.cleaned_data.get('genetista')
+
+        # Annotate con el conteo de análisis pendientes por paciente
+        base_qs = Propositos.objects.select_related(
+            'historia', 
+            'historia__genetista__user'
+        ).annotate(
+            plan_estudio_pendiente_count=Count(
+                'evaluaciongenetica__planes_estudio',
+                filter=Q(evaluaciongenetica__planes_estudio__completado=False)
+            )
+        ).order_by('-historia__fecha_ingreso')
+
+        # Como es vista de admin, empezamos con todos los pacientes
+        pacientes_qs = base_qs
+
+        # Aplicar filtros
+        if genetista_obj_from_form:
+            pacientes_qs = pacientes_qs.filter(historia__genetista=genetista_obj_from_form)
+
+        if query_paciente:
+            pacientes_qs = pacientes_qs.filter(
+                Q(nombres__icontains=query_paciente) | 
+                Q(apellidos__icontains=query_paciente) | 
+                Q(identificacion__icontains=query_paciente)
+            )
+        
+        if estado_filter:
+            pacientes_qs = pacientes_qs.filter(estado=estado_filter)
+    
+    # Si no hay búsqueda, mostramos todos los pacientes por defecto
+    if not search_attempted:
+        pacientes_qs = Propositos.objects.select_related(
+            'historia', 
+            'historia__genetista__user'
+        ).annotate(
+            plan_estudio_pendiente_count=Count(
+                'evaluaciongenetica__planes_estudio',
+                filter=Q(evaluaciongenetica__planes_estudio__completado=False)
+            )
+        ).order_by('-historia__fecha_ingreso')
+
+
+    context = {
+        # Datos para las tarjetas
+        'total_pacientes': total_pacientes,
+        'pacientes_activos': pacientes_activos,
+        'pacientes_inactivos': pacientes_inactivos,
+        'historias_clinicas_count': historias_clinicas_count,
+        'analisis_pendientes_count': analisis_pendientes_count,
+        'nuevos_pacientes_mes': nuevos_pacientes_mes,
+        'nuevas_historias_mes': nuevas_historias_mes,
+        'porcentaje_activos': porcentaje_activos,
+        
+        # Datos para la lista y filtros
+        'form': form, # Pasamos el form para los filtros
+        'pacientes_list': pacientes_qs,
+        'pacientes_count': pacientes_qs.count(),
+        'search_attempted': search_attempted,
+        'current_estado_filter': request.GET.get('estado', ''), # Para mantener el valor del filtro
+    }
+    return render(request, "gestion_pacientes.html", context)
+    
 
 
 

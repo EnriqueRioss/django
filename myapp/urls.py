@@ -18,7 +18,7 @@ urlpatterns = [
     path('logout/', views.signout, name="logout"),
 
     # Role-specific "Pacientes" list access points
-    path('pacientes/admin/', views.pacientes_admin_view, name="pacientes_admin_list"),
+    path('pacientes/admin/', views.gestion_pacientes_view, name="pacientes_admin_list"),
     path('pacientes/genetista/', views.pacientes_genetista_view, name="pacientes_genetista_list"),
     path('pacientes/lector/<int:genetista_id>/', views.pacientes_lector_view, name="pacientes_lector_list"),
     # Redirector for the generic "Pacientes" sidebar link
@@ -45,7 +45,7 @@ urlpatterns = [
     path('gestion/usuarios/toggle-status/<int:user_id>/', views.toggle_user_active_status, name='toggle_user_active'),
     path('gestion/usuarios/delete/<int:user_id>/', views.delete_user_admin, name='delete_user_admin'),
 
-     path('gestion_pacientes/', views.gestion_pacientes_view, name="gestion_pacientes"),
+ 
 
 
 ]

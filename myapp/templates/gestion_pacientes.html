@@ -29,10 +29,10 @@
                         <h1>Gestión de Pacientes</h1>
                         <p>Administra pacientes e historias clínicas genéticas</p>
                     </div>
-                   <!-- <button class="btn-outline">
+                   <a href="{% url 'historia_crear' %}" class="btn-outline">
                         <i class="fas fa-user-plus" class="btn-icon"></i>
                         Nuevo Paciente
-                    </button> -->
+                    </a>
                 </div>
 
                 <!-- Tarjetas de estadísticas -->
@@ -43,8 +43,8 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="stat-content">
-                            <h2>1.247</h2>
-                            <p class="card-description">+12 nuevos este mes</p>
+                            <h2>{{ total_pacientes|default:"0" }}</h2>
+                            <p class="card-description">+{{ nuevos_pacientes_mes|default:"0" }} nuevos este mes</p>
                         </div>
                     </div>
 
@@ -54,19 +54,30 @@
                             <i class="fas fa-eye"></i>
                         </div>
                         <div class="stat-content">
-                            <h2>1.089</h2>
-                            <p>87.3% del total</p>
+                            <h2>{{ pacientes_activos|default:"0" }}</h2>
+                            <p>{{ porcentaje_activos|floatformat:1 }}% del total</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Pacientes Inactivos</h3>
+                             <i class="fas fa-user-slash"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h2>{{ pacientes_inactivos|default:"0" }}</h2>
+                            <p>Pacientes en archivo</p>
                         </div>
                     </div>
 
                     <div class="stat-card">
                         <div class="stat-header">
                             <h3>Historias Clínicas</h3>
-                            <i class="fas fa-file"></i>
+                            <i class="fas fa-file-medical"></i>
                         </div>
                         <div class="stat-content">
-                            <h2>3.891</h2>
-                            <p>+156 este mes</p>
+                            <h2>{{ historias_clinicas_count|default:"0" }}</h2>
+                            <p>+{{ nuevas_historias_mes|default:"0" }} este mes</p>
                         </div>
                     </div>
 
@@ -76,7 +87,7 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-content">
-                            <h2>23</h2>
+                            <h2>{{ analisis_pendientes_count|default:"0" }}</h2>
                             <p>Requieren atención</p>
                         </div>
                     </div>
@@ -87,58 +98,52 @@
                     <div class="tarjeta-header">
                         <h3><i class="fas fa-filter"></i>Filtros de Búsqueda</h3>
                     </div>
-                    <div class="card-content">
-                        <div class="filters-grid">
-                            <div class="filter-group">
-                                <label for="buscar-paciente">Buscar paciente</label>
-                                <div class="search-input">
-                                    <i class="fas fa-search"></i>
-                                    <input type="text" placeholder="Buscar paciente...">
+                    <form method="get" action="{% url 'pacientes_admin_list' %}">
+                        <div class="card-content">
+                            <div class="filters-grid">
+                                <div class="filter-group">
+                                    <label for="buscar-paciente-input">Buscar paciente</label>
+                                    <div class="search-input">
+                                        <i class="fas fa-search"></i>
+                                        {{ form.buscar_paciente }}
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="filter-group">
-                                <label for="Estado">Estado</label>
-                                <div class="state-select">
-                                    <select>
-                                        <option value="">Estado</option>
-                                        <option value="all">Todos</option>
-                                        <option value="active">Activo</option>
-                                        <option value="follow">Seguimiento</option>
-                                        <option value="inactive">Inactivo</option>
-                                    </select>
+                                
+                                <div class="filter-group">
+                                    <label for="estado-select">Estado</label>
+                                    <div class="state-select">
+                                        <select name="estado" id="estado-select">
+                                             <option value="">Todos los Estados</option>
+                                             <option value="activo" {% if 'activo' == current_estado_filter %}selected{% endif %}>Activo</option>
+                                             <option value="inactivo" {% if 'inactivo' == current_estado_filter %}selected{% endif %}>Inactivo</option>
+                                             <option value="en_seguimiento" {% if 'en_seguimiento' == current_estado_filter %}selected{% endif %}>En Seguimiento</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                    
-                            <div class="filter-group">
-                                <label for="Genetista">Genetista</label>
-                                <div class="genetista-select">
-                                    <select>
-                                        <option value="">Genetista</option>
-                                        <option value="all">Todos</option>
-                                        <option value="garcia">Dr. García</option>
-                                        <option value="lopez">Dra. López</option>
-                                        <option value="ruiz">Dra. Ruiz</option>
-                                    </select>
+                                
+                                <div class="filter-group">
+                                    <label for="genetista-select">Genetista</label>
+                                    <div class="genetista-select">
+                                        {{ form.genetista }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="filter-actions">
-                                <button type="submit" class="btn-buscar">
-                                    <i class="fas fa-search"></i>
-                                    Buscar
-                                </button>
-                                <a href="#" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
+                                <div class="filter-actions">
+                                    <button type="submit" class="btn-buscar">
+                                        <i class="fas fa-search"></i>
+                                        Buscar
+                                    </button>
+                                    <a href="{% url 'pacientes_admin_list' %}" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <!-- Tabla de pacientes -->
                 <div class="content-card">
                     <div class="card-header">
                         <h3>Lista de Pacientes</h3>
-                        <p>4 pacientes registrados</p>
+                        <p>{{ pacientes_count }} paciente{{ pacientes_count|pluralize }} encontrado{{ pacientes_count|pluralize }}</p>
                     </div>
                     <div class="card-content">
                         <div class="table-container">
@@ -151,59 +156,80 @@
                                         <th>Genetista</th>
                                         <th>Última Visita</th>
                                         <th>Estado</th>
-                                        <th>Historias</th>
+                                        <th>Historia ID / Pendientes
+                                        </th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for proposito in pacientes_list %}
                                     <tr>
                                         <td>
-                                            <div class="patient-info">
-                                                <div class="patient-avatar">
-                                                    <img src="/placeholder.svg" alt="Avatar" class="avatar-img">
-                                                    <span class="avatar-fallback">MG</span>
+                                            <a href="{% url 'pacientes_admin_list' %}" class="patient-info-link">
+                                                <div class="patient-info">
+                                                    <div class="patient-avatar">
+                                                         {% if proposito.foto %}
+                                                            <img src="{{ proposito.foto.url }}" alt="Avatar" class="avatar-img">
+                                                        {% else %}
+                                                            <span class="avatar-fallback">{{ proposito.nombres|first }}{{ proposito.apellidos|first }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="patient-details">
+                                                        <div class="patient-name">{{ proposito.nombres }} {{ proposito.apellidos }}</div>
+                                                        <div class="patient-id">ID: {{ proposito.identificacion }}</div>
+                                                    </div>
                                                 </div>
-                                                <div class="patient-details">
-                                                    <div class="patient-name">María González</div>
-                                                    <div class="patient-id">P001</div>
-                                                </div>
-                                            </div>
+                                            </a>
                                         </td>
-                                        <td>34 años</td>
+                                        <td>{{ proposito.edad|default_if_none:"N/A" }} años</td>
                                         <td>
                                             <div class="contact-info">
+                                                {% if proposito.telefono %}
                                                 <div class="contact-item">
-                                                    <i class="fas fa-phone" class="contact-icon"></i>
-                                                    +34 612 345 678
+                                                    <i class="fas fa-phone contact-icon"></i>
+                                                    {{ proposito.telefono }}
                                                 </div>
+                                                {% endif %}
+                                                {% if proposito.email %}
                                                 <div class="contact-item muted">
-                                                    <i class="fas fa-envelope" class="contact-icon"></i>
-                                                    maria.gonzalez@email.com
+                                                    <i class="fas fa-envelope contact-icon"></i>
+                                                    {{ proposito.email }}
                                                 </div>
+                                                {% endif %}
                                             </div>
                                         </td>
-                                        <td>Dr. García</td>
-                                        <td>2024-01-15</td>
+                                        <td>{{ proposito.historia.genetista.user.get_full_name|default:"N/A" }}</td>
+                                        <td>{{ proposito.historia.fecha_ingreso|date:"Y-m-d" }}</td>
                                         <td>
-                                            <span class="badge badge-active">Activo</span>
+                                            {# Usamos el valor del estado para la clase CSS (ej. badge-activo) #}
+                                            <span class="badge badge-{{ proposito.estado|slugify }}">{{ proposito.get_estado_display }}</span>
                                         </td>
                                         <td>
                                             <div class="history-badges">
-                                                <span class="badge">3 HC</span>
-                                                <span class="badge badge-danger">1 pendiente</span>
+                                                {% if proposito.historia %}
+                                                    <span class="badge">HC {{ proposito.historia.numero_historia }}</span>
+                                                {% endif %}
+                                                {% if proposito.plan_estudio_pendiente_count > 0 %}
+                                                    <span class="badge badge-danger">{{ proposito.plan_estudio_pendiente_count }} pendiente{{ proposito.plan_estudio_pendiente_count|pluralize }}</span>
+                                                {% endif %}
                                             </div>
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                <button class="btn btn-icon">
+                                                <a href="{% url 'pacientes_admin_list' %}" class="btn btn-icon" title="Ver Paciente">
                                                     <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="btn btn-icon">
+                                                </a>
+                                                <a href="#" class="btn btn-icon" title="Editar Paciente"> <!-- TODO: Añadir URL de edición si existe -->
                                                     <i class="fas fa-edit"></i>
-                                                </button>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" style="text-align: center; padding: 20px;">No se encontraron pacientes que coincidan con los filtros.</td>
+                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>   
@@ -211,7 +237,8 @@
                 </div>
             </div>
         </main>
-      
+    </div>
+  </div>
 
   <!-- Modal de detalle de paciente -->
   <div class="modal hidden">

@@ -313,13 +313,13 @@ class EvaluacionGenetica(models.Model):
     evaluacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
         'Propositos',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE, # Importante: Esto ya asegura que si Proposito se borra, EvaluacionGenetica se borra
         null=True,
         blank=True
     )
     pareja = models.ForeignKey(
         'Parejas',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE, # Importante: Esto ya asegura que si Pareja se borra, EvaluacionGenetica se borra
         null=True,
         blank=True
     )
@@ -333,13 +333,13 @@ class EvaluacionGenetica(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) |
-                    models.Q(proposito__isnull=True, pareja__isnull=False)
-                ),
-                name='check_evaluacion_proposito_or_pareja'
-            ),
+            # models.CheckConstraint(  # <--- COMENTA O ELIMINA ESTA SECCIÓN
+            #     check=(
+            #         models.Q(proposito__isnull=False, pareja__isnull=True) |
+            #         models.Q(proposito__isnull=True, pareja__isnull=False)
+            #     ),
+            #     name='check_evaluacion_proposito_or_pareja'
+            # ),                                # <--- HASTA AQUÍ
             models.UniqueConstraint(
                 fields=['proposito'],
                 name='unique_evaluacion_proposito',
@@ -352,7 +352,7 @@ class EvaluacionGenetica(models.Model):
             )
         ]
 
-    def clean(self):
+    def clean(self): # Tu validación a nivel de aplicación sigue aquí y es crucial
         if self.proposito and self.pareja:
             raise ValidationError("La evaluación genética no puede estar relacionada con un propósito y una pareja al mismo tiempo.")
         if not self.proposito and not self.pareja:
@@ -369,7 +369,6 @@ class EvaluacionGenetica(models.Model):
         elif self.pareja:
             return f"Evaluación Genética de Pareja {self.pareja_id if self.pareja else 'N/A'}"
         return f"Evaluación Genética ID: {self.evaluacion_id}"
-
 
 class DiagnosticoPresuntivo(models.Model):
     diagnostico_id = models.AutoField(primary_key=True)
@@ -406,20 +405,25 @@ class PlanEstudio(models.Model):
         help_text="Describa un paso del plan de estudio"
     )
     completado = models.BooleanField(default=False)
-    fecha_limite = models.DateField(
+    fecha_visita = models.DateField(
         null=True,
         blank=True,
-        verbose_name="Fecha límite"
+        verbose_name="Fecha de Visita"
+    )
+    asesoramiento_evoluciones = models.TextField(
+        verbose_name="Asesoramiento y Evoluciones",
+        null=True,
+        blank=True
     )
 
     class Meta:
-        ordering = ['fecha_limite']
+        ordering = ['fecha_visita']
         verbose_name_plural = "Planes de Estudio"
 
-    def clean(self):
-        if self.fecha_limite and self.fecha_limite < timezone.now().date() and not self.completado:
-            raise ValidationError("La fecha límite no puede ser en el pasado para un plan no completado.")
-        super().clean()
+    def save(self, *args, **kwargs):
+        if self.completado and not self.fecha_visita:
+            self.fecha_visita = timezone.now().date()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.accion[:30]}... ({'Completado' if self.completado else 'Pendiente'})"
@@ -705,6 +709,17 @@ class PeriodoNeonatal(models.Model):
         return f"Periodo Neonatal {self.neonatal_id}"
 
 class Propositos(models.Model):
+    # Opciones para el campo de estado
+    ESTADO_ACTIVO = 'activo'
+    ESTADO_INACTIVO = 'inactivo'
+    ESTADO_SEGUIMIENTO = 'en_seguimiento'
+    
+    ESTADO_CHOICES = [
+        (ESTADO_ACTIVO, 'Activo'),
+        (ESTADO_INACTIVO, 'Inactivo'),
+        (ESTADO_SEGUIMIENTO, 'En Seguimiento'),
+    ]
+
     proposito_id = models.AutoField(primary_key=True)
     historia = models.ForeignKey('HistoriasClinicas', on_delete=models.CASCADE, null=True, blank=True)
     nombres = models.CharField(max_length=100)
@@ -721,6 +736,15 @@ class Propositos(models.Model):
     grupo_sanguineo = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('AB', 'AB'), ('O', 'O')], null=True, blank=True)
     factor_rh = models.CharField(max_length=10, choices=[('Positivo', 'Positivo'), ('Negativo', 'Negativo')], null=True, blank=True)
     foto = models.ImageField(upload_to='propositos_fotos/', null=True, blank=True)
+    
+    # --- CAMPO AÑADIDO ---
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default=ESTADO_ACTIVO, # Por defecto se crea como 'Activo'
+        verbose_name="Estado del Propósito"
+    )
 
     def __str__(self):
-        return f"{self.nombres} {self.apellidos} (ID: {self.identificacion})"
+        # Actualizamos el __str__ para que muestre el estado
+        return f"{self.nombres} {self.apellidos} (ID: {self.identificacion}) - {self.get_estado_display()}"

@@ -703,6 +703,7 @@ class DiagnosticoPresuntivoForm(forms.Form):
         required=False,
         initial=0
     )
+   
 
     def clean_descripcion(self):
         descripcion = self.cleaned_data.get('descripcion')
@@ -730,29 +731,12 @@ class PlanEstudioForm(forms.Form):
         }),
         strip=True
     )
-    fecha_limite = forms.DateField(
-        label="Fecha Límite (Opcional)",
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'form-control plan-fecha_limite'
-        }),
-        required=False
-    )
-    completado = forms.BooleanField(
-        label="Completado",
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input plan-completado'
-        })
-    )
-
+ 
     def clean_accion(self):
         accion = self.cleaned_data.get('accion')
         return accion
 
-    def clean_fecha_limite(self):
-        fecha = self.cleaned_data.get('fecha_limite')
-        return fecha
+
 
 PlanEstudioFormSet = formset_factory(
     PlanEstudioForm,

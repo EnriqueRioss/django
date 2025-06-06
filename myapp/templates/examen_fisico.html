@@ -199,7 +199,20 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit">Siguiente</button> {# Changed from Guardar to Siguiente #}
+            {% if pareja %}
+                {# Flujo de pareja #}
+                <button type="submit" name="save_and_finish" class="btn-primary">
+                    <i class="fas fa-check-double"></i> Guardar y Continuar a Evaluación (Pareja)
+                </button>
+                {% if otro_proposito %}
+                <button type="submit" name="save_and_go_to_other" class="btn-secondary">
+                    <i class="fas fa-arrow-right"></i> Guardar e Ir a Examen de {{ otro_proposito.nombres }}
+                </button>
+                {% endif %}
+            {% else %}
+                {# Flujo de propósito individual #}
+                <button type="submit" name="save_and_finish" class="btn-primary">Siguiente</button>
+            {% endif %}
         </div>
     </form>
 </div>
