@@ -4,18 +4,20 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction, IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from functools import wraps
 import csv
 from datetime import datetime
+
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from django.contrib.auth.models import User
 
 from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
@@ -28,7 +30,7 @@ from .forms import (
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
     ExamenFisicoForm, ParejaPropositosForm, SignosClinicosForm,
     DiagnosticoPresuntivoFormSet, PlanEstudioFormSet, LoginForm,
-    CreateNewTask, CreateNewProject, ReportSearchForm
+    CreateNewTask, CreateNewProject, ReportSearchForm,AdminUserCreationForm
 )
 
 
@@ -860,15 +862,102 @@ def export_report_data(request, export_format):
 
 
 @login_required
-@admin_required
+@admin_required # Make sure this decorator is correctly defined and working
 def gestion_usuarios_view(request):
-    # This view would typically list users and provide forms to change their roles
-    # and associate Lectors with Genetistas. For now, it's a placeholder.
-    # users = User.objects.all().select_related('genetistas').prefetch_related('genetistas__lectores_asociados')
-    # context = {'users': users}
-    # return render(request, 'gestion_usuarios.html', context)
-    messages.info(request, "La gestión detallada de usuarios (roles, asociaciones) se realiza a través del panel de Administración de Django por ahora.")
-    return render(request, 'gestion_usuarios.html') 
+    user_creation_form_instance = AdminUserCreationForm() # Default empty form
+
+    if request.method == 'POST':
+        # Check if the submission is for creating a user
+        if 'create_user_submit' in request.POST:
+            user_creation_form_instance = AdminUserCreationForm(request.POST)
+            if user_creation_form_instance.is_valid():
+                try:
+                    with transaction.atomic():
+                        user_creation_form_instance.save()
+                    messages.success(request, "Usuario creado exitosamente.")
+                    return redirect('gestion_usuarios') 
+                except Exception as e:
+                    messages.error(request, f"Error al crear usuario: {e}")
+            else:
+                messages.error(request, "Error al crear usuario. Por favor, corrija los errores.")
+                # The form with errors will be passed to the context
+
+    # Statistics
+    total_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    
+    # Counts for roles from Genetistas model
+    role_counts = Genetistas.objects.aggregate(
+        admin_count=Count('user_id', filter=Q(rol='ADM')),
+        genetista_count=Count('user_id', filter=Q(rol='GEN')),
+        lector_count=Count('user_id', filter=Q(rol='LEC')),
+    )
+
+    # User list and filtering
+    users_qs = User.objects.select_related('genetistas').all().order_by('last_name', 'first_name')
+    
+    search_query = request.GET.get('buscar-usuario', '').strip()
+    role_filter = request.GET.get('role_filter', '').strip()
+
+    if search_query:
+        users_qs = users_qs.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    if role_filter:
+        users_qs = users_qs.filter(genetistas__rol=role_filter)
+
+    # For the role filter dropdown in the template
+    genetista_roles_for_filter = Genetistas.ROL_CHOICES 
+
+    context = {
+        'user_creation_form': user_creation_form_instance,
+        'total_users': total_users_count,
+        'active_users': active_users_count,
+        'admin_users_count': role_counts['admin_count'],
+        'genetista_users_count': role_counts['genetista_count'],
+        'lector_users_count': role_counts['lector_count'],
+        'users_list': users_qs,
+        'search_query': search_query,
+        'current_role_filter': role_filter,
+        'genetista_roles_for_filter': genetista_roles_for_filter,
+        'form_errors_exist': bool(user_creation_form_instance.errors) # Flag for JS to reopen modal
+    }
+    return render(request, 'gestion_usuarios.html', context)
+
+@login_required
+@admin_required
+def toggle_user_active_status(request, user_id):
+    if request.method == 'POST':
+        user_to_toggle = get_object_or_404(User, pk=user_id)
+        if user_to_toggle == request.user:
+            messages.error(request, "No puede cambiar el estado de su propia cuenta.")
+        else:
+            user_to_toggle.is_active = not user_to_toggle.is_active
+            user_to_toggle.save()
+            status_message = "activado" if user_to_toggle.is_active else "desactivado"
+            messages.success(request, f"Usuario {user_to_toggle.username} {status_message} exitosamente.")
+    return redirect('gestion_usuarios')
+
+@login_required
+@admin_required
+def delete_user_admin(request, user_id):
+    if request.method == 'POST':
+        user_to_delete = get_object_or_404(User, pk=user_id)
+        if user_to_delete == request.user:
+            messages.error(request, "No puede eliminar su propia cuenta.")
+        else:
+            try:
+                with transaction.atomic():
+                    username = user_to_delete.username
+                    # The OneToOneField Genetistas profile should be deleted automatically if on_delete=models.CASCADE
+                    # If on_delete=models.SET_NULL or other, handle Genetistas profile explicitly if needed
+                    user_to_delete.delete()
+                    messages.success(request, f"Usuario {username} eliminado exitosamente.")
+            except Exception as e:
+                messages.error(request, f"Error al eliminar usuario: {e}")
+    return redirect('gestion_usuarios')
 
 
 # --- Index view and role-specific "Pacientes" list views ---

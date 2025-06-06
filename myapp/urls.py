@@ -41,7 +41,9 @@ urlpatterns = [
 
     path('reports/', views.reports_view, name="reports_dashboard"),
     path('reports/export/<str:export_format>/', views.export_report_data, name='export_report_data'),
-    path('gestion-usuarios/', views.gestion_usuarios_view, name="gestion_usuarios_dashboard"), 
+    path('gestion/usuarios/', views.gestion_usuarios_view, name='gestion_usuarios'),
+    path('gestion/usuarios/toggle-status/<int:user_id>/', views.toggle_user_active_status, name='toggle_user_active'),
+    path('gestion/usuarios/delete/<int:user_id>/', views.delete_user_admin, name='delete_user_admin'),
 ]
 
 if settings.DEBUG:

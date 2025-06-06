@@ -1,15 +1,57 @@
 {% extends 'layouts/base.html' %}
-
 {% load static %}
 
-
-{%block content%}
-
-
+{% block content %}
 <head>
     <title>GESTIÓN USUARIOS | IIG - LUZ</title>
-    <link rel="stylesheet" href= "{% static '/styles/adminuser.css' %}">
+    <link rel="stylesheet" href="{% static '/styles/adminuser.css' %}">
+    <style>
+        /* Styles for modal form fields and conditional display */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--primary-darkerblue); }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-gray);
+            border-radius: 0.25rem;
+            font-size: 1.4rem; /* Match other inputs if possible */
+        }
+        .form-group .help-text { font-size: 1.2rem; color: #666; margin-top: 0.25rem; }
+        .form-group ul.errorlist { list-style-type: none; padding: 0; color: var(--danger-color); font-size: 1.2rem; margin-top: 0.25rem; }
+        
+        .modal-body { max-height: 70vh; overflow-y: auto; }
 
+        /* Styles for action buttons in dropdown to look like links */
+        .dropdown-content form.dropdown-form-action { padding: 0; margin: 0; }
+        .dropdown-content form.dropdown-form-action button {
+            background: none;
+            border: none;
+            color: var(--text-color); /* Match .dropdown-content a */
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px; /* Match .dropdown-content a */
+            font-family: "Poppins", serif;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .dropdown-content form.dropdown-form-action button:hover {
+            background-color: var(--light-gray); /* Match .dropdown-content a:hover */
+        }
+        .dropdown-content form.dropdown-form-action button.danger {
+            color: var(--danger-color); /* Match .dropdown-content a.danger */
+        }
+        .dropdown-content form.dropdown-form-action button i {
+            margin-right: 8px; /* Consistent icon spacing */
+            width: 16px; /* Align icons */
+            text-align: center;
+        }
+    </style>
 </head>
 
 <div class="main-content">
@@ -22,7 +64,17 @@
         </div>
       </header>
 
-      <!--Contenido del usuario-->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem; background-color: {% if message.tags == 'success' %}var(--primary-lightblue){% elif message.tags == 'error' %}#f8d7da{% else %}var(--lighter-blue){% endif %}; color: {% if message.tags == 'success' %}var(--primary-darkerblue){% elif message.tags == 'error' %}#721c24{% else %}var(--primary-darkerblue){% endif %};">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="float: right; background: none; border: none; font-size: 1.5rem; cursor:pointer;">
+                  <span aria-hidden="true">×</span>
+              </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
     <div class="users-content">
         <div class="contenido-header">
             <div class="header-content">
@@ -37,7 +89,6 @@
             </div>
         </div>
 
-        <!--Cartas de datos-->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header">
@@ -45,42 +96,47 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>24</h2>
+                    <h2>{{ total_users }}</h2>
                 </div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-header">
                     <h3>Usuarios Activos</h3>
                     <i class="fas fa-user-check"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>21</h2>
+                    <h2>{{ active_users }}</h2>
                 </div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-header">
                     <h3>Administradores</h3>
                     <i class="fas fa-shield-alt"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>2</h2>
+                    <h2>{{ admin_users_count }}</h2>
                 </div>
             </div>
-
+            <div class="stat-card">
+                <div class="stat-header">
+                    <h3>Genetistas</h3>
+                    <i class="fas fa-user-md"></i> <!-- Changed icon for Genetistas -->
+                </div>
+                <div class="stat-content">
+                    <h2>{{ genetista_users_count }}</h2>
+                </div>
+            </div>
             <div class="stat-card">
                 <div class="stat-header">
                     <h3>Lectores</h3>
-                    <i class="fas fa-user-check"></i>
+                    <i class="fas fa-book-reader"></i> <!-- Changed icon for Lectores -->
                 </div>
                 <div class="stat-content">
-                    <h2>3</h2>
+                    <h2>{{ lector_users_count }}</h2>
                 </div>
             </div>
         </div>
 
-        <!--Divisor de secciones-->
         <div class="tabs-container">
             <div class="tab-nav">
                 <button class="tab-button active" data-tab="users-tab">Usuarios</button>
@@ -88,88 +144,92 @@
             </div>
         </div>
 
-        <!--Tabla de Usuarios-->
         <div class="tabs-content active" id="users-tab">
             <div class="content-card">
                 <div class="card-header">
                     <h2>Lista de Usuarios</h2>
                     <p>Gestiona todos los usuarios del sistema</p>
-                    <div class="table-filters">
-                        <div class="search-input">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar usuario..." name="buscar-usuario" id="buscar-usuario">
+                    <form method="GET" action="{% url 'gestion_usuarios' %}">
+                        <div class="table-filters">
+                            <div class="search-input">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Buscar por nombre, apellido o email..." name="buscar-usuario" id="buscar-usuario-input" value="{{ search_query }}">
+                            </div>
+                            <select name="role_filter" id="role-filter-select">
+                                <option value="">Filtrar por rol</option>
+                                {% for role_val, role_disp in genetista_roles_for_filter %}
+                                <option value="{{ role_val }}" {% if current_role_filter == role_val %}selected{% endif %}>{{ role_disp }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-primary" style="padding: 0.85rem 1rem; margin-left:10px;">Filtrar</button>
                         </div>
-                        <select>
-                            <option value="">Filtrar por rol</option>
-                            <option value="admin">Administrador</option>
-                            <option value="genetista">Genetista</option>
-                            <option value="lector">Asistente</option>
-                        </select>
-                    </div>
+                    </form>
                 </div>
                 <div class="card-content">
                     <div class="table-container">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Usuario</th>
+                                    <th>Nombre</th>
                                     <th>Email</th>
                                     <th>Rol</th>
+                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for user_obj in users_list %}
                                 <tr>
-                                    <td>Dra. Alexandra</td>
-                                    <td>alexandra@email.com</td>
-                                    <td><span class="badge default">Genetista</span></td>
+                                    <td>{{ user_obj.get_full_name|default:user_obj.username }}</td>
+                                    <td>{{ user_obj.email }}</td>
                                     <td>
-                                        <div class="dropdwon">
+                                        {% if user_obj.genetistas %}
+                                            <span class="badge default">{{ user_obj.genetistas.get_rol_display }}</span>
+                                        {% else %}
+                                            <span class="badge outline">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user_obj.is_active %}
+                                            <span class="badge success">Activo</span>
+                                        {% else %}
+                                            <span class="badge destructive">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
                                             <button class="btn-icon">
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
                                                 <a href="#"><i class="fas fa-edit"></i> Editar</a>
                                                 <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
-                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
+                                                
+                                                <form method="POST" action="{% url 'toggle_user_active' user_obj.id %}" class="dropdown-form-action">
+                                                    {% csrf_token %}
+                                                    <button type="submit">
+                                                        <i class="fas fa-toggle-{% if user_obj.is_active %}on{% else %}off{% endif %}"></i> 
+                                                        {% if user_obj.is_active %}Desactivar{% else %}Activar{% endif %}
+                                                    </button>
+                                                </form>
+
+                                                {% if user_obj.id != request.user.id %} <!-- Prevent deleting self -->
+                                                <form method="POST" action="{% url 'delete_user_admin' user_obj.id %}" class="dropdown-form-action" onsubmit="return confirm('¿Está seguro de que desea eliminar este usuario ({{ user_obj.username }})? Esta acción no se puede deshacer.');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="danger">
+                                                        <i class="fas fa-trash"></i> Eliminar
+                                                    </button>
+                                                </form>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </td>
                                 </tr>
+                                {% empty %}
                                 <tr>
-                                    <td>Dra. Paola</td>
-                                    <td>paola.gonzalez@email.com</td>
-                                    <td><span class="badge default">Genetista</span></td>
-                                    <td>
-                                        <div class="dropdwon">
-                                            <button class="btn-icon">
-                                                <i class="fas fa-ellipsis-h"></i>
-                                            </button>
-                                            <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
-                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
-                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
-                                            </div>
-                                        </div>
-                                    </td>
+                                    <td colspan="5" style="text-align: center;">No se encontraron usuarios.</td>
                                 </tr>
-                                <tr>
-                                    <td>Dra. Ana</td>
-                                    <td>anabracho@email.com</td>
-                                    <td><span class="badge default">Genetista</span></td>
-                                    <td>
-                                        <div class="dropdwon">
-                                            <button class="btn-icon">
-                                                <i class="fas fa-ellipsis-h"></i>
-                                            </button>
-                                            <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
-                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
-                                                <a href="#"><i class="fas fa-trash"></i> Eliminar</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -178,77 +238,168 @@
         </div>
 
         <div class="tabs-content" id="roles">
+            <!-- Static content for Roles y Permisos as per original HTML -->
             <div class="content-card">
                 <div class="card-header">
                     <h2>Gestión de Roles y Permisos</h2>
                     <p>Configura los roles y permisos del sistema</p>
                 </div>
                 <div class="card-content">
+                    <p>La gestión detallada de permisos por rol se configura a nivel de código o a través del panel de administración de Django.</p>
                     <div class="roles-grid">
                         <div class="role-card">
-                            <div class="role-header">
-                                <h3>Administrador</h3>
-                                <p>Acceso completo al sistema</p>
-                            </div>
-                            <div class="role-content">
-                                <div class="permisos">
-                                    <label>Permisos:</label>
-                                    <div class="badge-group">
-                                        <span class="badge outline">Crear</span>
-                                        <span class="badge outline">Leer</span>
-                                        <span class="badge outline">Actualizar</span>
-                                        <span class="badge outline">Eliminar</span>
-                                        <span class="badge outline">Administrar</span>
-                                    </div>
-                                </div>
-                                <div class="role-footer">
-                                    <span>2 usuarios asignados</span>
-                                    <button class="button outline small">
-                                        <i class="fas fa-edit"></i>
-                                        Editar
-                                    </button>
-                                </div>
-                            </div>
+                            <div class="role-header"><h3>Administrador</h3><p>Acceso completo al sistema</p></div>
                         </div>
-
+                        <div class="role-card">
+                            <div class="role-header"><h3>Genetista</h3><p>Acceso para gestionar historias clínicas y pacientes.</p></div>
+                        </div>
+                        <div class="role-card">
+                            <div class="role-header"><h3>Lector</h3><p>Acceso de solo lectura a pacientes de genetistas asociados.</p></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-
-
     </div>
-
     </main>
+</div>
+
+<!-- Modal para Crear Nuevo Usuario -->
+<div class="modal" id="newUserModal">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h2>Crear Nuevo Usuario</h2>
+        <button type="button" class="modal-close" id="closeNewUserModalBtn">×</button>
+      </div>
+      <form method="POST" action="{% url 'gestion_usuarios' %}" id="newUserForm">
+        {% csrf_token %}
+        <div class="modal-body">
+            <p style="font-size: 1.4rem; color: var(--primary-darkerblue); margin-bottom:1.5rem;">Completa la información para crear un nuevo usuario en el sistema.</p>
+            
+            <div class="form-group">
+                {{ user_creation_form.first_name.label_tag }}
+                {{ user_creation_form.first_name }}
+                {% if user_creation_form.first_name.errors %}<ul class="errorlist">{% for error in user_creation_form.first_name.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ user_creation_form.last_name.label_tag }}
+                {{ user_creation_form.last_name }}
+                {% if user_creation_form.last_name.errors %}<ul class="errorlist">{% for error in user_creation_form.last_name.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ user_creation_form.email.label_tag }}
+                {{ user_creation_form.email }}
+                {% if user_creation_form.email.errors %}<ul class="errorlist">{% for error in user_creation_form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ user_creation_form.password.label_tag }}
+                {{ user_creation_form.password }}
+                {% if user_creation_form.password.errors %}<ul class="errorlist">{% for error in user_creation_form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ user_creation_form.password_confirm.label_tag }}
+                {{ user_creation_form.password_confirm }}
+                {% if user_creation_form.password_confirm.errors %}<ul class="errorlist">{% for error in user_creation_form.password_confirm.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                {{ user_creation_form.rol.label_tag }}
+                {{ user_creation_form.rol }}
+                {% if user_creation_form.rol.errors %}<ul class="errorlist">{% for error in user_creation_form.rol.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group" id="associatedGenetistaGroup" style="display:none;"> <!-- Initially hidden -->
+                {{ user_creation_form.associated_genetista.label_tag }}
+                {{ user_creation_form.associated_genetista }}
+                {% if user_creation_form.associated_genetista.help_text %}<p class="help-text">{{ user_creation_form.associated_genetista.help_text }}</p>{% endif %}
+                {% if user_creation_form.associated_genetista.errors %}<ul class="errorlist">{% for error in user_creation_form.associated_genetista.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="cancelNewUserModalBtn" style="background-color: var(--button-gray); color: var(--primary-darkerblue); border: 1px solid var(--border-gray); padding: 0.85rem 1.5rem; border-radius: 0.5rem; font-family: 'Poppins', serif; font-size:1.3rem; cursor:pointer;">Cancelar</button>
+            <button type="submit" name="create_user_submit" class="btn-primary" style="background-color: var(--buttons-blue); color: white; padding: 0.85rem 1.5rem; border-radius: 0.5rem; border:none;font-family: 'Poppins', serif; font-size:1.3rem; cursor:pointer;">Crear Usuario</button>
+        </div>
+      </form>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Seleccionar todos los botones de pestaña
+    // Tab switching logic (from original HTML)
     const tabButtons = document.querySelectorAll('.tab-button');
-    
-    // Añadir evento click a cada botón
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Remover clase 'active' de todos los botones
             tabButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // Añadir clase 'active' al botón clickeado
             this.classList.add('active');
-            
-            // Ocultar todos los contenidos de pestaña
-            document.querySelectorAll('.tab-content').forEach(content => {
+            document.querySelectorAll('.tabs-content').forEach(content => {
                 content.classList.remove('active');
             });
-            
-            // Mostrar el contenido de la pestaña correspondiente
             const tabId = this.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
         });
     });
+
+    // Modal control
+    const newUserModal = document.getElementById('newUserModal');
+    const newUserBtn = document.getElementById('new-user-btn');
+    const closeNewUserModalBtn = document.getElementById('closeNewUserModalBtn');
+    const cancelNewUserModalBtn = document.getElementById('cancelNewUserModalBtn');
+
+    if (newUserBtn) {
+        newUserBtn.addEventListener('click', function() {
+            if (newUserModal) newUserModal.classList.add('active');
+        });
+    }
+    if (closeNewUserModalBtn) {
+        closeNewUserModalBtn.addEventListener('click', function() {
+            if (newUserModal) newUserModal.classList.remove('active');
+        });
+    }
+    if (cancelNewUserModalBtn) {
+        cancelNewUserModalBtn.addEventListener('click', function() {
+            if (newUserModal) newUserModal.classList.remove('active');
+        });
+    }
+    // Close modal if clicked outside of modal-content
+    if (newUserModal) {
+        newUserModal.addEventListener('click', function(event) {
+            if (event.target === newUserModal) {
+                newUserModal.classList.remove('active');
+            }
+        });
+    }
+    
+    // Conditional display for Associated Genetista field
+    const rolSelect = document.querySelector('#newUserForm select[name="rol"]'); // Target specific form
+    const associatedGenetistaGroup = document.getElementById('associatedGenetistaGroup');
+
+    if (rolSelect && associatedGenetistaGroup) {
+        rolSelect.addEventListener('change', function() {
+            if (this.value === 'LEC') { // 'LEC' is the value for Lector
+                associatedGenetistaGroup.style.display = 'block';
+            } else {
+                associatedGenetistaGroup.style.display = 'none';
+            }
+        });
+        // Trigger change on load in case of form repopulation with 'LEC' selected
+        if (rolSelect.value === 'LEC') {
+             associatedGenetistaGroup.style.display = 'block';
+        }
+    }
+
+    // Re-open modal if there are form errors on page load
+    const formErrorsExist = {{ form_errors_exist|yesno:"true,false" }};
+    if (formErrorsExist && newUserModal) {
+        newUserModal.classList.add('active');
+        if (rolSelect.value === 'LEC') { // Also ensure conditional field is shown
+             associatedGenetistaGroup.style.display = 'block';
+        }
+    }
+
+    // Dismiss alerts
+    document.querySelectorAll('.alert .close').forEach(function(button) {
+        button.addEventListener('click', function() {
+            this.parentElement.style.display = 'none';
+        });
+    });
 });
 </script>
-
-
 {% endblock %}

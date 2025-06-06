@@ -846,3 +846,91 @@ class ReportSearchForm(forms.Form):
             except ValueError:
                 raise forms.ValidationError("Formato de rango de fecha inválido. Use DD/MM/YYYY o DD/MM/YYYY a DD/MM/YYYY.")
         return None
+    
+
+class AdminUserCreationForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=True, label="Nombre", widget=forms.TextInput(attrs={'placeholder': 'Nombre del usuario'}))
+    last_name = forms.CharField(max_length=150, required=True, label="Apellido", widget=forms.TextInput(attrs={'placeholder': 'Apellido del usuario'}))
+    email = forms.EmailField(required=True, label="Email", widget=forms.EmailInput(attrs={'placeholder': 'correo@ejemplo.com'}))
+    password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
+    password_confirm = forms.CharField(widget=forms.PasswordInput, label="Confirmar Contraseña")
+    
+    # Add an empty choice for the placeholder "Seleccionar rol"
+    ROLE_CHOICES_WITH_EMPTY = [('', 'Seleccionar rol')] + list(Genetistas.ROL_CHOICES)
+    rol = forms.ChoiceField(choices=ROLE_CHOICES_WITH_EMPTY, required=True, label="Rol")
+    
+    associated_genetista = forms.ModelChoiceField(
+        queryset=Genetistas.objects.filter(rol='GEN').select_related('user'), 
+        required=False, 
+        label="Genetista Asociado",
+        help_text="Requerido si el rol es Lector.",
+        empty_label="Seleccionar genetista asociado"
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email'] # username will be derived
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['associated_genetista'].widget.attrs['style'] = 'display:none;' # Hide by default
+        self.fields['associated_genetista'].label_suffix = "" # Hide label suffix colon for this field initially
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Un usuario con este email ya existe.")
+        # Also check if username (which will be email) exists
+        if User.objects.filter(username=email).exists():
+            raise forms.ValidationError("Un usuario con este nombre de usuario (derivado del email) ya existe.")
+        return email
+
+    def clean_password_confirm(self):
+        password = self.cleaned_data.get('password')
+        password_confirm = self.cleaned_data.get('password_confirm')
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+        return password_confirm
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rol = cleaned_data.get('rol')
+        associated_genetista = cleaned_data.get('associated_genetista')
+
+        if rol == 'LEC' and not associated_genetista:
+            self.add_error('associated_genetista', "Debe seleccionar un genetista asociado para el rol Lector.")
+        
+        # If role is not Lector, associated_genetista should not be set.
+        # This will be enforced in the save method too.
+        if rol and rol != 'LEC' and associated_genetista:
+            # self.add_error('associated_genetista', "El genetista asociado solo es aplicable al rol Lector.")
+            # Or silently ignore/clear it. We'll clear it in save().
+            pass
+            
+        return cleaned_data
+
+    def save(self, commit=True):
+        # Create the User instance
+        user = User(
+            username=self.cleaned_data['email'], # Use email as username
+            email=self.cleaned_data['email'],
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name'],
+            is_active=True # New users are active by default
+        )
+        user.set_password(self.cleaned_data['password']) # Hashes the password
+        
+        if commit:
+            user.save()
+            # Create or update Genetistas profile
+            # Genetistas profile is automatically created by a signal if using the provided models.py
+            # We just need to fetch it and update the role and associated_genetista.
+            gen_profile, created = Genetistas.objects.get_or_create(user=user) # Signal might have created it
+            
+            gen_profile.rol = self.cleaned_data['rol']
+            if gen_profile.rol == 'LEC':
+                gen_profile.associated_genetista = self.cleaned_data['associated_genetista']
+            else:
+                gen_profile.associated_genetista = None # Ensure it's cleared if not Lector
+            gen_profile.save()
+        return user

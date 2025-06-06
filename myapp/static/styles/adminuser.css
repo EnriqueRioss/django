@@ -7,24 +7,37 @@
     --lighter-blue: #D5E5F2;
     --second-lighter-blue: #c8e1f5;
     --background-color: #F3F3F3;
-    --border-gray: #b3b3b3;
-    --liner-gray: #d3d2d2;
-    --button-gray: #e4e4e4;
+    --border-gray: #b3b3b3;         /* Used in new modal input borders */
+    --liner-gray: #d3d2d2;          /* Used in new modal header/footer borders */
+    --button-gray: #e4e4e4;         /* Used in new modal cancel button */
     --complement-cian: #009eb3;
     --complement-blue: #105183;
+
+    /* Added/Ensured for broader compatibility and new styles */
+    --white: #ffffff;
+    --text-color: #212529;          /* For dropdown text */
+    --light-gray: #f8f9fa;          /* For dropdown hover */
+    --medium-gray: #ced4da;         /* For generic modal borders, form inputs */
+    --dark-gray: #343a40;           /* For generic modal close button text */
+    --danger-color: #dc3545;        /* For errors, destructive actions */
+    --success-color: #28a745;       /* For success badges */
+    --warning-color: #ffc107;       /* For warning badges */
+    --primary-color: var(--primary-darkerblue); /* For generic form labels, aliased */
+    --secondary-light: #6c757d;     /* For secondary badges */
+    --border-radius: 0.25rem;       /* Generic border radius */
 }
 
 
 html {
     font-size: 62.5%;
     font-family: "Poppins", serif;
-    overflow-x: hidden;   
+    overflow-x: hidden;
 }
 
 
 body{
     background-color: var(--background-color);
-    overflow: hidden;
+    overflow: hidden; /* Consider if this is truly needed globally */
 }
 
 * {
@@ -41,8 +54,6 @@ li{
     list-style: none;
 }
 
-
-
 /*------------ MAIN CONTENT -----------*/
 
 .main-content{
@@ -52,7 +63,7 @@ li{
 
 .barra-content{
     flex: 1;
-    margin-left: 25rem;
+    margin-left: 25rem; /* This implies a fixed sidebar of 25rem width */
 }
 
 .content-header{
@@ -103,7 +114,7 @@ li{
 .header-content h1 {
   font-size: 3rem;
   font-weight: 700;
-  line-height: 0.5rem;
+  /* line-height: 0.5rem; Removed as it might clip text with descenders */
   color: var(--primary-darkerblue);
   margin-bottom: 2rem;
 }
@@ -118,7 +129,7 @@ li{
   gap: 0.75rem;
 }
 
-.btn-primary{
+.btn-primary{ /* General .btn-primary, not specific to modal */
   display: flex;
   align-items: center;
   padding: 0.85rem 1rem;
@@ -133,7 +144,7 @@ li{
   transition: background-color 0.2s;
 }
 
-button i {
+button i { /* General icon styling within buttons */
   font-size: 1.3rem;
   margin-right: 1rem;
   width: 2rem;
@@ -181,6 +192,11 @@ button i {
     margin: 0 0 0.5rem 0;
 }
 
+/* ----------- Tabs ------------ */
+.tabs-container {
+    /* If you need specific styling for the container itself */
+}
+
 .tab-nav{
     display: inline-flex;
     background-color: var(--lighter-blue);
@@ -210,7 +226,7 @@ button i {
 .tabs-content{
     color: var(--primary-darkerblue);
     display: none;
-    padding: 0.5rem;
+    padding: 0.5rem; /* Consider if this padding is needed if .content-card has padding */
     animation: fadeIn 0.5s ease;
     border: 1px solid var(--border-gray);
     border-radius: 0.5rem;
@@ -225,38 +241,22 @@ button i {
     to { opacity: 1; transform: translateY(0);}
 }
 
-/*--------Estilos especificos para los contenidos---------
-table{
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 2rem;
-}
-
-th, td{
-    padding: 1.2rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-gray);
-}
-
-th{
-    background-color: var(--background-color);
-}
-
-*/
-
+/*-------- Content Cards --------*/
 .content-card{
-    background-color: var(--background-color);
+    background-color: var(--background-color); /* Or var(--white) if you prefer a white card bg */
     border-radius: 0.5rem;
-    overflow: hidden;
+    overflow: hidden; /* Good for ensuring child elements respect border-radius */
 }
 
 .card-header{
     padding: 2rem;
+    /* border-bottom: 1px solid var(--liner-gray); Optional: if you want a line under card headers */
 }
 
 .card-header h2{
     font-size: 2rem;
     margin: 0 0 0.5rem 0;
+    color: var(--primary-darkerblue);
 }
 
 .card-header p{
@@ -269,15 +269,18 @@ th{
     padding: 2rem;
 }
 
+/*-------- Table Filters --------*/
 .table-filters{
     display: flex;
+    align-items: center; /* Align items vertically */
     gap: 1.5rem;
     margin-top: 1.5rem;
+    margin-bottom: 1.5rem; /* Added some bottom margin */
 }
 
 .search-input{
     position: relative;
-    flex: 1;
+    flex-grow: 1; /* Allow search input to take available space */
 }
 
 .search-input i{
@@ -286,69 +289,92 @@ th{
     top: 50%;
     transform: translateY(-50%);
     color: var(--complement-blue);
+    font-size: 1.4rem; /* Slightly larger icon */
 }
 
 .search-input input{
     width: 100%;
-    padding: 1rem 1.5rem 1rem 3.5rem;
+    padding: 1rem 1.5rem 1rem 3.5rem; /* Ensure padding accommodates icon */
     border: 1px solid var(--border-gray);
     border-radius: 0.5rem;
-    background-color: var(--background-color);
+    background-color: var(--white); /* Changed from var(--background-color) for better contrast */
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+}
+.search-input input::placeholder {
+    color: var(--border-gray);
 }
 
 .table-filters select{
-    width: 20%;
+    min-width: 180px; /* Or width: auto; if you prefer dynamic width */
     padding: 1rem 1.5rem;
     border: 1px solid var(--border-gray);
     border-radius: 0.5rem;
-    background-color: var(--background-color);
+    background-color: var(--white); /* Changed for better contrast */
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    cursor: pointer;
 }
+.table-filters .btn-primary { /* Style for filter button specifically if needed */
+    padding: 1rem 1.5rem; /* Match input/select height */
+    font-size: 1.3rem;
+}
+
 
 /*--------Tabla---------*/
 .table-container {
-  overflow-x: auto;
+  overflow-x: auto; /* Ensures table is scrollable on small screens */
 }
 
-table {
+table.table { /* More specific selector */
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1rem; /* Consistent spacing */
 }
 
 .table th{
     text-align: left;
-    padding: 1rem 1rem;
-    background-color: var(--background-color);
+    padding: 1.2rem 1rem; /* Increased padding slightly */
+    background-color: var(--lighter-blue); /* Lighter background for header */
     color: var(--primary-darkerblue);
     font-weight: 600;
     white-space: nowrap;
     font-size: 1.4rem;
-    border-bottom: 1px solid var(--border-gray);
+    border-bottom: 2px solid var(--border-gray); /* Stronger bottom border for header */
 }
 
 .table td{
-    padding: 1rem 1rem;
-    border-bottom: 1px solid var(--border-gray);
-    white-space: nowrap;
+    padding: 1.2rem 1rem; /* Increased padding slightly */
+    border-bottom: 1px solid var(--liner-gray); /* Lighter border for rows */
+    white-space: nowrap; /* Consider removing if content needs to wrap */
     font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    vertical-align: middle; /* Align content vertically in cells */
 }
 
 .table tr:last-child td {
-  border-bottom: none;
+  border-bottom: none; /* No border for the last row */
+}
+
+.table tr:hover td {
+    background-color: var(--second-lighter-blue); /* Hover effect for rows */
 }
 
 
 /* ---------- Badges --------------*/
 .badge {
   display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 1.2rem;
+  padding: 0.4em 0.8em; /* Use em for padding relative to font-size */
+  border-radius: 1.2rem; /* Or var(--border-radius) for consistency */
   font-size: 1.2rem;
   font-weight: 600;
+  line-height: 1; /* Ensure consistent height */
+  text-align: center;
 }
 
 .badge.default {
   background-color: var(--primary-darkerblue);
-  color: var(--background-color);
+  color: var(--white);
 }
 
 .badge.secondary {
@@ -363,7 +389,7 @@ table {
 
 .badge.warning {
   background-color: var(--warning-color);
-  color: var(--white);
+  color: var(--text-color); /* Better contrast for yellow */
 }
 
 .badge.destructive {
@@ -379,7 +405,7 @@ table {
 
 .badge-group {
   display: flex;
-  gap: 5px;
+  gap: 0.5rem; /* Consistent gap */
   flex-wrap: wrap;
 }
 
@@ -388,45 +414,80 @@ table {
   position: relative;
   display: inline-block;
 }
+.btn-icon { /* Style for the ellipsis button */
+    background: none;
+    border: none;
+    color: var(--primary-darkerblue);
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 1.6rem;
+    line-height: 1;
+}
+.btn-icon:hover {
+    color: var(--buttons-blue);
+}
 
 .dropdown-content {
   display: none;
   position: absolute;
   right: 0;
   background-color: var(--white);
-  min-width: 160px;
+  min-width: 200px; /* Slightly wider */
   box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  z-index: 1;
+  z-index: 10; /* Ensure it's above other content */
   border-radius: var(--border-radius);
   overflow: hidden;
+  border: 1px solid var(--liner-gray); /* Subtle border */
 }
 
-.dropdown-content a {
+.dropdown-content a,
+.dropdown-content form.dropdown-form-action button { /* Combined for consistency */
   color: var(--text-color);
-  padding: 12px 16px;
+  padding: 10px 15px; /* Adjusted padding */
   text-decoration: none;
   display: block;
-  font-size: 14px;
-  transition: background-color 0.3s;
+  font-size: 1.4rem; /* Consistent font size */
+  font-family: "Poppins", serif;
+  transition: background-color 0.2s;
+  background: none; /* For button reset */
+  border: none; /* For button reset */
+  width: 100%; /* For button */
+  text-align: left; /* For button */
+  cursor: pointer; /* For button */
 }
 
-.dropdown-content a:hover {
+.dropdown-content a i,
+.dropdown-content form.dropdown-form-action button i {
+    margin-right: 10px; /* Consistent icon spacing */
+    width: 18px; /* Align icons */
+    text-align: center;
+    color: var(--primary-darkerblue); /* Icon color */
+}
+
+.dropdown-content a:hover,
+.dropdown-content form.dropdown-form-action button:hover {
   background-color: var(--light-gray);
 }
 
-.dropdown-content a.danger {
+.dropdown-content a.danger,
+.dropdown-content form.dropdown-form-action button.danger {
   color: var(--danger-color);
 }
+.dropdown-content a.danger i,
+.dropdown-content form.dropdown-form-action button.danger i {
+    color: var(--danger-color);
+}
 
-.dropdown:hover .dropdown-content {
+.dropdown:hover .dropdown-content,
+.dropdown.active .dropdown-content { /* Add .active class for JS toggle */
   display: block;
 }
 
-/* Modal */
+/* ---------- Generic Modal Styles (can be used by other modals) ---------- */
 .modal {
   display: none;
   position: fixed;
-  z-index: 100;
+  z-index: 1000; /* Higher z-index for modals */
   left: 0;
   top: 0;
   width: 100%;
@@ -434,71 +495,332 @@ table {
   background-color: rgba(0,0,0,0.5);
   align-items: center;
   justify-content: center;
+  opacity: 0; /* For fade-in animation */
+  transition: opacity 0.3s ease;
 }
 
 .modal.active {
   display: flex;
+  opacity: 1;
 }
 
-.modal-content {
+.modal-content { /* Generic modal content */
   background-color: var(--white);
   border-radius: var(--border-radius);
-  width: 100%;
+  width: 90%; /* More responsive */
   max-width: 500px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  overflow: hidden;
+  overflow: hidden; /* Important */
+  transform: scale(0.95); /* For pop-in animation */
+  transition: transform 0.3s ease;
+}
+.modal.active .modal-content {
+    transform: scale(1);
 }
 
-.modal-header {
-  padding: 20px;
+
+.modal-header { /* Generic modal header */
+  padding: 15px 20px;
   border-bottom: 1px solid var(--medium-gray);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.modal-header h2 {
+.modal-header h2 { /* Generic modal title */
   margin: 0;
-  font-size: 20px;
+  font-size: 1.8rem; /* Adjusted generic size */
+  color: var(--primary-darkerblue);
 }
 
-.modal-close {
+.modal-close { /* Generic close button */
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 2.4rem;
+  font-weight: bold;
   cursor: pointer;
   color: var(--dark-gray);
+  padding: 0;
+  line-height: 1;
+}
+.modal-close:hover {
+    color: var(--primary-darkerblue);
 }
 
-.modal-body {
+.modal-body { /* Generic modal body */
   padding: 20px;
+  max-height: 70vh; /* Default max height */
+  overflow-y: auto; /* Default scroll */
 }
 
-.modal-footer {
+.modal-footer { /* Generic modal footer */
   padding: 15px 20px;
   border-top: 1px solid var(--medium-gray);
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  background-color: var(--light-gray); /* Slight bg for footer */
 }
 
-/* Formularios */
+/* ---------- Generic Form Styles (can be used by other forms) ---------- */
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 1.5rem; /* Consistent spacing */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: var(--primary-color);
+  font-size: 1.4rem;
+  color: var(--primary-color); /* Uses the aliased --primary-darkerblue */
 }
 
-.form-group input,
-.form-group select {
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 10px 15px;
+  padding: 0.85rem 1rem; /* Adjusted padding */
   border: 1px solid var(--medium-gray);
   border-radius: var(--border-radius);
-  font-size: 16px;
+  font-size: 1.4rem;
+  font-family: "Poppins", serif;
+  background-color: var(--white);
+  color: var(--primary-darkerblue);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--border-gray);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--buttons-blue);
+    box-shadow: 0 0 0 2px rgba(7, 102, 173, 0.2); /* Subtle glow */
+    outline: none;
+}
+
+.form-group .help-text {
+    font-size: 1.2rem;
+    color: #6c757d; /* Standard help text color */
+    margin-top: 0.25rem;
+}
+.form-group ul.errorlist {
+    list-style-type: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    color: var(--danger-color);
+    font-size: 1.2rem;
+}
+.form-group ul.errorlist li {
+    margin: 0;
+}
+
+
+/* ---- STYLES SPECIFIC TO "CREAR NUEVO USUARIO" MODAL (id="newUserModal") ---- */
+
+#newUserModal .modal-content { /* Overrides generic .modal-content for this specific modal */
+    background-color: var(--white);
+    border-radius: 0.6rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    max-width: 550px; /* From your HTML inline style */
+    overflow: hidden;
+}
+
+#newUserModal .modal-header { /* Overrides generic .modal-header */
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--liner-gray); /* Lighter border */
+}
+
+#newUserModal .modal-header h2 { /* Overrides generic .modal-header h2 */
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--primary-darkerblue);
+    margin: 0;
+    line-height: 1.3;
+}
+
+#newUserModal .modal-close { /* Overrides generic .modal-close */
+    font-size: 2.6rem;
+    font-weight: 300; /* Thinner 'x' */
+    color: var(--border-gray);
+    opacity: 0.8;
+}
+#newUserModal .modal-close:hover {
+    opacity: 1;
+    color: var(--primary-darkerblue);
+}
+
+#newUserModal .modal-body { /* Overrides generic .modal-body */
+    padding: 20px 25px;
+    /* max-height and overflow-y are inherited or can be set if different */
+}
+
+/* Subtitle for the new user modal */
+#newUserModal .modal-body > p:first-of-type { /* More specific selector if it's always the first p */
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    margin-top: 0;
+    margin-bottom: 2rem; /* More space before form fields */
+    line-height: 1.5;
+}
+
+/* Form field styles specific to the newUserModal's form */
+#newUserModal .form-group { /* Overrides generic .form-group within this modal */
+    margin-bottom: 1.8rem;
+}
+
+#newUserModal .form-group label { /* Overrides generic label within this modal */
+    display: block;
+    margin-bottom: 0.8rem;
+    font-weight: 500; /* Medium weight */
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+}
+
+#newUserModal .form-group input[type="text"],
+#newUserModal .form-group input[type="email"],
+#newUserModal .form-group input[type="password"],
+#newUserModal .form-group select { /* Overrides generic inputs/selects within this modal */
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 0.4rem;
+    font-size: 1.4rem;
+    font-family: "Poppins", serif;
+    background-color: var(--white);
+    color: var(--primary-darkerblue);
+    box-sizing: border-box; /* Important for consistent sizing */
+}
+#newUserModal .form-group input[type="text"]::placeholder,
+#newUserModal .form-group input[type="email"]::placeholder,
+#newUserModal .form-group input[type="password"]::placeholder {
+    color: var(--border-gray);
+    opacity: 0.8;
+}
+
+
+#newUserModal .form-group input[type="text"]:focus,
+#newUserModal .form-group input[type="email"]:focus,
+#newUserModal .form-group input[type="password"]:focus,
+#newUserModal .form-group select:focus { /* Overrides generic focus within this modal */
+    border-color: var(--buttons-blue);
+    box-shadow: 0 0 0 2px rgba(7, 102, 173, 0.2);
+    outline: none;
+}
+
+/* Help text and error list styling for newUserModal (can inherit generic or be specific) */
+#newUserModal .form-group .help-text {
+    /* Inherits generic or define specific if needed */
+}
+#newUserModal .form-group ul.errorlist {
+    /* Inherits generic or define specific if needed */
+}
+
+#newUserModal .modal-footer { /* Overrides generic .modal-footer */
+    padding: 15px 25px;
+    border-top: 1px solid var(--liner-gray);
+    background-color: var(--white); /* Match modal body or use slight off-white like #f9f9f9 if preferred */
+}
+
+/* Buttons specific to newUserForm inside the modal footer */
+/* Using !important as per previous request to override inline styles.
+   Remove !important if inline styles are removed from HTML. */
+#newUserForm .modal-footer button[name="create_user_submit"].btn-primary {
+    background-color: #333333 !important; /* Dark gray/black as per image */
+    color: var(--white) !important;
+    padding: 0.9rem 2rem !important;
+    border-radius: 0.5rem !important;
+    border: none !important;
+    font-family: "Poppins", serif !important;
+    font-size: 1.4rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+    line-height: normal;
+}
+#newUserForm .modal-footer button[name="create_user_submit"].btn-primary:hover {
+    background-color: #454545 !important; /* Slightly lighter on hover */
+}
+
+#newUserForm .modal-footer button#cancelNewUserModalBtn.btn-secondary {
+    background-color: var(--button-gray, #e4e4e4) !important;
+    color: var(--primary-darkerblue) !important;
+    border: 1px solid var(--border-gray, #b3b3b3) !important;
+    padding: 0.9rem 2rem !important;
+    border-radius: 0.5rem !important;
+    font-family: "Poppins", serif !important;
+    font-size: 1.4rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease !important;
+    line-height: normal;
+}
+#newUserForm .modal-footer button#cancelNewUserModalBtn.btn-secondary:hover {
+    background-color: #d8d8d8 !important;
+    border-color: #adadad !important;
+}
+
+/* Alert Messages (from your HTML) */
+.alert {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    position: relative; /* For positioning the close button */
+}
+.alert .close {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 1.5rem; /* Match HTML style */
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    color: inherit; /* Inherit color from parent alert */
+    opacity: 0.7;
+}
+.alert .close:hover {
+    opacity: 1;
+}
+/* Specific alert types (example, can be expanded) */
+.alert.alert-success {
+    background-color: var(--primary-lightblue);
+    color: var(--primary-darkerblue);
+    /* border: 1px solid darken(var(--primary-lightblue), 10%); */
+}
+.alert.alert-error {
+    background-color: #f8d7da; /* Example error bg */
+    color: #721c24; /* Example error text */
+    /* border: 1px solid darken(#f8d7da, 10%); */
+}
+
+/* Roles Grid (from your HTML structure for Roles y Permisos tab) */
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.role-card {
+    background-color: var(--white);
+    border: 1px solid var(--liner-gray);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.role-header h3 {
+    font-size: 1.6rem;
+    color: var(--primary-darkerblue);
+    margin: 0 0 0.5rem 0;
+}
+
+.role-header p {
+    font-size: 1.3rem;
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
 }
