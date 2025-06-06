@@ -12,6 +12,8 @@ from functools import wraps
 from django.urls import reverse 
 import csv
 from datetime import datetime
+from django.utils import timezone  # Añade esta importación
+
 
 
 
@@ -1050,25 +1052,114 @@ def _get_pacientes_queryset_for_role(user):
     return Propositos.objects.none()
 
 
+# Remplaza la función index_view() existente con esta:
+
 @login_required
 @all_roles_required # The view itself is accessible, content is role-dependent
 def index_view(request):
-    ultimos_propositos_qs = _get_pacientes_queryset_for_role(request.user)
     user_gen_profile = request.user.genetistas # Assumed to exist by decorator
+    role = user_gen_profile.rol
     
+    # --- 1. Cálculo de Estadísticas para las tarjetas ---
+    stats = {
+        'historias': 0,
+        'pacientes': 0,
+        'consultas_completadas': 0,
+        'diagnosticos_completados': 100 # Valor estático como se solicitó
+    }
+    
+    target_genetista = None
+    if role == 'GEN':
+        target_genetista = user_gen_profile
+    elif role == 'LEC':
+        target_genetista = user_gen_profile.associated_genetista
+    
+    # Para ADM, se calculan los totales del sistema
+    if role == 'ADM' or request.user.is_superuser:
+        stats['historias'] = HistoriasClinicas.objects.count()
+        stats['pacientes'] = Propositos.objects.count()
+        stats['consultas_completadas'] = PlanEstudio.objects.filter(completado=True).count()
+    # Para GEN o LEC asociado, se calculan los totales filtrados
+    elif target_genetista:
+        stats['historias'] = HistoriasClinicas.objects.filter(genetista=target_genetista).count()
+        stats['pacientes'] = Propositos.objects.filter(historia__genetista=target_genetista).count()
+        
+        # Filtro para planes de estudio (consultas) relacionados al genetista
+        q_proposito = Q(evaluacion__proposito__historia__genetista=target_genetista)
+        q_pareja = Q(evaluacion__pareja__proposito_id_1__historia__genetista=target_genetista) | \
+                   Q(evaluacion__pareja__proposito_id_2__historia__genetista=target_genetista)
+                   
+        stats['consultas_completadas'] = PlanEstudio.objects.filter(completado=True).filter(q_proposito | q_pareja).distinct().count()
+
+    # --- 2. Lógica para Actividad Reciente ---
+    recent_activities = []
+    
+    # Querysets base para las actividades
+    historias_qs = HistoriasClinicas.objects.select_related('genetista__user')
+    planes_completados_qs = PlanEstudio.objects.filter(completado=True).select_related(
+        'evaluacion__proposito', 'evaluacion__pareja__proposito_id_1', 'evaluacion__pareja__proposito_id_2'
+    )
+
+    last_historias = HistoriasClinicas.objects.none()
+    last_planes_completados = PlanEstudio.objects.none()
+
+    if role == 'ADM' or request.user.is_superuser:
+        last_historias = historias_qs.order_by('-fecha_ingreso')[:5]
+        last_planes_completados = planes_completados_qs.order_by('-fecha_visita')[:5]
+    elif target_genetista:
+        last_historias = historias_qs.filter(genetista=target_genetista).order_by('-fecha_ingreso')[:5]
+        q_proposito_plan = Q(evaluacion__proposito__historia__genetista=target_genetista)
+        q_pareja_plan = Q(evaluacion__pareja__proposito_id_1__historia__genetista=target_genetista) | \
+                        Q(evaluacion__pareja__proposito_id_2__historia__genetista=target_genetista)
+        last_planes_completados = planes_completados_qs.filter(q_proposito_plan | q_pareja_plan).distinct().order_by('-fecha_visita')[:5]
+
+    # Procesar historias creadas
+    for historia in last_historias:
+        proposito = Propositos.objects.filter(historia=historia).first()
+        paciente_name = f"{proposito.nombres} {proposito.apellidos}" if proposito else f"Historia N° {historia.numero_historia}"
+        recent_activities.append({
+            'title': 'Nueva historia clínica creada',
+            'meta': f'Paciente: {paciente_name}',
+            'timestamp': historia.fecha_ingreso,
+            'indicator_class': 'success',
+        })
+    
+    # Procesar análisis completados
+    for plan in last_planes_completados:
+        paciente_name = "N/A"
+        if plan.evaluacion.proposito:
+            paciente_name = f"{plan.evaluacion.proposito.nombres} {plan.evaluacion.proposito.apellidos}"
+        elif plan.evaluacion.pareja:
+            p1 = plan.evaluacion.pareja.proposito_id_1
+            p2 = plan.evaluacion.pareja.proposito_id_2
+            paciente_name = f"Pareja: {p1.nombres} y {p2.nombres}"
+
+        recent_activities.append({
+            'title': 'Análisis genético completado',
+            'meta': f'Paciente: {paciente_name}',
+            'timestamp': plan.fecha_visita,
+            'indicator_class': 'info',
+        })
+    
+    # Ordenar todas las actividades por fecha y obtener las 5 más recientes
+    recent_activities = [act for act in recent_activities if act['timestamp']]
+    recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_activities = recent_activities[:5]
+    
+    # --- 3. Preparación del Contexto Final ---
     page_title = "Inicio"
     if user_gen_profile:
         page_title = f"Inicio ({user_gen_profile.get_rol_display()})"
-        if user_gen_profile.rol == 'LEC' and not user_gen_profile.associated_genetista:
+        if role == 'LEC' and not target_genetista:
             messages.warning(request, "Usted es un Lector no asociado a ningún Genetista. Su vista de datos estará limitada.")
 
     context = {
-        'ultimos_propositos': ultimos_propositos_qs[:5],
         'page_title': page_title,
-        'can_create_historia': user_gen_profile.rol in ['GEN', 'ADM'] if user_gen_profile else False
+        'can_create_historia': role in ['GEN', 'ADM'],
+        'stats': stats,
+        'recent_activities': recent_activities,
     }
     return render(request, "index.html", context)
-
 
 @login_required
 @admin_required

@@ -1,13 +1,14 @@
 {% extends 'layouts/base.html' %}
 
 {% load static %}
+{% load humanize %} {# Carga la librería para usar 'naturaltime' #}
 
 
 {%block content%}
 
 
 <head>
-    <title>INICIO | IIG - LUZ</title>
+    <title>{{ page_title }} | IIG - LUZ</title>
     <link rel="stylesheet" href= "{% static '/styles/main.css' %}">
 </head>
     
@@ -23,11 +24,14 @@
     <div class="dashboard-content">
         <div class="welcome-banner">
             <div class="welcome-text">
-                <h1>Bienvenido, Dra. Gamboa</h1>
+                {# Muestra el nombre y rol del usuario dinámicamente #}
+                <h1>Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</h1>
                 <p>Sistema de Gestión de Historias Clínicas Genéticas</p>
+                {% if request.user.genetistas %}
                 <div class="badge-group">
-                    <span class="badge">Medico Genetista</span>
+                    <span class="badge">{{ request.user.genetistas.get_rol_display }}</span>
                 </div>
+                {% endif %}
             </div>
             <div class="welcome-icon">
                 <i class="fas fa-dna"></i>
@@ -41,7 +45,8 @@
                     <i class="fas fa-file-alt"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>160</h2>
+                    {# Muestra el conteo de historias del contexto #}
+                    <h2>{{ stats.historias }}</h2>
                     <p>+2% desde el mes pasado</p>
                 </div>
             </div>
@@ -52,7 +57,8 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>160</h2>
+                    {# Muestra el conteo de pacientes del contexto #}
+                    <h2>{{ stats.pacientes }}</h2>
                     <p>+2% desde el mes pasado</p>
                 </div>
             </div>
@@ -63,7 +69,8 @@
                     <i class="fas fa-list"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>320</h2>
+                    {# Muestra las consultas completadas del contexto #}
+                    <h2>{{ stats.consultas_completadas }}</h2>
                     <p>+4% desde el mes pasado</p>
                 </div>
             </div>
@@ -74,7 +81,8 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="stat-content">
-                    <h2>100</h2>
+                    {# Muestra el valor estático del contexto #}
+                    <h2>{{ stats.diagnosticos_completados }}</h2>
                     <p>+1.5% desde el mes pasado</p>
                 </div>
             </div>
@@ -90,37 +98,23 @@
             </div>
             <div class="card-content">
               <div class="activity-list">
+                {# Itera sobre la lista de actividades del contexto #}
+                {% for activity in recent_activities %}
                 <div class="activity-item">
-                  <div class="activity-indicator success"></div>
+                  <div class="activity-indicator {{ activity.indicator_class }}"></div>
                   <div class="activity-details">
-                    <p class="activity-title">Nueva historia clínica creada</p>
-                    <p class="activity-meta">Paciente: María González • Hace 2 horas</p>
+                    <p class="activity-title">{{ activity.title }}</p>
+                    {# Usa 'naturaltime' para mostrar "Hace X tiempo" #}
+                    <p class="activity-meta">{{ activity.meta }} • {{ activity.timestamp|naturaltime }}</p>
                   </div>
                 </div>
-                
+                {% empty %}
                 <div class="activity-item">
-                  <div class="activity-indicator info"></div>
-                  <div class="activity-details">
-                    <p class="activity-title">Análisis genético completado</p>
-                    <p class="activity-meta">Paciente: Carlos Rodríguez • Hace 4 horas</p>
-                  </div>
+                    <div class="activity-details">
+                        <p class="activity-title">No hay actividad reciente para mostrar.</p>
+                    </div>
                 </div>
-                
-                <div class="activity-item">
-                  <div class="activity-indicator warning"></div>
-                  <div class="activity-details">
-                    <p class="activity-title">Resultado pendiente de revisión</p>
-                    <p class="activity-meta">Paciente: Ana Martínez • Hace 6 horas</p>
-                  </div>
-                </div>
-                
-                <div class="activity-item">
-                  <div class="activity-indicator info"></div>
-                  <div class="activity-details">
-                    <p class="activity-title">Consulta programada</p>
-                    <p class="activity-meta">Paciente: Luis Fernández • Hace 1 día</p>
-                  </div>
-                </div>
+                {% endfor %}
               </div>
             </div>
           </div>
@@ -132,19 +126,22 @@
               <p>Funciones más utilizadas</p>
             </div>
             <div class="card-content">
+                {# Solo muestra este botón si el usuario tiene permiso #}
+                {% if can_create_historia %}
                 <a href="{% url 'historia_crear' %}" class="action-button">
                     <i class="fas fa-file-alt"></i>
                     Nueva Historia Clínica
                 </a>
-                <a href="#" class="action-button">
+                {% endif %}
+                <a href="{% url 'pacientes_list_redirect' %}" class="action-button">
                     <i class="fas fa-users"></i>
                     Registrar Paciente
                 </a>
-                <a href="#" class="action-button">
+                <a href="{% url 'reports_dashboard' %}" class="action-button">
                     <i class="fas fa-dna"></i>
                     Solicitar Análisis
                 </a>
-                <a href="#" class="action-button">
+                <a href="{% url 'reports_dashboard' %}" class="action-button">
                     <i class="fas fa-chart-bar"></i>
                     Ver Reportes
                 </a>
