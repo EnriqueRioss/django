@@ -1066,6 +1066,12 @@ def pacientes_redirect_view(request):
             return redirect('index')
     else:
         return redirect('index')
+    
+
+@login_required
+def gestion_pacientes_view(request):
+    return  render (request, "gestion_pacientes.html")
+
 
 
 # --- Example/Tutorial Views ---

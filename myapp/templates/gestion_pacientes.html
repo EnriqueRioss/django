@@ -1,0 +1,309 @@
+
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+  <title>Gestión de Pacientes</title>
+  <link rel="stylesheet" href="{% static '/styles/pacientes.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <div class="main-content">
+        <main class="barra-content">
+            <header class="content-header">
+                <div class="breadcrumb">
+                    <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+                    <span class="breadcrumb-separator">></span>
+                    <span class="breadcrumb-item active">Pacientes</span>
+                </div>
+            </header>
+
+            <div class="patients-content">
+                <!-- Header -->
+                <div class="contenido-header">
+                    <div class="header-content">
+                        <h1>Gestión de Pacientes</h1>
+                        <p>Administra pacientes e historias clínicas genéticas</p>
+                    </div>
+                   <!-- <button class="btn-outline">
+                        <i class="fas fa-user-plus" class="btn-icon"></i>
+                        Nuevo Paciente
+                    </button> -->
+                </div>
+
+                <!-- Tarjetas de estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Total Pacientes</h3>
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h2>1.247</h2>
+                            <p class="card-description">+12 nuevos este mes</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Pacientes Activos</h3>
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h2>1.089</h2>
+                            <p>87.3% del total</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Historias Clínicas</h3>
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h2>3.891</h2>
+                            <p>+156 este mes</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <h3>Análisis Pendientes</h3>
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h2>23</h2>
+                            <p>Requieren atención</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="content-card">
+                    <div class="tarjeta-header">
+                        <h3><i class="fas fa-filter"></i>Filtros de Búsqueda</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="buscar-paciente">Buscar paciente</label>
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" placeholder="Buscar paciente...">
+                                </div>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="Estado">Estado</label>
+                                <div class="state-select">
+                                    <select>
+                                        <option value="">Estado</option>
+                                        <option value="all">Todos</option>
+                                        <option value="active">Activo</option>
+                                        <option value="follow">Seguimiento</option>
+                                        <option value="inactive">Inactivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                    
+                            <div class="filter-group">
+                                <label for="Genetista">Genetista</label>
+                                <div class="genetista-select">
+                                    <select>
+                                        <option value="">Genetista</option>
+                                        <option value="all">Todos</option>
+                                        <option value="garcia">Dr. García</option>
+                                        <option value="lopez">Dra. López</option>
+                                        <option value="ruiz">Dra. Ruiz</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-actions">
+                                <button type="submit" class="btn-buscar">
+                                    <i class="fas fa-search"></i>
+                                    Buscar
+                                </button>
+                                <a href="#" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de pacientes -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3>Lista de Pacientes</h3>
+                        <p>4 pacientes registrados</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table class="patients-table">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>Edad</th>
+                                        <th>Contacto</th>
+                                        <th>Genetista</th>
+                                        <th>Última Visita</th>
+                                        <th>Estado</th>
+                                        <th>Historias</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="patient-info">
+                                                <div class="patient-avatar">
+                                                    <img src="/placeholder.svg" alt="Avatar" class="avatar-img">
+                                                    <span class="avatar-fallback">MG</span>
+                                                </div>
+                                                <div class="patient-details">
+                                                    <div class="patient-name">María González</div>
+                                                    <div class="patient-id">P001</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>34 años</td>
+                                        <td>
+                                            <div class="contact-info">
+                                                <div class="contact-item">
+                                                    <i class="fas fa-phone" class="contact-icon"></i>
+                                                    +34 612 345 678
+                                                </div>
+                                                <div class="contact-item muted">
+                                                    <i class="fas fa-envelope" class="contact-icon"></i>
+                                                    maria.gonzalez@email.com
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Dr. García</td>
+                                        <td>2024-01-15</td>
+                                        <td>
+                                            <span class="badge badge-active">Activo</span>
+                                        </td>
+                                        <td>
+                                            <div class="history-badges">
+                                                <span class="badge">3 HC</span>
+                                                <span class="badge badge-danger">1 pendiente</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-icon">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-icon">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>   
+                    </div>
+                </div>
+            </div>
+        </main>
+      
+
+  <!-- Modal de detalle de paciente -->
+  <div class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="patient-modal-title">
+          <div class="patient-avatar large">
+            <img src="/placeholder.svg" alt="Avatar" class="avatar-img">
+            <span class="avatar-fallback">MG</span>
+          </div>
+          <div>
+            <h2 class="patient-name">María González</h2>
+            <p class="patient-id muted">ID: P001</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-tabs">
+        <div class="tabs-header">
+          <button class="tab-btn active">Información Personal</button>
+          <button class="tab-btn">Historias Clínicas</button>
+          <button class="tab-btn">Análisis y Pruebas</button>
+        </div>
+
+        <div class="tab-content active">
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="card-header">
+                <h3 class="card-title">Datos Personales</h3>
+              </div>
+              <div class="card-content">
+                <div class="info-item">
+                  <i data-lucide="calendar" class="info-icon"></i>
+                  <span class="info-text">Edad: 34 años</span>
+                </div>
+                <div class="info-item">
+                  <i data-lucide="phone" class="info-icon"></i>
+                  <span class="info-text">+34 612 345 678</span>
+                </div>
+                <div class="info-item">
+                  <i data-lucide="mail" class="info-icon"></i>
+                  <span class="info-text">maria.gonzalez@email.com</span>
+                </div>
+                <div class="info-item">
+                  <i data-lucide="map-pin" class="info-icon"></i>
+                  <span class="info-text">Calle Mayor 123, Madrid</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="card-header">
+                <h3 class="card-title">Información Médica</h3>
+              </div>
+              <div class="card-content">
+                <div class="info-row">
+                  <span class="info-label">Genetista asignado:</span>
+                  <span class="badge">Dr. García</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Estado:</span>
+                  <span class="badge badge-active">Activo</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Última visita:</span>
+                  <span class="info-text">2024-01-15</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Historias clínicas:</span>
+                  <span class="badge">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simular funcionalidad del modal
+    document.querySelectorAll('.btn-icon[class="fas fa-eye"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelector('.modal-overlay').classList.remove('hidden');
+      });
+    });
+    
+    document.querySelector('.modal-overlay').addEventListener('click', (e) => {
+      if (e.target === document.querySelector('.modal-overlay')) {
+        document.querySelector('.modal-overlay').classList.add('hidden');
+      }
+    });
+  </script>
+
+{% endblock %}
