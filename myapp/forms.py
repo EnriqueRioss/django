@@ -1,3 +1,5 @@
+# forms.py
+
 from django import forms
 from django.utils import timezone
 from django.forms import ModelForm, Select, DateInput, ClearableFileInput, formset_factory
@@ -604,7 +606,7 @@ class ExamenFisicoForm(ModelForm):
     class Meta:
         model = ExamenFisico
         fields = '__all__'
-        exclude = ['fecha_examen', 'proposito']
+        exclude = ['examen_id', 'fecha_examen', 'proposito'] # Exclude examen_id too if it's AutoField
         widgets = {
             'medida_abrazada': forms.NumberInput(attrs={'step': '0.01'}),
             'segmento_inferior': forms.NumberInput(attrs={'step': '0.01'}),
@@ -660,7 +662,7 @@ class ExamenFisicoForm(ModelForm):
 
         if hasattr(self, 'proposito_instance') and self.proposito_instance:
             examenfisico.proposito = self.proposito_instance
-        elif not examenfisico.proposito_id and not self.instance:
+        elif not examenfisico.proposito_id and not (self.instance and self.instance.proposito_id): # check instance too
              raise ValueError("El propósito debe estar asignado para guardar el Examen Físico.")
 
         if commit:
@@ -715,7 +717,7 @@ class DiagnosticoPresuntivoForm(forms.Form):
 
 DiagnosticoPresuntivoFormSet = formset_factory(
     DiagnosticoPresuntivoForm,
-    extra=0,
+    extra=0, # Start with 0 extra forms
     can_delete=True,
 )
 
@@ -754,7 +756,7 @@ class PlanEstudioForm(forms.Form):
 
 PlanEstudioFormSet = formset_factory(
     PlanEstudioForm,
-    extra=0,
+    extra=0, # Start with 0 extra forms
     can_delete=True,
 )
 class ReportSearchForm(forms.Form):
@@ -840,7 +842,7 @@ class ReportSearchForm(forms.Form):
                     if fecha_desde > fecha_hasta:
                         raise forms.ValidationError("La fecha 'desde' no puede ser posterior a la fecha 'hasta'.")
                     return {'desde': fecha_desde, 'hasta': fecha_hasta}
-                elif len(parts) == 1 and parts[0].strip():
+                elif len(parts) == 1 and parts[0].strip(): # Single date
                     fecha = datetime.strptime(parts[0].strip(), '%d/%m/%Y').date()
                     return {'desde': fecha, 'hasta': fecha}
             except ValueError:
@@ -855,7 +857,6 @@ class AdminUserCreationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
     password_confirm = forms.CharField(widget=forms.PasswordInput, label="Confirmar Contraseña")
     
-    # Add an empty choice for the placeholder "Seleccionar rol"
     ROLE_CHOICES_WITH_EMPTY = [('', 'Seleccionar rol')] + list(Genetistas.ROL_CHOICES)
     rol = forms.ChoiceField(choices=ROLE_CHOICES_WITH_EMPTY, required=True, label="Rol")
     
@@ -869,18 +870,19 @@ class AdminUserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email'] # username will be derived
+        fields = ['first_name', 'last_name', 'email'] 
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['associated_genetista'].widget.attrs['style'] = 'display:none;' # Hide by default
-        self.fields['associated_genetista'].label_suffix = "" # Hide label suffix colon for this field initially
+        # self.fields['associated_genetista'].widget.attrs['style'] = 'display:none;' # MODIFICACIÓN: Eliminado para que el JS controle la visibilidad del DIV padre.
+        self.fields['associated_genetista'].label_suffix = "" 
+        # Set a user-friendly display for the genetista choices
+        self.fields['associated_genetista'].label_from_instance = lambda obj: obj.user.get_full_name() or obj.user.username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("Un usuario con este email ya existe.")
-        # Also check if username (which will be email) exists
         if User.objects.filter(username=email).exists():
             raise forms.ValidationError("Un usuario con este nombre de usuario (derivado del email) ya existe.")
         return email
@@ -900,37 +902,32 @@ class AdminUserCreationForm(forms.ModelForm):
         if rol == 'LEC' and not associated_genetista:
             self.add_error('associated_genetista', "Debe seleccionar un genetista asociado para el rol Lector.")
         
-        # If role is not Lector, associated_genetista should not be set.
-        # This will be enforced in the save method too.
         if rol and rol != 'LEC' and associated_genetista:
+            # Silently clear if not Lector, will be handled in save() too.
+            # Or you could raise an error:
             # self.add_error('associated_genetista', "El genetista asociado solo es aplicable al rol Lector.")
-            # Or silently ignore/clear it. We'll clear it in save().
             pass
             
         return cleaned_data
 
     def save(self, commit=True):
-        # Create the User instance
         user = User(
-            username=self.cleaned_data['email'], # Use email as username
+            username=self.cleaned_data['email'], 
             email=self.cleaned_data['email'],
             first_name=self.cleaned_data['first_name'],
             last_name=self.cleaned_data['last_name'],
-            is_active=True # New users are active by default
+            is_active=True 
         )
-        user.set_password(self.cleaned_data['password']) # Hashes the password
+        user.set_password(self.cleaned_data['password']) 
         
         if commit:
             user.save()
-            # Create or update Genetistas profile
-            # Genetistas profile is automatically created by a signal if using the provided models.py
-            # We just need to fetch it and update the role and associated_genetista.
-            gen_profile, created = Genetistas.objects.get_or_create(user=user) # Signal might have created it
+            gen_profile, created = Genetistas.objects.get_or_create(user=user) 
             
             gen_profile.rol = self.cleaned_data['rol']
             if gen_profile.rol == 'LEC':
                 gen_profile.associated_genetista = self.cleaned_data['associated_genetista']
             else:
-                gen_profile.associated_genetista = None # Ensure it's cleared if not Lector
+                gen_profile.associated_genetista = None 
             gen_profile.save()
         return user

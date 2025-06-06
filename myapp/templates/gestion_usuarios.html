@@ -120,7 +120,7 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <h3>Genetistas</h3>
-                    <i class="fas fa-user-md"></i> <!-- Changed icon for Genetistas -->
+                    <i class="fas fa-user-md"></i>
                 </div>
                 <div class="stat-content">
                     <h2>{{ genetista_users_count }}</h2>
@@ -129,7 +129,7 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <h3>Lectores</h3>
-                    <i class="fas fa-book-reader"></i> <!-- Changed icon for Lectores -->
+                    <i class="fas fa-book-reader"></i>
                 </div>
                 <div class="stat-content">
                     <h2>{{ lector_users_count }}</h2>
@@ -213,7 +213,7 @@
                                                     </button>
                                                 </form>
 
-                                                {% if user_obj.id != request.user.id %} <!-- Prevent deleting self -->
+                                                {% if user_obj.id != request.user.id %}
                                                 <form method="POST" action="{% url 'delete_user_admin' user_obj.id %}" class="dropdown-form-action" onsubmit="return confirm('¿Está seguro de que desea eliminar este usuario ({{ user_obj.username }})? Esta acción no se puede deshacer.');">
                                                     {% csrf_token %}
                                                     <button type="submit" class="danger">
@@ -238,7 +238,6 @@
         </div>
 
         <div class="tabs-content" id="roles">
-            <!-- Static content for Roles y Permisos as per original HTML -->
             <div class="content-card">
                 <div class="card-header">
                     <h2>Gestión de Roles y Permisos</h2>
@@ -323,7 +322,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching logic (from original HTML)
+    // Tab switching logic
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -350,48 +349,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (closeNewUserModalBtn) {
         closeNewUserModalBtn.addEventListener('click', function() {
-            if (newUserModal) newUserModal.classList.remove('active');
+            if (newUserModal) {
+                newUserModal.classList.remove('active');
+                // Optional: Reset form if desired when closing with 'x' or 'cancel'
+                // document.getElementById('newUserForm').reset();
+                // associatedGenetistaGroup.style.display = 'none'; // Ensure it's hidden on reset
+            }
         });
     }
     if (cancelNewUserModalBtn) {
         cancelNewUserModalBtn.addEventListener('click', function() {
-            if (newUserModal) newUserModal.classList.remove('active');
+            if (newUserModal) {
+                newUserModal.classList.remove('active');
+                 // Optional: Reset form
+                // document.getElementById('newUserForm').reset();
+                // associatedGenetistaGroup.style.display = 'none';
+            }
         });
     }
-    // Close modal if clicked outside of modal-content
     if (newUserModal) {
         newUserModal.addEventListener('click', function(event) {
             if (event.target === newUserModal) {
                 newUserModal.classList.remove('active');
+                 // Optional: Reset form
+                // document.getElementById('newUserForm').reset();
+                // associatedGenetistaGroup.style.display = 'none';
             }
         });
     }
     
     // Conditional display for Associated Genetista field
-    const rolSelect = document.querySelector('#newUserForm select[name="rol"]'); // Target specific form
+    // Ensure you target the select within the #newUserForm
+    const rolSelect = document.querySelector('#newUserForm select[name="rol"]'); 
     const associatedGenetistaGroup = document.getElementById('associatedGenetistaGroup');
 
-    if (rolSelect && associatedGenetistaGroup) {
-        rolSelect.addEventListener('change', function() {
-            if (this.value === 'LEC') { // 'LEC' is the value for Lector
+    function toggleAssociatedGenetistaField() {
+        if (rolSelect && associatedGenetistaGroup) {
+            if (rolSelect.value === 'LEC') { // 'LEC' is the value for Lector role
                 associatedGenetistaGroup.style.display = 'block';
             } else {
                 associatedGenetistaGroup.style.display = 'none';
             }
-        });
-        // Trigger change on load in case of form repopulation with 'LEC' selected
-        if (rolSelect.value === 'LEC') {
-             associatedGenetistaGroup.style.display = 'block';
         }
     }
 
+    if (rolSelect) {
+        rolSelect.addEventListener('change', toggleAssociatedGenetistaField);
+        // Initial check in case the form is re-rendered with a value (e.g., after validation error)
+        toggleAssociatedGenetistaField(); 
+    }
+
     // Re-open modal if there are form errors on page load
+    // The form_errors_exist variable should be set by Django template rendering
     const formErrorsExist = {{ form_errors_exist|yesno:"true,false" }};
     if (formErrorsExist && newUserModal) {
         newUserModal.classList.add('active');
-        if (rolSelect.value === 'LEC') { // Also ensure conditional field is shown
-             associatedGenetistaGroup.style.display = 'block';
-        }
+        // Ensure the conditional field visibility is also re-evaluated
+        toggleAssociatedGenetistaField(); 
     }
 
     // Dismiss alerts
