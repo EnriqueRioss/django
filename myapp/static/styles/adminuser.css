@@ -322,43 +322,84 @@ button i { /* General icon styling within buttons */
 
 
 /*--------Tabla---------*/
+
 .table-container {
-  overflow-x: auto; /* Ensures table is scrollable on small screens */
+  position: relative;
+  overflow: visible;
+  margin-bottom: 2rem;
 }
 
-table.table { /* More specific selector */
+table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem; /* Consistent spacing */
 }
 
 .table th{
     text-align: left;
-    padding: 1.2rem 1rem; /* Increased padding slightly */
-    background-color: var(--lighter-blue); /* Lighter background for header */
+    padding: 1rem 1rem;
+    background-color: var(--lighter-blue);
     color: var(--primary-darkerblue);
     font-weight: 600;
     white-space: nowrap;
     font-size: 1.4rem;
-    border-bottom: 2px solid var(--border-gray); /* Stronger bottom border for header */
+    border-bottom: 1px solid var(--border-gray);
 }
 
 .table td{
-    padding: 1.2rem 1rem; /* Increased padding slightly */
-    border-bottom: 1px solid var(--liner-gray); /* Lighter border for rows */
-    white-space: nowrap; /* Consider removing if content needs to wrap */
+    padding: 1rem 1rem;
+    border-bottom: 1px solid var(--border-gray);
+    white-space: nowrap;
     font-size: 1.4rem;
     color: var(--primary-darkerblue);
-    vertical-align: middle; /* Align content vertically in cells */
+    vertical-align: middle;
 }
 
 .table tr:last-child td {
-  border-bottom: none; /* No border for the last row */
+  border-bottom: none;
 }
 
 .table tr:hover td {
-    background-color: var(--second-lighter-blue); /* Hover effect for rows */
+    background-color: var(--second-lighter-blue); 
 }
+
+/*
+.table-container {
+  overflow-x: auto; 
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem; 
+
+.table th{
+    text-align: left;
+    padding: 1.2rem 1rem; 
+    background-color: var(--lighter-blue); 
+    color: var(--primary-darkerblue);
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 1.4rem;
+    border-bottom: 2px solid var(--border-gray); 
+}
+
+.table td{
+    padding: 1.2rem 1rem; 
+    border-bottom: 1px solid var(--liner-gray); 
+    white-space: nowrap;
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    vertical-align: middle; 
+}
+
+.table tr:last-child td {
+  border-bottom: none; 
+}
+
+.table tr:hover td {
+    background-color: var(--second-lighter-blue); 
+}
+    */
 
 
 /* ---------- Badges --------------*/
@@ -409,11 +450,12 @@ table.table { /* More specific selector */
   flex-wrap: wrap;
 }
 
-/* Dropdown */
+/* ------------ Dropdown ------------- */
 .dropdown {
   position: relative;
   display: inline-block;
 }
+
 .btn-icon { /* Style for the ellipsis button */
     background: none;
     border: none;
@@ -423,45 +465,78 @@ table.table { /* More specific selector */
     font-size: 1.6rem;
     line-height: 1;
 }
-.btn-icon:hover {
-    color: var(--buttons-blue);
-}
 
 .dropdown-content {
   display: none;
   position: absolute;
   right: 0;
   background-color: var(--white);
-  min-width: 200px; /* Slightly wider */
+  border: 1px solid var(--border-gray);
   box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  z-index: 10; /* Ensure it's above other content */
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  border: 1px solid var(--liner-gray); /* Subtle border */
+  min-width: 16rem; /* Slightly wider */
+  z-index: 1; /* Ensure it's above other content */
+  border-radius: 0.5rem;
+  bottom: 100%;
+  margin-bottom: 0.5rem;
 }
 
-.dropdown-content a,
-.dropdown-content form.dropdown-form-action button { /* Combined for consistency */
-  color: var(--text-color);
-  padding: 10px 15px; /* Adjusted padding */
+.dropdown-content.bottom {
+  bottom: auto;
+  top: 100%;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.dropdown-content a {
+  color: var(--primary-darkerblue);
+  padding: 1.2rem 1.6rem;
   text-decoration: none;
   display: block;
-  font-size: 1.4rem; /* Consistent font size */
+  font-size: 1.4rem;
+  transition: background-color 0.3s;
+}
+
+.dropdown-content a:hover {
+  background-color: var(--button-gray);
+}
+
+.dropdown-content a.danger {
+  color: var(--danger-color);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+
+.btn-icon:hover {
+    color: var(--buttons-blue);
+}
+
+/*
+
+.dropdown-content a,
+.dropdown-content form.dropdown-form-action button { 
+  color: var(--text-color);
+  padding: 10px 15px; 
+  text-decoration: none;
+  display: block;
+  font-size: 1.4rem; 
   font-family: "Poppins", serif;
   transition: background-color 0.2s;
-  background: none; /* For button reset */
-  border: none; /* For button reset */
-  width: 100%; /* For button */
-  text-align: left; /* For button */
-  cursor: pointer; /* For button */
+  background: none; 
+  border: none; 
+  width: 100%; 
+  text-align: left; 
+  cursor: pointer;
 }
 
 .dropdown-content a i,
 .dropdown-content form.dropdown-form-action button i {
-    margin-right: 10px; /* Consistent icon spacing */
-    width: 18px; /* Align icons */
+    margin-right: 10px; 
+    width: 18px; 
     text-align: center;
-    color: var(--primary-darkerblue); /* Icon color */
+    color: var(--primary-darkerblue); 
 }
 
 .dropdown-content a:hover,
@@ -479,9 +554,9 @@ table.table { /* More specific selector */
 }
 
 .dropdown:hover .dropdown-content,
-.dropdown.active .dropdown-content { /* Add .active class for JS toggle */
+.dropdown.active .dropdown-content { 
   display: block;
-}
+}*/
 
 /* ---------- Generic Modal Styles (can be used by other modals) ---------- */
 .modal {
