@@ -5,53 +5,6 @@
 <head>
     <title>GESTIÓN USUARIOS | IIG - LUZ</title>
     <link rel="stylesheet" href="{% static '/styles/adminuser.css' %}">
-    <style>
-        /* Styles for modal form fields and conditional display */
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--primary-darkerblue); }
-        .form-group input[type="text"],
-        .form-group input[type="email"],
-        .form-group input[type="password"],
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-gray);
-            border-radius: 0.25rem;
-            font-size: 1.4rem; /* Match other inputs if possible */
-        }
-        .form-group .help-text { font-size: 1.2rem; color: #666; margin-top: 0.25rem; }
-        .form-group ul.errorlist { list-style-type: none; padding: 0; color: var(--danger-color); font-size: 1.2rem; margin-top: 0.25rem; }
-        
-        .modal-body { max-height: 70vh; overflow-y: auto; }
-
-        /* Styles for action buttons in dropdown to look like links */
-        .dropdown-content form.dropdown-form-action { padding: 0; margin: 0; }
-        .dropdown-content form.dropdown-form-action button {
-            background: none;
-            border: none;
-            color: var(--text-color); /* Match .dropdown-content a */
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            font-size: 14px; /* Match .dropdown-content a */
-            font-family: "Poppins", serif;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .dropdown-content form.dropdown-form-action button:hover {
-            background-color: var(--light-gray); /* Match .dropdown-content a:hover */
-        }
-        .dropdown-content form.dropdown-form-action button.danger {
-            color: var(--danger-color); /* Match .dropdown-content a.danger */
-        }
-        .dropdown-content form.dropdown-form-action button i {
-            margin-right: 8px; /* Consistent icon spacing */
-            width: 16px; /* Align icons */
-            text-align: center;
-        }
-    </style>
 </head>
 
 <div class="main-content">
@@ -161,7 +114,7 @@
                                 <option value="{{ role_val }}" {% if current_role_filter == role_val %}selected{% endif %}>{{ role_disp }}</option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="btn-primary" style="padding: 0.85rem 1rem; margin-left:10px;">Filtrar</button>
+                            <button type="submit" class="btn-buscar"><i class="fas fa-search"></i>Buscar</button>
                         </div>
                     </form>
                 </div>
@@ -170,7 +123,9 @@
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>Usuario</th>
                                     <th>Nombre</th>
+                                    <th>Apellido</th>
                                     <th>Email</th>
                                     <th>Rol</th>
                                     <th>Estado</th>
@@ -181,6 +136,8 @@
                                 {% for user_obj in users_list %}
                                 <tr>
                                     <td>{{ user_obj.get_full_name|default:user_obj.username }}</td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
                                     <td>{{ user_obj.email }}</td>
                                     <td>
                                         {% if user_obj.genetistas %}
@@ -202,8 +159,8 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-edit"></i> Editar</a>
-                                                <a href="#"><i class="fas fa-key"></i> Reestablecer Contraseña</a>
+                                                <button class="edit-user" id="edit-user"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="modificar-pass" id="modificar-pass"><i class="fas fa-key"></i> Reestablecer Contraseña</button>
                                                 
                                                 <form method="POST" action="{% url 'toggle_user_active' user_obj.id %}" class="dropdown-form-action">
                                                     {% csrf_token %}
@@ -265,7 +222,7 @@
 
 <!-- Modal para Crear Nuevo Usuario -->
 <div class="modal" id="newUserModal">
-    <div class="modal-content" style="max-width: 550px;">
+    <div class="modal-content" style="max-width: 55rem;">
       <div class="modal-header">
         <h2>Crear Nuevo Usuario</h2>
         <button type="button" class="modal-close" id="closeNewUserModalBtn">×</button>
@@ -273,7 +230,7 @@
       <form method="POST" action="{% url 'gestion_usuarios' %}" id="newUserForm">
         {% csrf_token %}
         <div class="modal-body">
-            <p style="font-size: 1.4rem; color: var(--primary-darkerblue); margin-bottom:1.5rem;">Completa la información para crear un nuevo usuario en el sistema.</p>
+            <p>Completa la información para crear un nuevo usuario en el sistema.</p>
             
             <div class="form-group">
                 {{ user_creation_form.first_name.label_tag }}
@@ -313,12 +270,109 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn-secondary" id="cancelNewUserModalBtn" style="background-color: var(--button-gray); color: var(--primary-darkerblue); border: 1px solid var(--border-gray); padding: 0.85rem 1.5rem; border-radius: 0.5rem; font-family: 'Poppins', serif; font-size:1.3rem; cursor:pointer;">Cancelar</button>
-            <button type="submit" name="create_user_submit" class="btn-primary" style="background-color: var(--buttons-blue); color: white; padding: 0.85rem 1.5rem; border-radius: 0.5rem; border:none;font-family: 'Poppins', serif; font-size:1.3rem; cursor:pointer;">Crear Usuario</button>
+            <button type="button" class="btn-secondary" id="cancelNewUserModalBtn">Cancelar</button>
+            <button type="submit" name="create_user_submit" class="btn-primary">Crear Usuario</button>
         </div>
       </form>
     </div>
 </div>
+
+
+
+
+
+<!-- Modal para editar la información del usuario -->
+<div class="modal" id="editUserModal">
+    <div class="modal-content" style="max-width: 55rem;">
+        <div class="modal-header">
+            <h2><i class="fas fa-user"></i>Editar Usuario</h2>
+            <button type="button" class="modal-close" id="closeEditUserModalBtn">×</button>
+        </div>
+        <form method="POST" action="" id="editUserForm">
+            <div class="modal-body">
+                <p>Modifica la información del usuario (nombre del usuario).</p>
+                
+                <div class="form-group">
+                    <label for="user-name">Usuario</label>
+                    <input type="text" name="username" id="username">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label for="user-role">Rol</label>
+                    <select id="user-role" class="form-input" required>
+                        <option value="">Seleccionar rol</option>
+                        <option value="admin">Administrador</option>
+                        <option value="genetista">Genetista</option>
+                        <option value="lectura">Solo Lectura</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="user-role">Estado</label>
+                    <select id="user-state" class="form-input" required>
+                    <option value="">Seleccionar estado</option>
+                    <option value="admin">Activo</option>
+                    <option value="genetista">Inactivo</option>
+                    <option value="lectura">Suspendido</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancelEditUserModalBtn">Cancelar</button>
+                <button type="submit" name="edit_user_submit" class="btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+<!-- Modal para modificar la contraseña del usuario -->
+<div class="modal" id="modificarPassModal">
+    <div class="modal-content" style="max-width: 50rem;">
+        <div class="modal-header">
+            <h2><i class="fas fa-key"></i>Reestablecer Contraseña</h2>
+            <button type="button" class="modal-close" id="closeModificarPassModalBtn">×</button>
+        </div>
+        <form method="POST" action="" id="modificarPassForm">
+            <div class="modal-body">
+                <p>Reestablece la contraseña del usuario para (nombre del usuario).</p>
+                
+                <div class="form-group">
+                    <label for="new-pass">Nueva Contraseña</label>
+                    <input type="password" name="new-password" id="new-password">
+                    <p>Minimo 8 caracteres, debe incluir mayúsculas, minúsculas y números</p>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-pass">Confirmar Contraseña</label>
+                    <input type="password" name="confirm-pass" id="confirm-pass">
+                </div>
+                <div class="aviso-card">
+                    <div class="aviso-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Importante</h3>
+                    </div>
+                    <div class="aviso-content">
+                        <p>Esta acción reestablecerá inmediatamente la contraseña del usuario y cerrará 
+                            sus sesiones activas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancelModificarPassModalBtn">Cancelar</button>
+                <button type="submit" name="modificar_pass_submit" class="btn-primary">Reestablecer Contraseña</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -336,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Modal control
+    // Modal Nuevo Usuario control
     const newUserModal = document.getElementById('newUserModal');
     const newUserBtn = document.getElementById('new-user-btn');
     const closeNewUserModalBtn = document.getElementById('closeNewUserModalBtn');
@@ -414,6 +468,115 @@ document.addEventListener('DOMContentLoaded', function() {
             this.parentElement.style.display = 'none';
         });
     });
+
+}); 
+
+
+
+// Para el comportamiento del dropdown, que se despliegue al hacer click al boton de acciones y no solo hacer hover
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleccionar todos los dropdowns
+    const dropdowns = document.querySelectorAll('.dropdown');
+    
+    // Añadir evento click a cada botón de dropdown
+    dropdowns.forEach(dropdown => {
+        const btn = dropdown.querySelector('.btn-icon');
+        const content = dropdown.querySelector('.dropdown-content');
+        
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Cerrar otros dropdowns abiertos
+            document.querySelectorAll('.dropdown-content').forEach(item => {
+                if (item !== content) {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Alternar el dropdown actual
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+        });
+    });
+
+
+
+    // Cerrar dropdowns al hacer clic fuera de ellos
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-content').forEach(content => {
+            content.style.display = 'none';
+        });
+    });
 });
+
+
+
+
+/*Para las modales de edición de usuario y de contraseña*/
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de Editar Usuario
+    const editUserModal = document.getElementById('editUserModal');
+    const editUserBtn = document.getElementById('edit-user');
+    const closeEditUserModalBtn = document.getElementById('closeEditUserModalBtn');
+    const cancelEditUserModalBtn = document.getElementById('cancelEditUserModalBtn');
+
+    // Modal de Modificar Contraseña
+    const modifyPassModal = document.getElementById('modificarPassModal');
+    const modifyPassBtn = document.getElementById('modificar-pass');
+    const closeModifyPassModalBtn = document.getElementById('closeModificarPassModalBtn');
+    const cancelModifyPassModalBtn = document.getElementById('cancelModificarPassModalBtn');
+
+    // Función para cerrar todas las modales
+    function closeAllModals() {
+        if (editUserModal) editUserModal.classList.remove('active');
+        if (modifyPassModal) modifyPassModal.classList.remove('active');
+    }
+
+    // Eventos para Editar Usuario
+    if (editUserBtn) {
+        editUserBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeAllModals();
+            if (editUserModal) editUserModal.classList.add('active');
+        });
+    }
+
+    // Eventos para Modificar Contraseña
+    if (modifyPassBtn) {
+        modifyPassBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeAllModals();
+            if (modifyPassModal) modifyPassModal.classList.add('active');
+        });
+    }
+
+    // Eventos de cierre para ambas modales
+    [closeEditUserModalBtn, cancelEditUserModalBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', closeAllModals);
+        }
+    });
+
+    [closeModifyPassModalBtn, cancelModifyPassModalBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', closeAllModals);
+        }
+    });
+
+    // Cerrar al hacer clic fuera del contenido
+    [editUserModal, modifyPassModal].forEach(modal => {
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeAllModals();
+                }
+            });
+        }
+    });
+});
+
 </script>
 {% endblock %}
