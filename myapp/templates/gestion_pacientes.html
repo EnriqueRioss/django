@@ -216,12 +216,12 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                <a href="{% url 'pacientes_admin_list' %}" class="btn btn-icon" title="Ver Paciente">
+                                                <button class="btn-ver" id="ver-paciente">
                                                     <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="#" class="btn btn-icon" title="Editar Paciente"> <!-- TODO: Añadir URL de edición si existe -->
+                                                </button>
+                                                <button class="btn-editar" id="editar-paciente">
                                                     <i class="fas fa-edit"></i>
-                                                </a>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -241,12 +241,12 @@
   </div>
 
   <!-- Modal de detalle de paciente -->
-  <div class="modal hidden">
+  <div class="modal" id="verPacienteModal">
     <div class="modal-content">
       <div class="modal-header">
         <div class="patient-modal-title">
           <div class="patient-avatar large">
-            <img src="/placeholder.svg" alt="Avatar" class="avatar-img">
+            <img alt="" class="avatar-img">
             <span class="avatar-fallback">MG</span>
           </div>
           <div>
@@ -258,79 +258,134 @@
 
       <div class="modal-tabs">
         <div class="tabs-header">
-          <button class="tab-btn active">Información Personal</button>
-          <button class="tab-btn">Historias Clínicas</button>
-          <button class="tab-btn">Análisis y Pruebas</button>
+          <button class="tab-btn active" data-tab="personal-info">Información Personal</button>
+          <button class="tab-btn" data-tab="medical-record">Historias Clínicas</button>
+          <button class="tab-btn" data-tab="tests">Análisis y Pruebas</button>
         </div>
 
-        <div class="tab-content active">
-          <div class="info-grid">
-            <div class="info-card">
-              <div class="card-header">
-                <h3 class="card-title">Datos Personales</h3>
-              </div>
-              <div class="card-content">
-                <div class="info-item">
-                  <i data-lucide="calendar" class="info-icon"></i>
-                  <span class="info-text">Edad: 34 años</span>
+        <div class="tab-content active" id="personal-info">
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Datos Personales</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span class="info-text">Edad: 34 años</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <span class="info-text">+34 612 345 678</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <span class="info-text">maria.gonzalez@email.com</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-map-pin"></i>
+                            <span class="info-text">Calle Mayor 123, Madrid</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                  <i data-lucide="phone" class="info-icon"></i>
-                  <span class="info-text">+34 612 345 678</span>
-                </div>
-                <div class="info-item">
-                  <i data-lucide="mail" class="info-icon"></i>
-                  <span class="info-text">maria.gonzalez@email.com</span>
-                </div>
-                <div class="info-item">
-                  <i data-lucide="map-pin" class="info-icon"></i>
-                  <span class="info-text">Calle Mayor 123, Madrid</span>
-                </div>
-              </div>
-            </div>
 
-            <div class="info-card">
-              <div class="card-header">
-                <h3 class="card-title">Información Médica</h3>
-              </div>
-              <div class="card-content">
-                <div class="info-row">
-                  <span class="info-label">Genetista asignado:</span>
-                  <span class="badge">Dr. García</span>
+                <div class="info-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Información Médica</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Genetista asignado:</span>
+                            <span class="badge">Dr. García</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Estado:</span>
+                            <span class="badge badge-active">Activo</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Última visita:</span>
+                            <span class="info-text">2024-01-15</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Historias clínicas:</span>
+                            <span class="badge">3</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-row">
-                  <span class="info-label">Estado:</span>
-                  <span class="badge badge-active">Activo</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Última visita:</span>
-                  <span class="info-text">2024-01-15</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Historias clínicas:</span>
-                  <span class="badge">3</span>
-                </div>
-              </div>
             </div>
-          </div>
+        </div>
+
+        <div class="tab-content" id="medical-record">
+            <h2>Hola</h2>
+        </div>
+
+        <div class="tab-content" id="tests">
+            <h2>Adios</h2>
         </div>
       </div>
+      <button type="button" class="modal-close" id="closeVerPacienteModalBtn">×</button>
     </div>
   </div>
 
+
+
   <script>
-    // Simular funcionalidad del modal
-    document.querySelectorAll('.btn-icon[class="fas fa-eye"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelector('.modal-overlay').classList.remove('hidden');
-      });
+    document.addEventListener('DOMContentLoaded', function() {
+    // Modal de Editar Paciente
+    const verPacienteModal = document.getElementById('verPacienteModal');
+    const verPacienteBtn = document.getElementById('ver-paciente');
+    const closeVerPacienteModalBtn = document.getElementById('closeVerPacienteModalBtn');
+
+
+    // Función para cerrar la modal
+    function closeAllModals() {
+        if (verPacienteModal) verPacienteModal.classList.remove('active');
+    }
+
+    // Eventos para ver Paciente
+    if (verPacienteBtn) {
+        verPacienteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeAllModals();
+            if (verPacienteModal) verPacienteModal.classList.add('active');
+        });
+    }
+
+    // Eventos de cierre para ambas modales
+    [closeVerPacienteModalBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', closeAllModals);
+        }
     });
-    
-    document.querySelector('.modal-overlay').addEventListener('click', (e) => {
-      if (e.target === document.querySelector('.modal-overlay')) {
-        document.querySelector('.modal-overlay').classList.add('hidden');
-      }
+
+    // Cerrar al hacer clic fuera del contenido
+    [verPacienteModal].forEach(modal => {
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeAllModals();
+                }
+            });
+        }
     });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching logic
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+});
+
   </script>
 
 {% endblock %}
