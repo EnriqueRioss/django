@@ -5,6 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>{% block title %}GenClinic - IIG LUZ{% endblock %}</title>
     <link rel="stylesheet" href="{% static '/styles/stylesside.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> 
@@ -162,5 +165,98 @@
         {% block content %}
         {% endblock %}
     </div>   
+
+<SCript>
+     function setupAjaxForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) {
+            console.error(`Form with id "${formId}" not found.`);
+            return;
+        }
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent traditional form submission
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.innerHTML = 'Enviando...';
+            submitButton.disabled = true;
+
+
+            // Clear previous errors
+            form.querySelectorAll('.field-errors').forEach(el => el.innerHTML = '');
+            const nonFieldErrorsDiv = form.querySelector('.non-field-errors');
+            if (nonFieldErrorsDiv) nonFieldErrorsDiv.innerHTML = '';
+
+
+            const formData = new FormData(form);
+            const url = form.action || window.location.href;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                if (!response.ok && response.status !== 400) { // 400 is expected for validation errors
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Success! Redirect to the next page.
+                    window.location.href = data.redirect_url;
+                } else {
+                    // Validation failed. Display errors.
+                    if (data.errors) {
+                        for (const fieldName in data.errors) {
+                            const errorList = data.errors[fieldName];
+                            if (fieldName === '__all__') {
+                                // Handle non-field errors
+                                if (nonFieldErrorsDiv) {
+                                    errorList.forEach(error => {
+                                        const errorElement = document.createElement('p');
+                                        errorElement.textContent = error;
+                                        nonFieldErrorsDiv.appendChild(errorElement);
+                                    });
+                                }
+                            } else {
+                                // Handle field-specific errors
+                                const field = document.getElementById(`id_${fieldName}`);
+                                const errorDiv = document.getElementById(`error_id_${fieldName}`); // Updated to match template
+                                if (errorDiv) {
+                                    errorList.forEach(error => {
+                                        const errorElement = document.createElement('span');
+                                        errorElement.textContent = error;
+                                        errorDiv.appendChild(errorElement);
+                                    });
+                                } else if (field) { // Fallback if no specific error div
+                                    console.warn(`No error div found for field: ${fieldName}. Errors:`, errorList);
+                                }
+                            }
+                        }
+                    }
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                if (nonFieldErrorsDiv) {
+                    nonFieldErrorsDiv.innerHTML = '<p>Ocurrió un error inesperado. Por favor, intente de nuevo.</p>';
+                } else {
+                    alert('Ocurrió un error inesperado. Por favor, intente de nuevo.');
+                }
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+            });
+        });
+    }
+</SCript>
 </body>
+
 </html>

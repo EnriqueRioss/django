@@ -1,6 +1,3 @@
-#
-# ESTE ES EL ARCHIVO COMPLETO Y CORREGIDO
-#
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.contrib.auth import login, authenticate, logout
@@ -18,15 +15,13 @@ from datetime import datetime
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
+
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from django.contrib.auth.models import User
-# CAMBIO IMPORTANTE: Importamos 'modelformset_factory' directamente aquí
-from django.forms import modelformset_factory
-
 
 from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
@@ -37,30 +32,10 @@ from .models import (
 from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
-    ExamenFisicoForm, ParejaPropositosForm, 
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm
+    ExamenFisicoForm, ParejaPropositosForm, SignosClinicosForm,
+    DiagnosticoPresuntivoFormSet, PlanEstudioFormSet, LoginForm,
+    CreateNewTask, CreateNewProject, ReportSearchForm,AdminUserCreationForm
 )
-
-from django.views.decorators.cache import patch_cache_control
-
-
-def never_cache_on_get(view_func):
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        response = view_func(request, *args, **kwargs)
-        if request.method == 'GET':
-            patch_cache_control(
-                response, 
-                no_cache=True, 
-                no_store=True, 
-                must_revalidate=True,
-                max_age=0
-            )
-            response['Expires'] = '0'
-            response['Pragma'] = 'no-cache'
-        return response
-    return _wrapped_view
-
 
 # --- Role-Based Access Decorators ---
 def role_required(allowed_roles):
@@ -122,19 +97,19 @@ all_roles_required = role_required(['GEN', 'ADM', 'LEC'])
 @genetista_or_admin_required
 @never_cache
 def crear_historia(request):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if request.method == 'POST':
         form = HistoriasForm(request.POST)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
         if form.is_valid():
             try:
                 genetista_profile = request.user.genetistas
+                
+                
                 historia = form.save(commit=False)
                 if genetista_profile.rol in ['GEN', 'ADM']:
                     historia.genetista = genetista_profile
                 historia.save()
-                
-                request.session.pop('form_data', None) # Limpiar datos de sesión en caso de éxito
                 messages.success(request, f"Historia Clínica N° {historia.numero_historia} creada exitosamente.")
                 
                 motivo = form.cleaned_data['motivo_tipo_consulta']
@@ -152,31 +127,22 @@ def crear_historia(request):
                 return redirect(redirect_url)
 
             except IntegrityError:
-                error_msg = f"Ya existe una historia clínica con el número '{form.cleaned_data.get('numero_historia', '')}'. Revise por favor."
+                error_msg = f"Ya existe una historia clínica con el número '{form.cleaned_data.get('numero_historia')}'. Revise por favor."
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'numero_historia': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
                 
             except Genetistas.DoesNotExist:
                 error_msg = 'Perfil de genetista no encontrado.'
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-            
             messages.error(request, "No se pudo crear la historia. Corrija los errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        form = HistoriasForm(form_data) if form_data else HistoriasForm()
 
+    form = HistoriasForm()
     return render(request, "historia_clinica.html", {'form1': form})
 
 @login_required
@@ -189,14 +155,14 @@ def crear_paciente(request, historia_id):
         raise PermissionDenied("No tiene permiso para modificar pacientes de esta historia clínica.")
     
     existing_proposito = Propositos.objects.filter(historia=historia).first()
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
         form = PropositosForm(request.POST, request.FILES, instance=existing_proposito)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
         if form.is_valid():
             try:
-                proposito = form.save(historia=historia)
-                request.session.pop('form_data', None)
+                proposito = form.save(historia=historia) 
                 action_verb = 'actualizado' if existing_proposito else 'creado'
                 messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {action_verb} exitosamente.")
                 redirect_url = reverse('padres_proposito_crear', kwargs={'historia_id': historia.historia_id, 'proposito_id': proposito.proposito_id})
@@ -209,23 +175,14 @@ def crear_paciente(request, historia_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar el paciente. Corrija los errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        if form_data:
-            form = PropositosForm(form_data, instance=existing_proposito)
-        else:
-            form = PropositosForm(instance=existing_proposito)
-        
-        if existing_proposito and not form_data:
-            messages.info(request, f"Editando información para: {existing_proposito.nombres} {existing_proposito.apellidos}")
+
+    form = PropositosForm(instance=existing_proposito)
+    if existing_proposito:
+        messages.info(request, f"Editando información para: {existing_proposito.nombres} {existing_proposito.apellidos}")
             
     return render(request, "Crear_paciente.html", {'form': form, 'historia': historia, 'editing': bool(existing_proposito)})
 
@@ -238,17 +195,19 @@ def crear_pareja(request, historia_id):
     if user_profile.rol == 'GEN' and historia.genetista != user_profile:
         raise PermissionDenied("No tiene permiso para modificar parejas de esta historia clínica.")
 
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if request.method == 'POST':
         form = ParejaPropositosForm(request.POST, request.FILES)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # (Your existing logic for get_or_create_proposito_from_form and creating Pareja is good)
                     def get_or_create_proposito_from_form(form_cleaned_data, prefix_num, historia_obj, files_data):
                         identificacion = form_cleaned_data[f'identificacion_{prefix_num}']
                         proposito_data = {
-                            'historia': historia_obj, 'nombres': form_cleaned_data[f'nombres_{prefix_num}'], 'apellidos': form_cleaned_data[f'apellidos_{prefix_num}'],
+                            'historia': historia_obj,
+                            'nombres': form_cleaned_data[f'nombres_{prefix_num}'], 'apellidos': form_cleaned_data[f'apellidos_{prefix_num}'],
                             'sexo': form_cleaned_data.get(f'sexo_{prefix_num}'), 'lugar_nacimiento': form_cleaned_data.get(f'lugar_nacimiento_{prefix_num}'),
                             'fecha_nacimiento': form_cleaned_data.get(f'fecha_nacimiento_{prefix_num}'), 'escolaridad': form_cleaned_data.get(f'escolaridad_{prefix_num}'),
                             'ocupacion': form_cleaned_data.get(f'ocupacion_{prefix_num}'), 'edad': form_cleaned_data.get(f'edad_{prefix_num}'),
@@ -258,8 +217,11 @@ def crear_pareja(request, historia_id):
                         }
                         proposito_defaults = {k: v for k, v in proposito_data.items() if v is not None}
                         proposito_defaults['historia'] = historia_obj
+
                         proposito, created = Propositos.objects.update_or_create(identificacion=identificacion, defaults=proposito_defaults)
-                        if not created and proposito.historia != historia_obj: proposito.historia = historia_obj
+                        if not created and proposito.historia != historia_obj:
+                            proposito.historia = historia_obj
+                        
                         foto_file = files_data.get(f'foto_{prefix_num}')
                         if foto_file:
                             proposito.foto = foto_file
@@ -269,13 +231,12 @@ def crear_pareja(request, historia_id):
                     proposito1 = get_or_create_proposito_from_form(form.cleaned_data, '1', historia, request.FILES)
                     proposito2 = get_or_create_proposito_from_form(form.cleaned_data, '2', historia, request.FILES)
 
-                    if proposito1.pk == proposito2.pk:
+                    if proposito1.pk == proposito2.pk: 
                         raise IntegrityError("Los dos miembros de la pareja no pueden ser la misma persona.")
 
                     p_min, p_max = sorted([proposito1, proposito2], key=lambda p: p.pk)
                     pareja, pareja_created = Parejas.objects.get_or_create(proposito_id_1=p_min, proposito_id_2=p_max)
                 
-                request.session.pop('form_data', None)
                 action_verb = 'creada' if pareja_created else 'localizada/actualizada'
                 messages.success(request, f"Pareja ({proposito1.nombres} y {proposito2.nombres}) {action_verb} exitosamente.")
                 redirect_url = reverse('antecedentes_personales_crear', kwargs={'historia_id': historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja.pareja_id})
@@ -283,24 +244,22 @@ def crear_pareja(request, historia_id):
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
                 return redirect(redirect_url)
+
             except (IntegrityError, Exception) as e:
                 error_msg = f"Error al guardar la pareja: {e}"
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar la pareja. Corrija los errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        form = ParejaPropositosForm(form_data) if form_data else ParejaPropositosForm()
-        
+            
+    form = ParejaPropositosForm()
     return render(request, 'Crear_pareja.html', {'form': form, 'historia': historia})
+
+
+# ... The pattern continues for other views ...
 
 @login_required
 @genetista_or_admin_required
@@ -312,12 +271,12 @@ def padres_proposito(request, historia_id, proposito_id):
     if user_profile.rol == 'GEN' and proposito.historia.genetista != user_profile:
         raise PermissionDenied("No tiene permiso para modificar esta información.")
 
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if request.method == 'POST':
         form = PadresPropositoForm(request.POST)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         if form.is_valid():
             try:
+                # ... (your saving logic is good) ...
                 with transaction.atomic():
                     padre_defaults = {k[len('padre_'):]: v for k, v in form.cleaned_data.items() if k.startswith('padre_')}
                     padre_defaults_clean = {k:v for k,v in padre_defaults.items() if v is not None or k in ['nombres','apellidos']}
@@ -331,7 +290,6 @@ def padres_proposito(request, historia_id, proposito_id):
                     madre_defaults_clean['factor_rh'] = madre_defaults_clean.get('factor_rh') or None
                     InformacionPadres.objects.update_or_create(proposito=proposito, tipo='Madre', defaults=madre_defaults_clean)
 
-                request.session.pop('form_data', None)
                 messages.success(request, "Información de los padres guardada/actualizada.")
                 redirect_url = reverse('antecedentes_personales_crear', kwargs={'historia_id': historia_id, 'tipo': 'proposito', 'objeto_id': proposito_id})
                 if is_ajax:
@@ -342,39 +300,32 @@ def padres_proposito(request, historia_id, proposito_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar información de padres. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        if form_data:
-            form = PadresPropositoForm(form_data)
-        else:
-            padre = InformacionPadres.objects.filter(proposito=proposito, tipo='Padre').first()
-            madre = InformacionPadres.objects.filter(proposito=proposito, tipo='Madre').first()
-            initial_data = {}
-            if padre: initial_data.update({f'padre_{f.name}': getattr(padre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre, f.name)})
-            if madre: initial_data.update({f'madre_{f.name}': getattr(madre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre, f.name)})
-            form = PadresPropositoForm(initial=initial_data if initial_data else None)
-            if initial_data: messages.info(request, "Editando información de padres.")
-
+    
+    # GET request logic
+    padre = InformacionPadres.objects.filter(proposito=proposito, tipo='Padre').first()
+    madre = InformacionPadres.objects.filter(proposito=proposito, tipo='Madre').first()
+    initial_data = {}
+    if padre: initial_data.update({f'padre_{f.name}': getattr(padre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre, f.name)})
+    if madre: initial_data.update({f'madre_{f.name}': getattr(madre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre, f.name)})
+    form = PadresPropositoForm(initial=initial_data if initial_data else None)
+    if initial_data: messages.info(request, "Editando información de padres.")
     return render(request, "Padres_proposito.html", {'form': form, 'historia': historia, 'proposito': proposito})
+
+# I will apply the same pattern to the other main form views.
+# The following is the rest of `views.py` fully updated.
 
 @login_required
 @genetista_or_admin_required
-@never_cache
+@never_cache_on_get
 def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
     proposito_obj, pareja_obj, context_object_name = None, None, ""
     editing = False
     user_gen_profile = request.user.genetistas
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if tipo == 'proposito':
         proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id, historia=historia)
         if user_gen_profile.rol == 'GEN' and proposito_obj.historia.genetista != user_gen_profile:
@@ -390,23 +341,22 @@ def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
                  raise PermissionDenied("No tiene permiso para esta acción sobre la pareja.")
         context_object_name = f"Pareja ID: {pareja_obj.pareja_id}"
         if AntecedentesPersonales.objects.filter(pareja=pareja_obj).exists(): editing = True
-    else:
+    else: # Should not happen
         messages.error(request, 'Tipo de objeto no válido.')
         return redirect('index')
 
     if request.method == 'POST':
         form = AntecedentesDesarrolloNeonatalForm(request.POST)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         if form.is_valid():
             try:
                 target_proposito = proposito_obj if tipo == 'proposito' else None
                 target_pareja = pareja_obj if tipo == 'pareja' else None
                 form.save(proposito=target_proposito, pareja=target_pareja)
                 
-                request.session.pop('form_data', None)
                 action_verb = "actualizados" if editing else "guardados"
                 messages.success(request, f"Antecedentes personales y desarrollo {action_verb} para {context_object_name}.")
                 redirect_url = reverse('antecedentes_preconcepcionales_crear', kwargs={'historia_id': historia.historia_id, 'tipo': tipo, 'objeto_id': objeto_id})
-                
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
                 return redirect(redirect_url)
@@ -415,48 +365,40 @@ def crear_antecedentes_personales(request, historia_id, tipo, objeto_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudieron guardar los antecedentes. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        if form_data:
-            form = AntecedentesDesarrolloNeonatalForm(form_data)
-        else:
-            initial_data = {}
-            if editing:
-                ap_instance, dp_instance, pn_instance = None, None, None
-                target = proposito_obj if tipo == 'proposito' else pareja_obj
-                if target:
-                    ap_instance = AntecedentesPersonales.objects.filter(**{tipo: target}).first()
-                    dp_instance = DesarrolloPsicomotor.objects.filter(**{tipo: target}).first()
-                    pn_instance = PeriodoNeonatal.objects.filter(**{tipo: target}).first()
 
-                if ap_instance: initial_data.update({f.name: getattr(ap_instance, f.name) for f in AntecedentesPersonales._meta.fields if hasattr(ap_instance, f.name) and f.name not in ['antecedente_id', 'proposito', 'pareja']})
-                if dp_instance: initial_data.update({f.name: getattr(dp_instance, f.name) for f in DesarrolloPsicomotor._meta.fields if hasattr(dp_instance, f.name) and f.name not in ['desarrollo_id', 'proposito', 'pareja']})
-                if pn_instance: initial_data.update({f.name: getattr(pn_instance, f.name) for f in PeriodoNeonatal._meta.fields if hasattr(pn_instance, f.name) and f.name not in ['neonatal_id', 'proposito', 'pareja']})
-                if initial_data: messages.info(request, f"Editando antecedentes para {context_object_name}.")
-            form = AntecedentesDesarrolloNeonatalForm(initial=initial_data if initial_data else None)
+    # GET request logic
+    initial_data = {}
+    if editing:
+        # ... your initial data loading logic is correct ...
+        ap_instance, dp_instance, pn_instance = None, None, None
+        target = proposito_obj if tipo == 'proposito' else pareja_obj
+        if target:
+            ap_instance = AntecedentesPersonales.objects.filter(**{tipo: target}).first()
+            dp_instance = DesarrolloPsicomotor.objects.filter(**{tipo: target}).first()
+            pn_instance = PeriodoNeonatal.objects.filter(**{tipo: target}).first()
 
+        if ap_instance: initial_data.update({f.name: getattr(ap_instance, f.name) for f in AntecedentesPersonales._meta.fields if hasattr(ap_instance, f.name) and f.name not in ['antecedente_id', 'proposito', 'pareja']})
+        if dp_instance: initial_data.update({f.name: getattr(dp_instance, f.name) for f in DesarrolloPsicomotor._meta.fields if hasattr(dp_instance, f.name) and f.name not in ['desarrollo_id', 'proposito', 'pareja']})
+        if pn_instance: initial_data.update({f.name: getattr(pn_instance, f.name) for f in PeriodoNeonatal._meta.fields if hasattr(pn_instance, f.name) and f.name not in ['neonatal_id', 'proposito', 'pareja']})
+        if initial_data: messages.info(request, f"Editando antecedentes para {context_object_name}.")
+    
+    form = AntecedentesDesarrolloNeonatalForm(initial=initial_data if initial_data else None)
     context = {'form': form, 'historia': historia, 'tipo': tipo, 'objeto': proposito_obj or pareja_obj, 'context_object_name': context_object_name, 'editing': editing}
     return render(request, 'antecedentes_personales.html', context)
 
 
 @login_required
 @genetista_or_admin_required
-@never_cache
+@never_cache_on_get
 def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
     historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
     proposito_obj, pareja_obj, context_object_name = None, None, ""
     instance_to_edit = None
     user_gen_profile = request.user.genetistas
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
     if tipo == 'proposito':
         proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id, historia=historia)
         if user_gen_profile.rol == 'GEN' and proposito_obj.historia.genetista != user_gen_profile:
@@ -468,7 +410,7 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         if user_gen_profile.rol == 'GEN':
             p1_hist_gen = pareja_obj.proposito_id_1.historia.genetista if pareja_obj.proposito_id_1.historia else None
             p2_hist_gen = pareja_obj.proposito_id_2.historia.genetista if pareja_obj.proposito_id_2 and pareja_obj.proposito_id_2.historia else None
-            if not (p1_hist_gen == user_gen_profile or p2_hist_gen == user_gen_profile):
+            if not (p1_hist_gen == user_gen_profile or p2_hist_gen == user_gen_profile) :
                  raise PermissionDenied("No tiene permiso para esta acción sobre la pareja.")
         context_object_name = f"Pareja: {pareja_obj.proposito_id_1.nombres} y {pareja_obj.proposito_id_2.nombres}"
         instance_to_edit = AntecedentesFamiliaresPreconcepcionales.objects.filter(pareja=pareja_obj).first()
@@ -476,14 +418,14 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
         return redirect('index')
 
     if request.method == 'POST':
-        form = AntecedentesPreconcepcionalesForm(request.POST)
+        form = AntecedentesPreconcepcionalesForm(request.POST) 
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         if form.is_valid():
             try:
                 target_proposito = proposito_obj if tipo == 'proposito' else None
                 target_pareja = pareja_obj if tipo == 'pareja' else None
                 form.save(proposito=target_proposito, pareja=target_pareja, tipo=tipo)
                 
-                request.session.pop('form_data', None)
                 action_verb = "actualizados" if instance_to_edit else "guardados"
                 messages.success(request, f"Antecedentes preconcepcionales {action_verb}.")
 
@@ -495,7 +437,12 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
                 elif 'save_and_exam_p2' in request.POST and pareja_obj:
                     redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': pareja_obj.proposito_id_2.proposito_id}) + f"?pareja_id={pareja_obj.pareja_id}"
                 else:
-                    redirect_url = reverse('flow_completion')
+                    if tipo == 'proposito' and proposito_obj:
+                        redirect_url = reverse('evaluacion_genetica_detalle', kwargs={'historia_id': historia.historia_id, 'tipo': "proposito", 'objeto_id': proposito_obj.proposito_id})
+                    elif tipo == 'pareja' and pareja_obj:
+                        redirect_url = reverse('evaluacion_genetica_detalle', kwargs={'historia_id': historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja_obj.pareja_id})
+                
+                if not redirect_url: redirect_url = reverse('index')
                 
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
@@ -506,41 +453,31 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
         else: # Form is invalid
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudieron guardar antec. preconcepcionales. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        if form_data:
-            form = AntecedentesPreconcepcionalesForm(form_data)
-        else:
-            initial_data = {}
-            if instance_to_edit:
-                initial_data = {f.name: getattr(instance_to_edit, f.name) for f in AntecedentesFamiliaresPreconcepcionales._meta.fields if hasattr(instance_to_edit, f.name)}
-                if initial_data: messages.info(request, f"Editando antec. preconcepcionales para {context_object_name}.")
-            form = AntecedentesPreconcepcionalesForm(initial=initial_data or None)
 
+    # GET request logic
+    initial_data = {}
+    if instance_to_edit:
+        initial_data = {f.name: getattr(instance_to_edit, f.name) for f in AntecedentesFamiliaresPreconcepcionales._meta.fields if hasattr(instance_to_edit, f.name)}
+        if initial_data: messages.info(request, f"Editando antec. preconcepcionales para {context_object_name}.")
+    form = AntecedentesPreconcepcionalesForm(initial=initial_data or None)
     context = {'form': form, 'historia': historia, 'tipo': tipo, 'objeto': proposito_obj or pareja_obj, 'context_object_name': context_object_name, 'editing': bool(instance_to_edit)}
     return render(request, 'antecedentes_preconcepcionales.html', context)
 
 
 @login_required
 @genetista_or_admin_required
-@never_cache
+@never_cache_on_get
 def crear_examen_fisico(request, proposito_id):
     proposito = get_object_or_404(Propositos, pk=proposito_id)
     user_profile = request.user.genetistas
     if user_profile.rol == 'GEN' and proposito.historia.genetista != user_profile:
         raise PermissionDenied("No tiene permiso para modificar el examen físico de este propósito.")
-    
     examen_existente = ExamenFisico.objects.filter(proposito=proposito).first()
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    
+    # ... (your logic for pareja/otro_proposito is fine) ...
     pareja, otro_proposito, otro_proposito_id_faltante = None, None, None
     pareja_id = request.GET.get('pareja_id') or request.POST.get('pareja_id')
     if pareja_id:
@@ -551,10 +488,11 @@ def crear_examen_fisico(request, proposito_id):
     
     if request.method == 'POST':
         form = ExamenFisicoForm(request.POST, instance=examen_existente)
-        form.proposito_instance = proposito
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        form.proposito_instance = proposito # Important for form.save()
+        
         if form.is_valid():
             form.save()
-            request.session.pop('form_data', None)
             action_verb = "actualizado" if examen_existente else "guardado"
             messages.success(request, f"Examen físico para {proposito.nombres} {action_verb}.")
 
@@ -562,9 +500,10 @@ def crear_examen_fisico(request, proposito_id):
             if 'save_and_go_to_other' in request.POST and otro_proposito:
                 messages.info(request, f"Ahora puede completar el examen para {otro_proposito.nombres}.")
                 redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': otro_proposito.proposito_id}) + f"?pareja_id={pareja.pareja_id}"
+            elif pareja:
+                redirect_url = reverse('evaluacion_genetica_detalle', kwargs={'historia_id': proposito.historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja.pareja_id})
             else:
-                # En cualquier otro caso de éxito (guardado simple), redirige a la página de finalización.
-                redirect_url = reverse('flow_completion')
+                redirect_url = reverse('evaluacion_genetica_detalle', kwargs={'historia_id': proposito.historia.historia_id, 'tipo': "proposito", 'objeto_id': proposito.proposito_id})
             
             if is_ajax:
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})
@@ -573,16 +512,9 @@ def crear_examen_fisico(request, proposito_id):
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar Examen Físico. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
-    else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        if form_data:
-            form = ExamenFisicoForm(form_data, instance=examen_existente)
-        else:
-            form = ExamenFisicoForm(instance=examen_existente)
-            if examen_existente: messages.info(request, f"Editando examen físico para {proposito.nombres}.")
-
+    
+    form = ExamenFisicoForm(instance=examen_existente)
+    if examen_existente: messages.info(request, f"Editando examen físico para {proposito.nombres}.")
     context = {
         'form': form, 'proposito': proposito, 'editing': bool(examen_existente),
         'pareja': pareja, 'otro_proposito': otro_proposito,
@@ -590,9 +522,12 @@ def crear_examen_fisico(request, proposito_id):
     }
     return render(request, 'examen_fisico.html', context)
 
+
+# The view 'ver_proposito' is read-only, no changes needed.
 @login_required
 @all_roles_required
 def ver_proposito(request, proposito_id):
+    # ... (NO CHANGES NEEDED)
     proposito = get_object_or_404(Propositos, pk=proposito_id)
     user_gen_profile = request.user.genetistas
 
@@ -625,71 +560,95 @@ def ver_proposito(request, proposito_id):
     })
     
 
-
 @login_required
-@admin_required
-@never_cache
-def gestion_usuarios_view(request):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+@genetista_or_admin_required
+@never_cache_on_get
+def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
+    # ... (Permission checks and object loading is fine) ...
+    historia = get_object_or_404(HistoriasClinicas, historia_id=historia_id)
+    proposito_obj, pareja_obj, context_object_name = None, None, ""
+    user_gen_profile = request.user.genetistas
+
+    if user_gen_profile.rol == 'GEN' and historia.genetista != user_gen_profile:
+        raise PermissionDenied("No tiene permiso para acceder a la evaluación de esta historia.")
+    if tipo == 'proposito':
+        proposito_obj = get_object_or_404(Propositos, proposito_id=objeto_id, historia=historia)
+        context_object_name = f"Propósito: {proposito_obj.nombres} {proposito_obj.apellidos}"
+        evaluacion, created = EvaluacionGenetica.objects.get_or_create(proposito=proposito_obj, defaults={'pareja': None})
+        if not created and evaluacion.pareja is not None: evaluacion.pareja = None; evaluacion.proposito = proposito_obj; evaluacion.save()
+    elif tipo == 'pareja':
+        pareja_obj = get_object_or_404(Parejas, pareja_id=objeto_id)
+        if user_gen_profile.rol == 'GEN':
+             p1_hist_gen = pareja_obj.proposito_id_1.historia.genetista if pareja_obj.proposito_id_1.historia else None
+             p2_hist_gen = pareja_obj.proposito_id_2.historia.genetista if pareja_obj.proposito_id_2 and pareja_obj.proposito_id_2.historia else None
+             if not (p1_hist_gen == user_gen_profile or p2_hist_gen == user_gen_profile):
+                  raise PermissionDenied("La pareja no está asociada con su perfil de genetista.")
+        context_object_name = f"Pareja ID: {pareja_obj.pareja_id} ({pareja_obj.proposito_id_1.nombres} y {pareja_obj.proposito_id_2.nombres})"
+        evaluacion, created = EvaluacionGenetica.objects.get_or_create(pareja=pareja_obj, defaults={'proposito': None})
+        if not created and evaluacion.proposito is not None: evaluacion.proposito = None; evaluacion.pareja = pareja_obj; evaluacion.save()
+    else:
+        messages.error(request, "Tipo de objeto no válido para evaluación genética.")
+        return redirect('index')
 
     if request.method == 'POST':
-        if 'create_user_submit' in request.POST:
-            form = AdminUserCreationForm(request.POST)
-            if form.is_valid():
-                try:
-                    form.save()
-                    request.session.pop('form_data', None)
-                    messages.success(request, "Usuario creado exitosamente.")
-                    redirect_url = reverse('gestion_usuarios')
-                    if is_ajax:
-                        return JsonResponse({'success': True, 'redirect_url': redirect_url})
-                    return redirect(redirect_url)
-                except Exception as e:
-                    error_msg = f"Error al crear usuario: {e}"
-                    if is_ajax:
-                        return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
-                    messages.error(request, error_msg)
-                    request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                    return redirect(request.path_info) # <<< PRG FIX
-            else: # Form is invalid
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-                messages.error(request, "Error al crear usuario. Por favor, corrija los errores.")
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
-    
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        signos_form = SignosClinicosForm(request.POST, instance=evaluacion)
+        diagnostico_formset = DiagnosticoPresuntivoFormSet(request.POST, prefix='diagnosticos')
+        plan_formset = PlanEstudioFormSet(request.POST, prefix='plans')
+
+        if signos_form.is_valid() and diagnostico_formset.is_valid() and plan_formset.is_valid():
+            with transaction.atomic():
+                # ... (your saving logic for formsets is fine) ...
+                evaluacion_instance = signos_form.save()
+                DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion_instance).delete()
+                for form_data_diag in diagnostico_formset.cleaned_data: 
+                    if form_data_diag and not form_data_diag.get('DELETE', False) and form_data_diag.get('descripcion'): 
+                        DiagnosticoPresuntivo.objects.create(evaluacion=evaluacion_instance, descripcion=form_data_diag['descripcion'], orden=form_data_diag.get('orden', 0))
+                PlanEstudio.objects.filter(evaluacion=evaluacion_instance).delete()
+                for form_data_plan in plan_formset.cleaned_data: 
+                    if form_data_plan and not form_data_plan.get('DELETE', False) and form_data_plan.get('accion'): 
+                        PlanEstudio.objects.create(
+                            evaluacion=evaluacion_instance, 
+                            accion=form_data_plan['accion'],
+                            asesoramiento_evoluciones=form_data_plan.get('asesoramiento_evoluciones')
+                        )
+                        
+            messages.info(request, "POPUP:Historia Clínica Genética completada y guardada.") 
+            redirect_url = reverse('index')
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect_url': redirect_url})
+            return redirect(redirect_url)
+        else: # Forms are invalid
+            errors = {
+                'signos_clinicos': signos_form.errors,
+                'diagnosticos': diagnostico_formset.errors,
+                'plans': plan_formset.errors,
+                'non_form_errors': diagnostico_formset.non_form_errors() or plan_formset.non_form_errors()
+            }
+            if is_ajax:
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            messages.error(request, "No se pudo guardar la evaluación. Corrija los errores.")
+
     # GET request logic
-    form_data = request.session.pop('form_data', None) # <<< PRG FIX
-    user_creation_form_instance = AdminUserCreationForm(form_data) if form_data else AdminUserCreationForm()
-    
-    total_users_count = User.objects.count()
-    active_users_count = User.objects.filter(is_active=True).count()
-    role_counts = Genetistas.objects.aggregate(
-        admin_count=Count('user_id', filter=Q(rol='ADM')),
-        genetista_count=Count('user_id', filter=Q(rol='GEN')),
-        lector_count=Count('user_id', filter=Q(rol='LEC')),
-    )
-    users_qs = User.objects.select_related('genetistas').all().order_by('last_name', 'first_name')
-    search_query = request.GET.get('buscar-usuario', '').strip()
-    role_filter = request.GET.get('role_filter', '').strip()
+    signos_form = SignosClinicosForm(instance=evaluacion)
+    diagnostico_initial = [{'descripcion': d.descripcion, 'orden': d.orden} for d in DiagnosticoPresuntivo.objects.filter(evaluacion=evaluacion).order_by('orden')]
+    plan_initial = [{'accion': p.accion} for p in PlanEstudio.objects.filter(evaluacion=evaluacion).order_by('pk')]
+    diagnostico_formset = DiagnosticoPresuntivoFormSet(prefix='diagnosticos', initial=diagnostico_initial or [{'orden':0}])
+    plan_formset = PlanEstudioFormSet(prefix='plans', initial=plan_initial or [{}])
 
-    if search_query:
-        users_qs = users_qs.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query) | Q(email__icontains=search_query))
-    if role_filter:
-        users_qs = users_qs.filter(genetistas__rol=role_filter)
+    context = {'historia': historia, 'tipo': tipo, 'objeto': proposito_obj or pareja_obj, 'context_object_name': context_object_name, 'signos_form': signos_form, 'diagnostico_formset': diagnostico_formset, 'plan_formset': plan_formset, 'evaluacion_instance': evaluacion}
+    return render(request, 'diagnosticos_plan.html', context)
 
-    context = {
-        'user_creation_form': user_creation_form_instance,
-        'total_users': total_users_count, 'active_users': active_users_count,
-        'admin_users_count': role_counts['admin_count'], 'genetista_users_count': role_counts['genetista_count'], 'lector_users_count': role_counts['lector_count'],
-        'users_list': users_qs, 'search_query': search_query, 'current_role_filter': role_filter,
-        'genetista_roles_for_filter': Genetistas.ROL_CHOICES,
-        'form_errors_exist': bool(user_creation_form_instance.errors)
-    }
-    return render(request, 'gestion_usuarios.html', context)
-    
-# --- El resto de las vistas no manejan formularios complejos y estaban correctas ---
-# (Las incluyo aquí sin cambios para que el archivo esté completo)
+# ... The other views (reports, simple auth, etc.) can remain as they are.
+# The `gestion_usuarios_view` could also benefit from AJAX, so I've updated it too.
+
+
+
+
+# --- The rest of the views.py file can remain as is ---
+# (I am omitting them for brevity but they should be included in your final file)
+
+# --- AJAX Views ---
 @login_required
 @all_roles_required
 def buscar_propositos(request):
@@ -729,7 +688,9 @@ def buscar_propositos(request):
     } for p in propositos_qs]
     return JsonResponse({'propositos': resultados})
 
-@never_cache
+
+# --- Authentication Views ---
+@never_cache_on_get
 def signup(request):
     if request.user.is_authenticated: return redirect('index')
     if request.method == 'POST':
@@ -747,7 +708,7 @@ def signup(request):
     else: form = ExtendedUserCreationForm()
     return render(request, "signup.html", {'form': form})
 
-@never_cache
+@never_cache_on_get
 def login_medico(request):
     if request.user.is_authenticated: return redirect('index')
     if request.method == 'POST':
@@ -785,6 +746,8 @@ def signout(request):
     messages.success(request, "Sesión cerrada exitosamente.")
     return redirect('login')
 
+
+# --- Other/Management Views ---
 @login_required
 @all_roles_required
 def reports_view(request):
@@ -967,7 +930,61 @@ def export_report_data(request, export_format):
 
     return HttpResponse("Formato de exportación no soportado.", status=400)
 
+@login_required
+@admin_required
+@never_cache_on_get
+def gestion_usuarios_view(request):
+    if request.method == 'POST':
+        # This view only handles one form, so a simpler AJAX check is fine.
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        form = AdminUserCreationForm(request.POST)
 
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, "Usuario creado exitosamente.")
+                redirect_url = reverse('gestion_usuarios')
+                if is_ajax:
+                    return JsonResponse({'success': True, 'redirect_url': redirect_url})
+                return redirect(redirect_url)
+            except Exception as e:
+                error_msg = f"Error al crear usuario: {e}"
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
+                messages.error(request, error_msg)
+        else: # Form is invalid
+            if is_ajax:
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            messages.error(request, "Error al crear usuario. Por favor, corrija los errores.")
+    
+    # GET request logic
+    user_creation_form_instance = AdminUserCreationForm()
+    # ... (rest of your GET logic is fine) ...
+    total_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    role_counts = Genetistas.objects.aggregate(
+        admin_count=Count('user_id', filter=Q(rol='ADM')),
+        genetista_count=Count('user_id', filter=Q(rol='GEN')),
+        lector_count=Count('user_id', filter=Q(rol='LEC')),
+    )
+    users_qs = User.objects.select_related('genetistas').all().order_by('last_name', 'first_name')
+    search_query = request.GET.get('buscar-usuario', '').strip()
+    role_filter = request.GET.get('role_filter', '').strip()
+
+    if search_query:
+        users_qs = users_qs.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query) | Q(email__icontains=search_query))
+    if role_filter:
+        users_qs = users_qs.filter(genetistas__rol=role_filter)
+
+    context = {
+        'user_creation_form': user_creation_form_instance,
+        'total_users': total_users_count, 'active_users': active_users_count,
+        'admin_users_count': role_counts['admin_count'], 'genetista_users_count': role_counts['genetista_count'], 'lector_users_count': role_counts['lector_count'],
+        'users_list': users_qs, 'search_query': search_query, 'current_role_filter': role_filter,
+        'genetista_roles_for_filter': Genetistas.ROL_CHOICES,
+        'form_errors_exist': bool(user_creation_form_instance.errors)
+    }
+    return render(request, 'gestion_usuarios.html', context)
 @login_required
 @admin_required
 def toggle_user_active_status(request, user_id):
@@ -999,6 +1016,7 @@ def delete_user_admin(request, user_id):
                 messages.error(request, f"Error al eliminar usuario: {e}")
     return redirect('gestion_usuarios')
 
+# --- Index view and other remaining views ---
 def _get_pacientes_queryset_for_role(user):
     try:
         user_gen_profile = user.genetistas
@@ -1199,14 +1217,3 @@ def create_project(request):
 def project_detail(request, id):
     project_instance = get_object_or_404(Project, id=id) 
     return render(request, 'detail.html', {'project': project_instance, 'tasks': Task.objects.filter(project=project_instance)})
-
-@login_required
-@all_roles_required
-def flow_completion_view(request):
-    """
-    Vista simple que muestra una página de éxito al finalizar un flujo de formularios.
-    """
-    # Puedes añadir un mensaje genérico si lo deseas, aunque los mensajes
-    # de las vistas anteriores ya deberían estar en la cola de mensajes.
-    # messages.success(request, "Proceso completado exitosamente.")
-    return render(request, 'flow_completion.html')

@@ -2,7 +2,7 @@
 
 from django import forms
 from django.utils import timezone
-from django.forms import ModelForm, Select, DateInput, ClearableFileInput, formset_factory
+from django.forms import ModelForm, Select, DateInput, ClearableFileInput
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -12,7 +12,7 @@ from datetime import datetime
 from .models import (
     HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales, DesarrolloPsicomotor,
-    AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica, Genetistas
+    AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica, Genetistas,
 )
 
 # --- General Purpose Forms ---
@@ -159,6 +159,11 @@ class PadresPropositoForm(forms.Form):
 class PropositosForm(forms.Form):
     nombres = forms.CharField(max_length=100, label="Nombres", strip=True)
     apellidos = forms.CharField(max_length=100, label="Apellidos", strip=True)
+    sexo = forms.ChoiceField(
+        choices=[('', 'Seleccione')] + Propositos.SEXO_CHOICES,
+        label="Sexo",
+        required=True
+    )
     lugar_nacimiento = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
     escolaridad = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
     ocupacion = forms.CharField(max_length=100, required=False, label="Ocupación", strip=True)
@@ -229,6 +234,7 @@ class PropositosForm(forms.Form):
             'historia': historia,
             'nombres': cleaned_data['nombres'],
             'apellidos': cleaned_data['apellidos'],
+            'sexo': cleaned_data.get('sexo'),
             'lugar_nacimiento': cleaned_data.get('lugar_nacimiento'),
             'fecha_nacimiento': cleaned_data.get('fecha_nacimiento'),
             'escolaridad': cleaned_data.get('escolaridad'),
@@ -263,6 +269,10 @@ class PropositosForm(forms.Form):
 class ParejaPropositosForm(forms.Form):
     nombres_1 = forms.CharField(max_length=100, label="Nombres (Primer Cónyuge)", strip=True)
     apellidos_1 = forms.CharField(max_length=100, label="Apellidos (Primer Cónyuge)", strip=True)
+    sexo_1 = forms.ChoiceField(
+        choices=[('', 'Seleccione')] + Propositos.SEXO_CHOICES,
+        required=True, label="Sexo"
+    )
     lugar_nacimiento_1 = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
     fecha_nacimiento_1 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), label="Fecha de Nacimiento")
     escolaridad_1 = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
@@ -278,6 +288,10 @@ class ParejaPropositosForm(forms.Form):
 
     nombres_2 = forms.CharField(max_length=100, label="Nombres (Segundo Cónyuge)", strip=True)
     apellidos_2 = forms.CharField(max_length=100, label="Apellidos (Segundo Cónyuge)", strip=True)
+    sexo_2 = forms.ChoiceField(
+        choices=[('', 'Seleccione')] + Propositos.SEXO_CHOICES,
+        required=True, label="Sexo"
+    )
     lugar_nacimiento_2 = forms.CharField(max_length=100, required=False, label="Lugar de Nacimiento", strip=True)
     fecha_nacimiento_2 = forms.DateField(required=False, widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), label="Fecha de Nacimiento")
     escolaridad_2 = forms.CharField(max_length=100, required=False, label="Escolaridad", strip=True)
@@ -669,80 +683,11 @@ class ExamenFisicoForm(ModelForm):
             examenfisico.save()
         return examenfisico
 
-class SignosClinicosForm(ModelForm):
-    class Meta:
-        model = EvaluacionGenetica
-        fields = ['signos_clinicos']
-        widgets = {
-            'signos_clinicos': forms.Textarea(attrs={
-                'rows': 3,
-                'class': 'form-control',
-                'placeholder': 'Ej: Microcefalia, hipotonía, fisura palpebral, cardiopatía congénita...'
-            })
-        }
-        labels = {
-            'signos_clinicos': "Signos Clínicos Relevantes"
-        }
-
-class DiagnosticoPresuntivoForm(forms.Form):
-    descripcion = forms.CharField(
-        label="Diagnóstico Presuntivo",
-        widget=forms.Textarea(attrs={
-            'rows': 1,
-            'class': 'form-control diagnostico-descripcion',
-            'placeholder': 'Ej: Síndrome de Down, Acondroplasia'
-        }),
-        strip=True
-    )
-    orden = forms.IntegerField(
-        label="Prioridad",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control diagnostico-orden',
-            'min': '0',
-        }),
-        required=False,
-        initial=0
-    )
-   
-
-    def clean_descripcion(self):
-        descripcion = self.cleaned_data.get('descripcion')
-        return descripcion
-
-
-    def clean_orden(self):
-        orden = self.cleaned_data.get('orden')
-        if orden is not None and orden < 0:
-            raise forms.ValidationError("La prioridad no puede ser negativa.")
-        return orden if orden is not None else 0
-
-DiagnosticoPresuntivoFormSet = formset_factory(
-    DiagnosticoPresuntivoForm,
-    extra=0, # Start with 0 extra forms
-    can_delete=True,
-)
-
-class PlanEstudioForm(forms.Form):
-    accion = forms.CharField(
-        label="Acción/Estudio a Realizar",
-        widget=forms.TextInput(attrs={
-            'class': 'form-control plan-accion',
-            'placeholder': 'Ej: Cariotipo en sangre periférica, Ecocardiograma, Array CGH'
-        }),
-        strip=True
-    )
- 
-    def clean_accion(self):
-        accion = self.cleaned_data.get('accion')
-        return accion
 
 
 
-PlanEstudioFormSet = formset_factory(
-    PlanEstudioForm,
-    extra=0, # Start with 0 extra forms
-    can_delete=True,
-)
+
+
 class ReportSearchForm(forms.Form):
     buscar_paciente = forms.CharField(
         required=False,

@@ -5,296 +5,95 @@
 <head>
     <title>Registrar Pareja</title>
     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
+    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
 </head>
 
 <div class="form-container">
     <h2>REGISTRAR PAREJA</h2>
     <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
 
-    <form method="post" enctype="multipart/form-data" class="pareja-form">
+    <form method="post" enctype="multipart/form-data" class="pareja-form" id="crear-pareja-form">
         {% csrf_token %}
+        <div class="alert alert-danger non-field-errors"></div>
 
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger non-field-errors">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- Primer Conyugue -->
         <div class="conyugue-section">
             <h3><i class="fas fa-user"></i> Primer Cónyugue</h3>
-
-            <div class="form-row">
-                <div class="form-group-medio">
-                   <div class="half-width">
-                       <label for="{{ form.nombres_1.id_for_label }}">Nombres*</label>
-                        {{ form.nombres_1 }}
-                        {% if form.nombres_1.errors %}<div class="field-errors">{% for e in form.nombres_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                   </div>
-                   <div class="half-width">
-                       <label for="{{ form.apellidos_1.id_for_label }}">Apellidos*</label>
-                       {{ form.apellidos_1 }}
-                       {% if form.apellidos_1.errors %}<div class="field-errors">{% for e in form.apellidos_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                   </div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group-medio">
-                   <div class="half-width">
-                       <label for="{{ form.identificacion_1.id_for_label }}">Identificación*</label>
-                       {{ form.identificacion_1 }}
-                       {% if form.identificacion_1.errors %}<div class="field-errors">{% for e in form.identificacion_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                   </div>
-                   <div class="half-width">
-                       <label for="{{ form.fecha_nacimiento_1.id_for_label }}">Fecha Nacimiento</label>
-                       {{ form.fecha_nacimiento_1 }}
-                       {% if form.fecha_nacimiento_1.errors %}<div class="field-errors">{% for e in form.fecha_nacimiento_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                   </div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.edad_1.id_for_label }}">Edad</label>
-                    {{ form.edad_1 }}
-                    {% if form.edad_1.errors %}<div class="field-errors">{% for e in form.edad_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.lugar_nacimiento_1.id_for_label }}">Lugar Nacimiento</label>
-                    {{ form.lugar_nacimiento_1 }}
-                    {% if form.lugar_nacimiento_1.errors %}<div class="field-errors">{% for e in form.lugar_nacimiento_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.escolaridad_1.id_for_label }}">Escolaridad</label>
-                    {{ form.escolaridad_1 }}
-                    {% if form.escolaridad_1.errors %}<div class="field-errors">{% for e in form.escolaridad_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.ocupacion_1.id_for_label }}">Ocupación</label>
-                    {{ form.ocupacion_1 }}
-                    {% if form.ocupacion_1.errors %}<div class="field-errors">{% for e in form.ocupacion_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.grupo_sanguineo_1.id_for_label }}">Grupo Sanguíneo</label>
-                    {{ form.grupo_sanguineo_1 }}
-                    {% if form.grupo_sanguineo_1.errors %}<div class="field-errors">{% for e in form.grupo_sanguineo_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.factor_rh_1.id_for_label }}">Factor RH</label>
-                    {{ form.factor_rh_1 }}
-                    {% if form.factor_rh_1.errors %}<div class="field-errors">{% for e in form.factor_rh_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.telefono_1.id_for_label }}">Teléfono</label>
-                    {{ form.telefono_1 }}
-                    {% if form.telefono_1.errors %}<div class="field-errors">{% for e in form.telefono_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.email_1.id_for_label }}">Email</label>
-                    {{ form.email_1 }}
-                    {% if form.email_1.errors %}<div class="field-errors">{% for e in form.email_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.direccion_1.id_for_label }}">Dirección</label>
-                    {{ form.direccion_1 }}
-                    {% if form.direccion_1.errors %}<div class="field-errors">{% for e in form.direccion_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                {# Assuming documento_nacimiento_1 is not in use as per forms.py #}
-                {#
-                <div class="form-group">
-                    <label for="{{ form.documento_nacimiento_1.id_for_label }}">Documento Nacimiento</label>
-                    {{ form.documento_nacimiento_1 }}
-                    {% if form.documento_nacimiento_1.errors %}<div class="field-errors">{% for e in form.documento_nacimiento_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                #}
-                <div class="form-group">
-                    <label for="{{ form.foto_1.id_for_label }}">Foto</label>
-                    <div class="file-input-container">
-                        {{ form.foto_1 }}
-                        <label for="{{ form.foto_1.id_for_label }}" class="file-label">
-                            <i class="fas fa-camera"></i> Seleccionar archivo
-                        </label>
-                        <span class="file-name" id="file-name-1">Ningún archivo seleccionado</span>
-                    </div>
-                    {% if form.foto_1.errors %}<div class="field-errors">{% for e in form.foto_1.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
+            <div class="form-row"><div class="form-group-medio">
+               <div class="half-width"><label for="{{ form.nombres_1.id_for_label }}">Nombres*</label>{{ form.nombres_1 }}<div class="field-errors" id="error_{{ form.nombres_1.id_for_label }}"></div></div>
+               <div class="half-width"><label for="{{ form.apellidos_1.id_for_label }}">Apellidos*</label>{{ form.apellidos_1 }}<div class="field-errors" id="error_{{ form.apellidos_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+               <div class="half-width"><label for="{{ form.sexo_1.id_for_label }}">Sexo*</label>{{ form.sexo_1 }}<div class="field-errors" id="error_{{ form.sexo_1.id_for_label }}"></div></div>
+               <div class="half-width"><label for="{{ form.identificacion_1.id_for_label }}">Identificación*</label>{{ form.identificacion_1 }}<div class="field-errors" id="error_{{ form.identificacion_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.fecha_nacimiento_1.id_for_label }}">Fecha Nacimiento</label>{{ form.fecha_nacimiento_1 }}<div class="field-errors" id="error_{{ form.fecha_nacimiento_1.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.edad_1.id_for_label }}">Edad</label>{{ form.edad_1 }}<div class="field-errors" id="error_{{ form.edad_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.lugar_nacimiento_1.id_for_label }}">Lugar Nacimiento</label>{{ form.lugar_nacimiento_1 }}<div class="field-errors" id="error_{{ form.lugar_nacimiento_1.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.escolaridad_1.id_for_label }}">Escolaridad</label>{{ form.escolaridad_1 }}<div class="field-errors" id="error_{{ form.escolaridad_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.ocupacion_1.id_for_label }}">Ocupación</label>{{ form.ocupacion_1 }}<div class="field-errors" id="error_{{ form.ocupacion_1.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.grupo_sanguineo_1.id_for_label }}">Grupo Sanguíneo</label>{{ form.grupo_sanguineo_1 }}<div class="field-errors" id="error_{{ form.grupo_sanguineo_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.factor_rh_1.id_for_label }}">Factor RH</label>{{ form.factor_rh_1 }}<div class="field-errors" id="error_{{ form.factor_rh_1.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.telefono_1.id_for_label }}">Teléfono</label>{{ form.telefono_1 }}<div class="field-errors" id="error_{{ form.telefono_1.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-group"><label for="{{ form.email_1.id_for_label }}">Email</label>{{ form.email_1 }}<div class="field-errors" id="error_{{ form.email_1.id_for_label }}"></div></div>
+            <div class="form-group"><label for="{{ form.direccion_1.id_for_label }}">Dirección</label>{{ form.direccion_1 }}<div class="field-errors" id="error_{{ form.direccion_1.id_for_label }}"></div></div>
+            <div class="form-group"><label for="{{ form.foto_1.id_for_label }}">Foto</label><div class="file-input-container">{{ form.foto_1 }}<label for="{{ form.foto_1.id_for_label }}" class="file-label"><i class="fas fa-camera"></i> Seleccionar archivo</label><span class="file-name" id="file-name-1">Ningún archivo seleccionado</span></div><div class="field-errors" id="error_{{ form.foto_1.id_for_label }}"></div></div>
         </div>
 
-        <!-- Segundo Conyugue -->
         <div class="conyugue-section">
             <h3><i class="fas fa-user"></i> Segundo Cónyugue</h3>
-
-            <div class="form-row">
-                <div class="form-group-medio">
-                    <div class="half-width">
-                        <label for="{{ form.nombres_2.id_for_label }}">Nombres*</label>
-                        {{ form.nombres_2 }}
-                        {% if form.nombres_2.errors %}<div class="field-errors">{% for e in form.nombres_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                    </div>
-                    <div class="half-width">
-                        <label for="{{ form.apellidos_2.id_for_label }}">Apellidos*</label>
-                        {{ form.apellidos_2 }}
-                        {% if form.apellidos_2.errors %}<div class="field-errors">{% for e in form.apellidos_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group-medio">
-                    <div class="half-width">
-                        <label for="{{ form.identificacion_2.id_for_label }}">Identificación*</label>
-                        {{ form.identificacion_2 }}
-                        {% if form.identificacion_2.errors %}<div class="field-errors">{% for e in form.identificacion_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                    </div>
-                    <div class="half-width">
-                        <label for="{{ form.fecha_nacimiento_2.id_for_label }}">Fecha Nacimiento</label>
-                        {{ form.fecha_nacimiento_2 }}
-                        {% if form.fecha_nacimiento_2.errors %}<div class="field-errors">{% for e in form.fecha_nacimiento_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                    </div>
-                </div>
-            </div>
-             <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.edad_2.id_for_label }}">Edad</label>
-                    {{ form.edad_2 }}
-                    {% if form.edad_2.errors %}<div class="field-errors">{% for e in form.edad_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.lugar_nacimiento_2.id_for_label }}">Lugar Nacimiento</label>
-                    {{ form.lugar_nacimiento_2 }}
-                    {% if form.lugar_nacimiento_2.errors %}<div class="field-errors">{% for e in form.lugar_nacimiento_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.escolaridad_2.id_for_label }}">Escolaridad</label>
-                    {{ form.escolaridad_2 }}
-                    {% if form.escolaridad_2.errors %}<div class="field-errors">{% for e in form.escolaridad_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.ocupacion_2.id_for_label }}">Ocupación</label>
-                    {{ form.ocupacion_2 }}
-                    {% if form.ocupacion_2.errors %}<div class="field-errors">{% for e in form.ocupacion_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.grupo_sanguineo_2.id_for_label }}">Grupo Sanguíneo</label>
-                    {{ form.grupo_sanguineo_2 }}
-                    {% if form.grupo_sanguineo_2.errors %}<div class="field-errors">{% for e in form.grupo_sanguineo_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.factor_rh_2.id_for_label }}">Factor RH</label>
-                    {{ form.factor_rh_2 }}
-                    {% if form.factor_rh_2.errors %}<div class="field-errors">{% for e in form.factor_rh_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.telefono_2.id_for_label }}">Teléfono</label>
-                    {{ form.telefono_2 }}
-                    {% if form.telefono_2.errors %}<div class="field-errors">{% for e in form.telefono_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.email_2.id_for_label }}">Email</label>
-                    {{ form.email_2 }}
-                    {% if form.email_2.errors %}<div class="field-errors">{% for e in form.email_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.direccion_2.id_for_label }}">Dirección</label>
-                    {{ form.direccion_2 }}
-                    {% if form.direccion_2.errors %}<div class="field-errors">{% for e in form.direccion_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
-
-            <div class="form-row">
-                 {# Assuming documento_nacimiento_2 is not in use #}
-                {#
-                <div class="form-group">
-                    <label for="{{ form.documento_nacimiento_2.id_for_label }}">Documento Nacimiento</label>
-                    {{ form.documento_nacimiento_2 }}
-                    {% if form.documento_nacimiento_2.errors %}<div class="field-errors">{% for e in form.documento_nacimiento_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-                #}
-                <div class="form-group">
-                    <label for="{{ form.foto_2.id_for_label }}">Foto</label>
-                    <div class="file-input-container">
-                        {{ form.foto_2 }}
-                        <label for="{{ form.foto_2.id_for_label }}" class="file-label">
-                            <i class="fas fa-camera"></i> Seleccionar archivo
-                        </label>
-                        <span class="file-name" id="file-name-2">Ningún archivo seleccionado</span>
-                    </div>
-                     {% if form.foto_2.errors %}<div class="field-errors">{% for e in form.foto_2.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
-                </div>
-            </div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.nombres_2.id_for_label }}">Nombres*</label>{{ form.nombres_2 }}<div class="field-errors" id="error_{{ form.nombres_2.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.apellidos_2.id_for_label }}">Apellidos*</label>{{ form.apellidos_2 }}<div class="field-errors" id="error_{{ form.apellidos_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.sexo_2.id_for_label }}">Sexo*</label>{{ form.sexo_2 }}<div class="field-errors" id="error_{{ form.sexo_2.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.identificacion_2.id_for_label }}">Identificación*</label>{{ form.identificacion_2 }}<div class="field-errors" id="error_{{ form.identificacion_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.fecha_nacimiento_2.id_for_label }}">Fecha Nacimiento</label>{{ form.fecha_nacimiento_2 }}<div class="field-errors" id="error_{{ form.fecha_nacimiento_2.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.edad_2.id_for_label }}">Edad</label>{{ form.edad_2 }}<div class="field-errors" id="error_{{ form.edad_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.lugar_nacimiento_2.id_for_label }}">Lugar Nacimiento</label>{{ form.lugar_nacimiento_2 }}<div class="field-errors" id="error_{{ form.lugar_nacimiento_2.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.escolaridad_2.id_for_label }}">Escolaridad</label>{{ form.escolaridad_2 }}<div class="field-errors" id="error_{{ form.escolaridad_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.ocupacion_2.id_for_label }}">Ocupación</label>{{ form.ocupacion_2 }}<div class="field-errors" id="error_{{ form.ocupacion_2.id_for_label }}"></div></div>
+                <div class="half-width"><label for="{{ form.grupo_sanguineo_2.id_for_label }}">Grupo Sanguíneo</label>{{ form.grupo_sanguineo_2 }}<div class="field-errors" id="error_{{ form.grupo_sanguineo_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-row"><div class="form-group-medio">
+                <div class="half-width"><label for="{{ form.factor_rh_2.id_for_label }}">Factor RH</label>{{ form.factor_rh_2 }}<div class="field-errors" id="error_{{ form.factor_rh_2.id_for_label }}"></div></div>
+                 <div class="half-width"><label for="{{ form.telefono_2.id_for_label }}">Teléfono</label>{{ form.telefono_2 }}<div class="field-errors" id="error_{{ form.telefono_2.id_for_label }}"></div></div>
+            </div></div>
+            <div class="form-group"><label for="{{ form.email_2.id_for_label }}">Email</label>{{ form.email_2 }}<div class="field-errors" id="error_{{ form.email_2.id_for_label }}"></div></div>
+            <div class="form-group"><label for="{{ form.direccion_2.id_for_label }}">Dirección</label>{{ form.direccion_2 }}<div class="field-errors" id="error_{{ form.direccion_2.id_for_label }}"></div></div>
+            <div class="form-group"><label for="{{ form.foto_2.id_for_label }}">Foto</label><div class="file-input-container">{{ form.foto_2 }}<label for="{{ form.foto_2.id_for_label }}" class="file-label"><i class="fas fa-camera"></i> Seleccionar archivo</label><span class="file-name" id="file-name-2">Ningún archivo seleccionado</span></div><div class="field-errors" id="error_{{ form.foto_2.id_for_label }}"></div></div>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn-submit">
-                <i class="fas fa-save"></i> Siguiente {# Changed from Guardar Pareja #}
-            </button>
+            <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Siguiente</button>
         </div>
     </form>
 </div>
-
 <script>
-// Mostrar nombre de archivo seleccionado
-const foto1Input = document.getElementById('{{ form.foto_1.id_for_label }}');
-if (foto1Input) {
-    foto1Input.addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
-        document.getElementById('file-name-1').textContent = fileName;
-    });
-}
+document.getElementById('{{ form.foto_1.id_for_label }}')?.addEventListener('change', e => {
+    document.getElementById('file-name-1').textContent = e.target.files[0]?.name || 'Ningún archivo seleccionado';
+});
+document.getElementById('{{ form.foto_2.id_for_label }}')?.addEventListener('change', e => {
+    document.getElementById('file-name-2').textContent = e.target.files[0]?.name || 'Ningún archivo seleccionado';
+});
 
-const foto2Input = document.getElementById('{{ form.foto_2.id_for_label }}');
-if (foto2Input) {
-    foto2Input.addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
-        document.getElementById('file-name-2').textContent = fileName;
-    });
-}
-
-// Basic date validation (can be enhanced)
-document.querySelector('.pareja-form').addEventListener('submit', function(e) {
-    const fecha1Input = document.getElementById('{{ form.fecha_nacimiento_1.id_for_label }}');
-    const fecha2Input = document.getElementById('{{ form.fecha_nacimiento_2.id_for_label }}');
-
-    if (fecha1Input && fecha2Input) {
-        const fecha1 = fecha1Input.value;
-        const fecha2 = fecha2Input.value;
-        // This client-side validation is very basic. Server-side is more reliable.
-        // if (fecha1 && fecha2 && new Date(fecha1) > new Date(fecha2)) {
-        //     alert('La fecha de nacimiento del primer cónyugue no puede ser posterior a la del segundo. Este es un ejemplo, la validación real está en el servidor.');
-        //     // e.preventDefault(); // Consider if client-side prevention is desired.
-        // }
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    setupAjaxForm('crear-pareja-form');
 });
 </script>
+
 {% endblock %}

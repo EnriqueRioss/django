@@ -1,7 +1,7 @@
-{% extends 'layouts/base.html' %} {# Assuming base.html handles messages like base2.html #}
+{% extends 'layouts/base.html' %}
 {% load static %}
 
-{%block content%}
+{% block content %}
 <head>
     <title>HISTORIA CLÍNICA | IIG - LUZ</title>
     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
@@ -10,100 +10,63 @@
 <div class="main-content">
     <div class="form-container">
         <div class="imagenes-logo">
-            <img src="{% static '/images/LUZ.png' %}" width="80" height="80">
+            <img src="{% static '/images/LUZ.png' %}" width="80" height="80" alt="Logo LUZ">
         </div>
         <h1>Historia Clínica</h1><br><br>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" id="crear-historia-form">
             {% csrf_token %}
 
-            {# Display non-field errors if any (e.g., from form.clean()) #}
-            {% if form1.non_field_errors %}
-                <div class="alert alert-danger non-field-errors">
-                    {% for error in form1.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
+            <div class="alert alert-danger non-field-errors"></div>
 
             <div class="form-group-medio">
                 <div class="half-width">
                     <label for="{{ form1.numero_historia.id_for_label }}">Numero Historia</label>
                     {{ form1.numero_historia }}
-                    {% if form1.numero_historia.errors %}
-                        <div class="field-errors">
-                            {% for error in form1.numero_historia.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="field-errors" id="error_{{ form1.numero_historia.id_for_label }}"></div>
                 </div>
                 <div class="half-width">
                     <label for="{{ form1.motivo_tipo_consulta.id_for_label }}">Motivo de Consulta</label>
                     {{ form1.motivo_tipo_consulta }}
-                    {% if form1.motivo_tipo_consulta.errors %}
-                        <div class="field-errors">
-                            {% for error in form1.motivo_tipo_consulta.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="field-errors" id="error_{{ form1.motivo_tipo_consulta.id_for_label }}"></div>
                 </div>
             </div><br>
 
             <div class="form-group">
                 <label for="{{ form1.cursante_postgrado.id_for_label }}">Cursante de Postgrado</label>
                 {{ form1.cursante_postgrado }}
-                {% if form1.cursante_postgrado.errors %}
-                    <div class="field-errors">
-                        {% for error in form1.cursante_postgrado.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                <div class="field-errors" id="error_{{ form1.cursante_postgrado.id_for_label }}"></div>
             </div><br>
             <div class="form-group">
                 <label for="{{ form1.centro_referencia.id_for_label }}">Centro de Referencia</label>
                 {{ form1.centro_referencia }}
-                {% if form1.centro_referencia.errors %}
-                    <div class="field-errors">
-                        {% for error in form1.centro_referencia.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                <div class="field-errors" id="error_{{ form1.centro_referencia.id_for_label }}"></div>
             </div><br>
 
             <div class="form-group-medio">
                 <div class="half-width">
                     <label for="{{ form1.medico.id_for_label }}">Médico de Referencia</label>
                     {{ form1.medico }}
-                    {% if form1.medico.errors %}
-                        <div class="field-errors">
-                            {% for error in form1.medico.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="field-errors" id="error_{{ form1.medico.id_for_label }}"></div>
                 </div>
                 <div class="half-width">
                     <label for="{{ form1.especialidad.id_for_label }}">Especialidad Medico de Referencia</label>
                     {{ form1.especialidad }}
-                    {% if form1.especialidad.errors %}
-                        <div class="field-errors">
-                            {% for error in form1.especialidad.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="field-errors" id="error_{{ form1.especialidad.id_for_label }}"></div>
                 </div>
             </div><br><br><br>
 
-            <div class="form-actions" id=" ">
+            <div class="form-actions">
                 <button type="submit">Siguiente</button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupAjaxForm('crear-historia-form');
+});
+</script>
 
 {% endblock %}

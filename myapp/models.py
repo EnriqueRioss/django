@@ -720,10 +720,24 @@ class Propositos(models.Model):
         (ESTADO_SEGUIMIENTO, 'En Seguimiento'),
     ]
 
+    # Opciones para el campo de sexo
+    SEXO_MASCULINO = 'M'
+    SEXO_FEMENINO = 'F'
+    SEXO_CHOICES = [
+        (SEXO_MASCULINO, 'Masculino'),
+        (SEXO_FEMENINO, 'Femenino'),
+    ]
+
     proposito_id = models.AutoField(primary_key=True)
     historia = models.ForeignKey('HistoriasClinicas', on_delete=models.CASCADE, null=True, blank=True)
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
+    sexo = models.CharField(
+        max_length=1,
+        choices=SEXO_CHOICES,
+        verbose_name="Sexo",
+        null=True, blank=True # Nullable para registros existentes, se hará requerido en los forms.
+    )
     lugar_nacimiento = models.CharField(max_length=100, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     escolaridad = models.CharField(max_length=100, null=True, blank=True)

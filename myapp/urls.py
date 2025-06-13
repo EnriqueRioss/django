@@ -34,8 +34,10 @@ urlpatterns = [
          views.crear_antecedentes_preconcepcionales, name="antecedentes_preconcepcionales_crear"),
     path('propositos/<int:proposito_id>/examen-fisico/', views.crear_examen_fisico, name='examen_fisico_crear_editar'),
     path('propositos/<int:proposito_id>/', views.ver_proposito, name='proposito_detalle'), 
-    path('historias/<int:historia_id>/<str:tipo>/<int:objeto_id>/evaluacion-genetica/', 
-         views.diagnosticos_plan_estudio, name='evaluacion_genetica_detalle'), 
+     # path('historias/<int:historia_id>/<str:tipo>/<int:objeto_id>/evaluacion-genetica/', 
+        #   views.diagnosticos_plan_estudio, name='evaluacion_genetica_detalle'), 
+     path('proceso/completado/', views.flow_completion_view, name='flow_completion'),
+
 
     path('ajax/buscar-propositos/', views.buscar_propositos, name='ajax_buscar_propositos'), 
 

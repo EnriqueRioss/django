@@ -21,61 +21,51 @@
         </p>
         <br>
 
-
-
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" id="antecedentes-preconcepcionales-form">
             {% csrf_token %}
-
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger non-field-errors">
-                    {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            {# Removed your old errors block, Django messages will handle general form errors #}
+            <div class="alert alert-danger non-field-errors"></div>
 
             <div class="form-group-medio">
                 <div class="half-width">
                     <label for="{{ form.antecedentes_padre.id_for_label }}">Antecedentes del Padre</label>
                     {{ form.antecedentes_padre }}
-                    {% if form.antecedentes_padre.errors %}<div class="field-errors">{% for e in form.antecedentes_padre.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                    <div class="field-errors" id="error_{{ form.antecedentes_padre.id_for_label }}"></div>
                 </div>
                 <div class="half-width">
                     <label for="{{ form.antecedentes_madre.id_for_label }}">Antecedentes de la Madre</label>
                     {{ form.antecedentes_madre }}
-                    {% if form.antecedentes_madre.errors %}<div class="field-errors">{% for e in form.antecedentes_madre.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                    <div class="field-errors" id="error_{{ form.antecedentes_madre.id_for_label }}"></div>
                 </div>
             </div>
 
             <div class="form-group">
-                    <label for="{{ form.estado_salud_padre.id_for_label }}">Estado de Salud del Padre</label>
-                    {{ form.estado_salud_padre }}
-                    {% if form.estado_salud_padre.errors %}<div class="field-errors">{% for e in form.estado_salud_padre.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                <label for="{{ form.estado_salud_padre.id_for_label }}">Estado de Salud del Padre</label>
+                {{ form.estado_salud_padre }}
+                <div class="field-errors" id="error_{{ form.estado_salud_padre.id_for_label }}"></div>
             </div>
             <div class="form-group">
-                    <label for="{{ form.estado_salud_madre.id_for_label }}">Estado de Salud de la Madre</label>
-                    {{ form.estado_salud_madre }}
-                    {% if form.estado_salud_madre.errors %}<div class="field-errors">{% for e in form.estado_salud_madre.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                <label for="{{ form.estado_salud_madre.id_for_label }}">Estado de Salud de la Madre</label>
+                {{ form.estado_salud_madre }}
+                <div class="field-errors" id="error_{{ form.estado_salud_madre.id_for_label }}"></div>
             </div>
 
             <div class="form-group-medio">
                 <div class="half-width">
                     <label for="{{ form.fecha_union_pareja.id_for_label }}">Fecha de Unión de la Pareja</label>
                     {{ form.fecha_union_pareja }}
-                    {% if form.fecha_union_pareja.errors %}<div class="field-errors">{% for e in form.fecha_union_pareja.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                    <div class="field-errors" id="error_{{ form.fecha_union_pareja.id_for_label }}"></div>
                 </div>
                 <div class="half-width">
                     <label for="{{ form.consanguinidad.id_for_label }}">Consanguinidad</label>
                     {{ form.consanguinidad }}
-                    {% if form.consanguinidad.errors %}<div class="field-errors">{% for e in form.consanguinidad.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                    <div class="field-errors" id="error_{{ form.consanguinidad.id_for_label }}"></div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="{{ form.grado_consanguinidad.id_for_label }}">Grado de Consanguinidad</label>
                 {{ form.grado_consanguinidad }}
-                {% if form.grado_consanguinidad.errors %}<div class="field-errors">{% for e in form.grado_consanguinidad.errors %}<span>{{e}}</span>{% endfor %}</div>{% endif %}
+                <div class="field-errors" id="error_{{ form.grado_consanguinidad.id_for_label }}"></div>
             </div>
 
             <div class="form-actions">
@@ -102,5 +92,11 @@
     </div>
 
     <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setupAjaxForm('antecedentes-preconcepcionales-form');
+    });
+    </script>
 </body>
+
 {% endblock %}
