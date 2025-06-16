@@ -1,83 +1,147 @@
+{% extends 'layouts/base.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block content %}
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <link rel="stylesheet" href= "{% static '/styles/stylesforms.css' %}">
-    <link rel="stylesheet" href="{% static 'styles/messages.css' %}">
-    <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
 </head>
-<body>
 
-    <header>
-        <div class="container-navbar">
-            <nav class="navbar container">
-                <div class="container-logo">
-                    <h1 class="logo">GenClinic</h1>
+<div class="main-content">
+    <div class="form-container">
+
+        <div class="form-container-card">
+            <div class="card-header">
+                <div>
+                    <h1>Historia Clínica Genética</h1>
+                    <p>Complete todos los campos requeridos para crear la historia clínica</p>
                 </div>
-                <div class="opciones">
-                    <ul class="menu">
-                        <li>
-                            <a href="{%  url 'index' %}">Inicio</a>
-                            <a href="{% url 'pacientes_list_redirect' %}">Pacientes</a>
-                            <a href="{% url 'reports_dashboard' %}">Reportes</a>
-                            {% if user.is_authenticated %}
-                            <a href="/logout">Logout</a>
-                            {% else %}
-                            <a href="{%  url 'login' %}">Login</a>
-                            {% endif %}
-                            
-                            <span class="conf-logo">
-                                <i class="fa-solid fa-gear"></i>
-                            </span>
-                            <span class="conf-logo">
-                                <a href="{% url 'logout' %}" style="color: inherit; text-decoration: none;">
-                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                                </a>
-                            </span>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-            <hr>
-        </div>
-    </header>
-
-
-    <div class="main-content-area">
-        {% if messages %}
-            <div class="messages-container">
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li{% if message.tags %} class="message-item {{ message.tags }}"{% endif %}>
-                            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
-                                <i class="fas fa-times-circle"></i> Error:
-                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
-                                <i class="fas fa-check-circle"></i> Éxito:
-                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
-                                <i class="fas fa-exclamation-triangle"></i> Advertencia:
-                            {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO and not 'POPUP:' in message.message %}
-                                <i class="fas fa-info-circle"></i> Información:
-                            {% endif %}
-                            {% if not 'POPUP:' in message.message %}
-                                {{ message }}
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
+                <div class="step-indicator" id="stepIndicator">Paso 1 de 7</div>
             </div>
-        {% endif %}
 
-        <div class="content">
-            {% block content %}
-            {% endblock %}
+            <!--Barra de progreso-->
+
+            <!--DE MOMENTO ESTO QUEDARA EN STAND BY PORQUE DEBO VER COMO SE INCORPORA EN EL RESTO DE LOS FORMULARIOS-->
+            <div class="seccion-progreso">
+                <p class="progress-title">Progreso del formulario</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar"></div>
+                </div>
+                <p class="progress-percentage">17% completado</p>
+            </div>
+
+            <div class="stepper">
+                <!--Primer paso-->
+                <div class="stepper-item active" data-step="1">
+                    <div class="step-counter">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="step-name">
+                        <p class="font-bold">Informacion General</p>
+                    </div>
+                </div>
+
+
+                <!--Segundo paso-->
+                <div class="stepper-item" data-step="2">
+                    <div class="step-counter">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos del Proposito</p>
+                    </div>
+                </div>
+
+                <!--Tercer Paso-->
+                <!--SOLO APARECE SI EL ES UN PROPOSITO, SON LOS DATOS DE LOS PADRES-->
+                <div class="stepper-item" data-step="3">
+                    <div class="step-counter">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos del Representante</p>
+                    </div>
+                </div>
+
+                <!--Cuarto paso-->
+                <div class="stepper-item" data-step="4">
+                    <div class="step-counter">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Antecedentes Personales</p>
+                    </div>
+                </div>
+
+                <!--Quinto paso-->
+                <div class="stepper-item" data-step="5">
+                    <div class="step-counter">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos preconcepcionales</p>
+                    </div>
+                </div>
+
+                <!--Sexto paso-->
+                <div class="stepper-item" data-step="6">
+                    <div class="step-counter">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Examen Fisico</p>
+                    </div>
+                </div>
+
+                <!--Septimo paso-->
+                <div class="stepper-item" data-step="7">
+                    <div class="step-counter">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Diagnóstico Final</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMENTO ESTOS MENSAJES SOLO POR LAS PRUEBAS QUE SE ESTAN HACIENDO, CUALQUIER COSA
+             MAS ADELANTE SE DESCOMENTAN, PORQUE NO SE SI TE VAYA A OCASIONAR PROBLEMAS
+
+            <div class="main-content-area">
+                {% if messages %}
+                    <div class="messages-container">
+                        <ul class="messages">
+                            {% for message in messages %}
+                                <li{% if message.tags %} class="message-item {{ message.tags }}"{% endif %}>
+                                    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                                        <i class="fas fa-times-circle"></i> Error:
+                                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                                        <i class="fas fa-check-circle"></i> Éxito:
+                                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+                                        <i class="fas fa-exclamation-triangle"></i> Advertencia:
+                                    {% elif message.level == DEFAULT_MESSAGE_LEVELS.INFO and not 'POPUP:' in message.message %}
+                                        <i class="fas fa-info-circle"></i> Información:
+                                    {% endif %}
+                                    {% if not 'POPUP:' in message.message %}
+                                        {{ message }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                -->
+
+                <div class="content">
+                    {% block form_content %}
+                    {% endblock form_content %}
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+
     
     <!-- ================================================================= -->
     <!-- === REUSABLE AJAX FORM HANDLING SCRIPT ========================== -->
@@ -178,5 +242,5 @@
         {% endif %}
     });
 </script>
-</body>
-</html>
+
+{% endblock %}

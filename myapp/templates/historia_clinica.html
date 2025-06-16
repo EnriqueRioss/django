@@ -7,59 +7,180 @@
     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
 </head>
 
+<!--ESTE FORMULARIO ESTA EXTENDIENDO SOLAMENTE DEL BASE 1-->
+
+
+
 <div class="main-content">
     <div class="form-container">
-        <div class="imagenes-logo">
+        <!--<div class="imagenes-logo">
             <img src="{% static '/images/LUZ.png' %}" width="80" height="80" alt="Logo LUZ">
         </div>
-        <h1>Historia Clínica</h1><br><br>
+        <h1>Historia Clínica</h1><br><br>-->
 
-        <form method="post" enctype="multipart/form-data" id="crear-historia-form">
+        <div class="form-container-card">
+            <div class="card-header">
+                <div>
+                    <h1>Historia Clínica Genética</h1>
+                    <p>Complete todos los campos requeridos para crear la historia clínica</p>
+                </div>
+                <div class="step-indicator" id="stepIndicator">Paso 1 de 7</div>
+            </div>
+
+            <!--Barra de progreso-->
+
+            <!--DE MOMENTO ESTO QUEDARA EN STAND BY PORQUE DEBO VER COMO SE INCORPORA EN EL RESTO DE LOS FORMULARIOS-->
+            <div class="seccion-progreso">
+                <p class="progress-title">Progreso del formulario</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar"></div>
+                </div>
+                <p class="progress-percentage">17% completado</p>
+            </div>
+
+            <div class="stepper">
+                <!--Primer paso-->
+                <div class="stepper-item active" data-step="1">
+                    <div class="step-counter">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="step-name">
+                        <p class="font-bold">Informacion General</p>
+                    </div>
+                </div>
+
+
+                <!--Segundo paso-->
+                <div class="stepper-item" data-step="2">
+                    <div class="step-counter">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos del Proposito</p>
+                    </div>
+                </div>
+
+                <!--Tercer Paso-->
+                <!--SOLO APARECE SI EL ES UN PROPOSITO, SON LOS DATOS DE LOS PADRES-->
+                <div class="stepper-item" data-step="3">
+                    <div class="step-counter">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos del Representante</p>
+                    </div>
+                </div>
+
+                <!--Cuarto paso-->
+                <div class="stepper-item" data-step="4">
+                    <div class="step-counter">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Antecedentes Personales</p>
+                    </div>
+                </div>
+
+                <!--Quinto paso-->
+                <div class="stepper-item" data-step="5">
+                    <div class="step-counter">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Datos preconcepcionales</p>
+                    </div>
+                </div>
+
+                <!--Sexto paso-->
+                <div class="stepper-item" data-step="6">
+                    <div class="step-counter">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Examen Fisico</p>
+                    </div>
+                </div>
+
+                <!--Septimo paso-->
+                <div class="stepper-item" data-step="7">
+                    <div class="step-counter">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="step-name">
+                        <p>Diagnóstico Final</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <!--FORMULARIO DE CREACION DE HISTORIA-->
+            <form method="post" enctype="multipart/form-data" id="crear-historia-form">
             {% csrf_token %}
 
-            <div class="alert alert-danger non-field-errors"></div>
 
-            <div class="form-group-medio">
-                <div class="half-width">
-                    <label for="{{ form1.numero_historia.id_for_label }}">Numero Historia</label>
-                    {{ form1.numero_historia }}
-                    <div class="field-errors" id="error_{{ form1.numero_historia.id_for_label }}"></div>
-                </div>
-                <div class="half-width">
-                    <label for="{{ form1.motivo_tipo_consulta.id_for_label }}">Motivo de Consulta</label>
-                    {{ form1.motivo_tipo_consulta }}
-                    <div class="field-errors" id="error_{{ form1.motivo_tipo_consulta.id_for_label }}"></div>
-                </div>
-            </div><br>
+            <!--Paso 1: Informacion general (ES EL FORMULARIO DE CREAR HISTORIA CLINICA)-->
+                <div class="form-step active">
+                    <div class="step-content-header">
+                        <i class="fas fa-file"></i>
+                        <h2>Informacion General</h2>
+                    </div>
+                    <p class="step-subtitle">Datos basicos de la historia clinica genetica</p>
 
-            <div class="form-group">
-                <label for="{{ form1.cursante_postgrado.id_for_label }}">Cursante de Postgrado</label>
-                {{ form1.cursante_postgrado }}
-                <div class="field-errors" id="error_{{ form1.cursante_postgrado.id_for_label }}"></div>
-            </div><br>
-            <div class="form-group">
-                <label for="{{ form1.centro_referencia.id_for_label }}">Centro de Referencia</label>
-                {{ form1.centro_referencia }}
-                <div class="field-errors" id="error_{{ form1.centro_referencia.id_for_label }}"></div>
-            </div><br>
+                    <div class="alert alert-danger non-field-errors"></div>
 
-            <div class="form-group-medio">
-                <div class="half-width">
-                    <label for="{{ form1.medico.id_for_label }}">Médico de Referencia</label>
-                    {{ form1.medico }}
-                    <div class="field-errors" id="error_{{ form1.medico.id_for_label }}"></div>
-                </div>
-                <div class="half-width">
-                    <label for="{{ form1.especialidad.id_for_label }}">Especialidad Medico de Referencia</label>
-                    {{ form1.especialidad }}
-                    <div class="field-errors" id="error_{{ form1.especialidad.id_for_label }}"></div>
-                </div>
-            </div><br><br><br>
+                    <div class="info-box">
+                        <i class="fas fa-circle-exclamation"></i>
+                        <p><strong>Información importante:</strong> Los campos marcados con asterisco (*) son obligatorios. Asegúrese de completar toda la información requerida antes de continuar.</p>
+                    </div>
+                    <div class="form-group-medio">
+                        <div class="half-width">
+                            <label for="{{ form1.numero_historia.id_for_label }}">Numero Historia *</label>
+                            {{ form1.numero_historia }}
+                            <div class="field-errors" id="error_{{ form1.numero_historia.id_for_label }}"></div>
+                        </div>
+                        <div class="half-width">
+                            <label for="{{ form1.motivo_tipo_consulta.id_for_label }}">Motivo de Consulta *</label>
+                            {{ form1.motivo_tipo_consulta }}
+                            <div class="field-errors" id="error_{{ form1.motivo_tipo_consulta.id_for_label }}"></div>
+                        </div>
+                    </div><br>
 
-            <div class="form-actions">
-                <button type="submit">Siguiente</button>
-            </div>
-        </form>
+                    <div class="form-group-medio">
+                        <div class="half-width">
+                            <label for="{{ form1.cursante_postgrado.id_for_label }}">Cursante de Postgrado</label>
+                            {{ form1.cursante_postgrado }}
+                            <div class="field-errors" id="error_{{ form1.cursante_postgrado.id_for_label }}"></div>
+                        </div>
+                        <div class="half-width">
+                            <label for="{{ form1.centro_referencia.id_for_label }}">Centro de Referencia</label>
+                            {{ form1.centro_referencia }}
+                            <div class="field-errors" id="error_{{ form1.centro_referencia.id_for_label }}"></div>
+                        </div>
+                    </div><br>
+                    
+                    <div class="form-group-medio">
+                        <div class="half-width">
+                            <label for="{{ form1.medico.id_for_label }}">Médico de Referencia</label>
+                            {{ form1.medico }}
+                            <div class="field-errors" id="error_{{ form1.medico.id_for_label }}"></div>
+                        </div>
+                        <div class="half-width">
+                            <label for="{{ form1.especialidad.id_for_label }}">Especialidad Medico de Referencia</label>
+                            {{ form1.especialidad }}
+                            <div class="field-errors" id="error_{{ form1.especialidad.id_for_label }}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline">Guardar Borrador</button>
+                    <button type="submit" class="btn btn-primary" id="nextBtn">Siguiente</button>
+                    <!--<button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">Finalizar y Guardar</button>-->
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

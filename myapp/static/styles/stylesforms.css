@@ -12,6 +12,9 @@
     --border-gray: #b3b3b3;
     --liner-gray: #d3d2d2;
     --button-gray: #e4e4e4;
+    --info-background: #e1ebf6;
+    --info-border: #abcef6;
+    --info-text: #1b5ec9;
 }
 
 html {
@@ -44,8 +47,10 @@ a{
 li{
     list-style: none;
 }
-/*---------------- NAVBAR FORMULARIOS --------------------*/
 
+
+/*---------------- NAVBAR FORMULARIOS --------------------*/
+/*
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -124,17 +129,22 @@ hr{
     color: var(--primary-darkerblue);
     font-size: 1.5rem;
 }
-
+*/
 
 
 /*----------------- HISTORIA CLÍNICA --------------------*/
 
 
-.content-base {
-    margin-left: 3rem; /* Igual al ancho del sidebar */
-    padding: 2rem; 
-    width: calc(100% - 3rem); 
-    min-height: 100vh;
+.main-content{
+    flex: 1;
+    padding: 2rem;
+}
+
+.form-container{
+    flex: 1;
+    margin-left: 25rem;
+    background-color: var(--background-color);
+    padding: 5rem 2rem;
 }
 
 
@@ -144,11 +154,149 @@ hr{
 }
 
 
+form{
+    border: 1px solid var(--border-gray);
+    border-radius: 1rem;
+    padding: 2rem;
+}
 
+.card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+}
+
+.card-header h1{
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+    color: var(--primary-darkerblue);
+}
+
+.card-header p{
+    font-size: 1.2rem;
+    color: var(--primary-darkerblue);
+    margin-top: 0.25rem;
+}
+
+.step-indicator{
+ background-color: var(--background-color);
+ color: var(--primary-darkerblue);
+ font-size: 1.2rem;
+ font-weight: 700;
+ padding: 0.5rem 1rem;
+ border-radius: 99rem;
+ border: 1px solid var(--primary-darkerblue);  
+}
+
+         /*----BARRA DE PROGRESO----*/
+
+.seccion-progreso{
+    padding: 1.5rem 0;
+}
+
+.progress-title, .progress-percentage{
+    font-size: 1.2rem;
+    color: var(--buttons-blue);
+    margin: 0 0 0.5rem 0;
+}
+
+.progress-bar-container{
+    width: 100%;
+    height: 0.8rem;
+    background-color: var(--liner-gray);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.progress-bar{
+    height: 100%;
+    width: 15%;
+    background-color: var(--primary-darkerblue);
+    border-radius: 0.5rem;
+    transition: width 0.4s ease;
+}
+
+.progress-percentage{
+    margin-top: 0.5rem;
+    font-weight: 700;
+    color: var(--primary-darkerblue);
+}
+
+.stepper{
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    position: relative;
+    padding-bottom: 3.5rem;
+}
+
+/*
+.stepper::before{
+    content: '';
+    position: absolute;
+    top: 1.5rem;
+    left: 0;
+    right: 0;
+    height: 0.2rem;
+    background-color: var(--liner-gray);
+    transform: translateY(-50%);
+    z-index: 1;
+}*/
+
+
+.stepper-item{
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 2;
+    flex: 1;
+    color: var(--border-gray);
+}
+
+.step-counter{
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background-color: var(--background-color);
+    border: 2px solid var(--border-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.step-counter i{
+    font-size: 1.3rem;
+    color: var(--border-gray);
+}
+
+
+.step-name .font-bold{
+  font-family: 700;
+  font-size: 1.2rem;
+}
+
+       /*----ESTILOS PARA EL PASO ACTIVO----*/
+
+.stepper-item.active .step-counter{
+    background-color: var(--primary-darkerblue);
+    border-color: var(--primary-darkerblue);
+}
+
+.stepper-item.active .step-counter i{
+    color: var(--background-color);
+}
+
+.stepper-item.active .step-name{
+    color: var(--primary-darkerblue);
+    font-size: 1.2rem;
+}
 
 
 /*--------------------- FORMULARIOS --------------------*/
-.form-container {
+/*.form-container {
     background-color: var(--background-color);
     padding: 5rem 2rem;
     margin: 2rem auto;
@@ -161,7 +309,75 @@ hr{
     color: var(--primary-darkerblue);
     margin-bottom: 2.5rem;
     text-align: center;
+}*/
+
+.form-step{
+    display: none;
 }
+
+.form-step.active{
+    display: block;
+    /*animation: fadeIn 0.5s ease-in-out;*/
+}
+
+/*@keyframes fadeIn{
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}*/
+
+.step-content-header{
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+
+.step-content-header i{
+    font-size: 2rem;
+    color: var(--primary-darkerblue);
+}
+
+.step-content-header h2{
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0;
+    color: var(--primary-darkerblue);
+}
+
+.step-subtitle{
+    color: var(--primary-darkerblue);
+    margin-top: 0;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+}
+
+
+        /*----INFO BOX----*/
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background-color: var(--info-background);
+    color: var(--info-text);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--info-border);
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+}
+
+.info-box i {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+.info-box p {
+    margin: 0;
+    font-size: 1.3rem;
+    line-height: 1.5;
+}
+
 
 .form-group-medio {
     display: flex;
@@ -365,15 +581,15 @@ hr{
 
 /* Estilo Base para TODOS los botones dentro de .form-actions */
 .form-actions button {
-    padding: 1.2rem 2.5rem; /* Aumenta el padding para un mejor look */
+    padding: 1.2rem 1.8rem; /* Aumenta el padding para un mejor look */
     border: none;
-    border-radius: 25px; /* Más redondeado para un estilo moderno */
+    border-radius: 1rem; /* Más redondeado para un estilo moderno */
     cursor: pointer;
     font-size: 1.4rem; 
     font-weight: 600;
     font-family: "Poppins", serif;
     transition: all 0.3s ease;
-    min-width: 220px; /* Ancho mínimo para mantener la consistencia */
+    min-width: 18rem; /* Ancho mínimo para mantener la consistencia */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
 }
 
@@ -443,104 +659,6 @@ hr{
 
 
 
-
-/*---------------------- REVISAR -------------------------------*/
-
-/*Estilos para campos de archivo
-.form-group input[type="file"] {
-    padding: 5px;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-}
-
-/* Estilos para campos de fecha
-.form-group input[type="date"] {
-    padding: 7px;
-}
-
-/* Estilos para campos de selección (select) 
-.form-group select {
-    padding: 7px;
-    background-color: var(--background-color);
-}
-
-
-/* Estilos para campos numéricos 
-.form-group input[type="number"] {
-    padding: 7px;
-}
-
-/* Estilos para campos de email 
-.form-group input[type="email"] {
-    padding: 7px;
-}
-
-.paciente-detalle-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.paciente-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 20px;
-}
-
-.paciente-header .paciente-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 30px;
-    background: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.paciente-header .paciente-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.paciente-header .paciente-info h1 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
-
-.paciente-header .paciente-metadata {
-    display: flex;
-    gap: 20px;
-    color: #666;
-    font-size: 14px;
-}
-
-.paciente-seccion {
-    margin-bottom: 30px;
-}
-
-.paciente-seccion h2 {
-    color: #444;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.paciente-datos {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 15px;
-}
-
-.paciente-datos p {
-    margin: 5px 0;
-}
-*/
-
 /*--------- css del ultimo formulario de diagnosticos ----------*/
 .diagnostico-item {
     display: flex;
@@ -559,8 +677,11 @@ hr{
 }
 
 
+
+/*COMENTE LOS MENSAJES DE ERROR PORQUE ESTA TOMANDO ESTILOS DE OTRO CSS YA*/
+
 /*--------- css para los mensajes de error ----------*/
-.messages-container {
+/*.messages-container {
     width: 80%;
     margin: 15px auto;
     padding: 0;
@@ -581,7 +702,7 @@ li.message-item {
     align-items: center;
 }
 
-li.message-item i { /* For FontAwesome icons */
+li.message-item i {
     margin-right: 8px;
     font-size: 1.2em;
 }
@@ -613,11 +734,11 @@ li.message-item.warning {
     color: #856404;
     border: 1px solid #ffeeba;
 }
-li.message-item.warning i { color: #856404; }
+li.message-item.warning i { color: #856404; }*/
 
 /* For field-specific errors */
-.field-errors {
-    color: #721c24; /* Similar to bootstrap's text-danger */
+/*.field-errors {
+    color: #721c24; Similar to bootstrap's text-danger 
     font-size: 0.875em;
     margin-top: .25rem;
 }
@@ -628,10 +749,11 @@ li.message-item.warning i { color: #856404; }
 .form-group input.is-invalid,
 .form-group select.is-invalid,
 .form-group textarea.is-invalid {
-    border-color: #dc3545; /* Bootstrap's danger color */
+    border-color: #dc3545;  Bootstrap's danger color 
 }
 
-.form-group .alert-danger { /* If using alerts for field errors from formset */
+.form-group .alert-danger {  If using alerts for field errors from formset 
     font-size: 0.875em;
     padding: 0.5rem 0.75rem;
 }
+*/

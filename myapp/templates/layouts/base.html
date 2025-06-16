@@ -146,7 +146,7 @@
        
     <div class="content">
         {% if messages %}
-            <div class="messages-container" style="padding: 10px 20px;">
+            <div class="messages-container" style="padding: 2rem 2rem 3rem 27rem;">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" 
                          style="background-color: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% elif message.tags == 'warning' %}#fff3cd{% else %}#cce5ff{% endif %}; 
