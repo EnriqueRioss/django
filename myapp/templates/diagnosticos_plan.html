@@ -2,339 +2,554 @@
 {% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'styles/stylesforms.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Formulario de Evaluación Genética</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tus estilos CSS (sin cambios) -->
+    <style>
+        /* --- General y Tipografía --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #eef2f7; /* Un gris azulado muy claro */
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- Contenedor Principal del Formulario --- */
+        .form-container {
+            max-width: 950px;
+            margin: 20px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #dee2e6;
+        }
+
+        .error-list {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 5px;
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .form-group .error-list {
+            margin-top: 0.25rem;
+            margin-bottom: 1rem;
+        }
+        .error-list p {
+            margin: 0;
+        }
+        .non-form-errors {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header-info {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .historia-info {
+            font-weight: 500;
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* --- Grupos de Campos (Fieldsets) --- */
+        fieldset {
+            border: 1px solid #dbe2e9;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            background-color: #fdfdff;
+        }
+
+        legend {
+            width: auto;
+            padding: 0 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #34495e;
+            border-bottom: none;
+            margin-bottom: 20px;
+        }
+
+        /* --- Estilos para cada sub-formulario (Diagnóstico, Plan) --- */
+        .dynamic-form-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background-color: #ffffff;
+            position: relative;
+            transition: box-shadow 0.2s ease-in-out;
+        }
+        .dynamic-form-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        /* --- Estilos de etiquetas y campos de entrada --- */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .field-wrapper label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .field-wrapper input[type="text"],
+        .field-wrapper textarea,
+        .form-control { /* Aseguramos que la clase de Django también sea estilizada */
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            color: #495057;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .field-wrapper textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .field-wrapper input[type="text"]:focus,
+        .field-wrapper textarea:focus,
+        .form-control:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+
+        /* --- Estilos de Botones --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+
+        .btn-secondary {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        .btn-danger-soft {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border-color: transparent;
+            font-size: 0.875rem;
+            padding: 5px 10px;
+        }
+        .btn-danger-soft:hover {
+            color: #fff;
+            background-color: #dc3545;
+        }
+
+        .remove-form-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        
+        .add-form-btn {
+            margin-top: 10px;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 40px;
+            border-top: 1px solid #e9ecef;
+            padding-top: 25px;
+        }
+    </style>
+</head>
+
 
 <div class="form-container">
     <h1>Evaluación Genética</h1>
-    <h4>
-        {{ context_object_name }}
-    </h4>
-    <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
-     {% if evaluacion_instance.pk %} {# Check if we are editing an existing evaluation #}
-        <p class="editing-info"><em>Modo Edición: Actualizando Evaluación Genética.</em></p>
-    {% endif %}
+    <div class="header-info">
+        <span class="historia-info">
+            Historia Clínica #{{ historia_id }} - {{ parent_object }}
+        </span>
+        <p>Por favor, complete todos los campos requeridos.</p>
+    </div>
 
+    <div id="form-errors-global" class="non-form-errors" style="display:none;"></div>
 
-    <form method="post" id="evaluacion-form">
+    <form method="post" id="evaluacion-form" novalidate>
         {% csrf_token %}
 
-        {# Non-field errors for SignosClinicosForm #}
-        {% if signos_form.non_field_errors %}
-            <div class="alert alert-danger non-field-errors">
-                {% for error in signos_form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         <div class="form-group">
-            <label for="{{ signos_form.signos_clinicos.id_for_label }}">Signos Clínicos Relevantes</label>
-            {{ signos_form.signos_clinicos }}
-            {% if signos_form.signos_clinicos.errors %}
-                <div class="field-errors alert-danger mt-1"> {# Using alert-danger for consistency #}
-                    {% for error in signos_form.signos_clinicos.errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
-                </div>
-            {% endif %}
+            <div class="field-wrapper">
+                {{ form.signos_clinicos.label_tag }}
+                {{ form.signos_clinicos }}
+                <div class="error-list" id="errors-signos_clinicos">{{ form.signos_clinicos.errors }}</div>
+            </div>
         </div>
 
-        <fieldset class="form-group">
+        <fieldset>
             <legend>Diagnósticos Presuntivos</legend>
+            
             {{ diagnostico_formset.management_form }}
-            {% if diagnostico_formset.non_form_errors %}
-                <div class="alert alert-danger non-field-errors">
-                    {% for error in diagnostico_formset.non_form_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            <div id="diagnostico-form-list" class="formset-list">
+            <div id="diagnostico-non-form-errors" class="error-list">
+                {{ diagnostico_formset.non_form_errors }}
+            </div>
+
+            <div id="diagnostico-form-list">
                 {% for form in diagnostico_formset %}
-                <div class="ingredient-form diagnostico-form" id="diagnostico-form-{{ forloop.counter0 }}">
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                           {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    <div class="dynamic-form-item" id="diagnostico-form-{{ forloop.counter0 }}">
+                        {# ======================================================= #}
+                        {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
+                        {# Esto renderizará los <input type="hidden"> para el ID, la clave foránea y el campo 'orden' #}
+                        {{ form.diagnostico_id }} 
+                        {{ form.evaluacion }}
+                        {{ form.orden }}
+                        {# ======================================================= #}
+
+                        <div class="field-wrapper">
+                            {{ form.descripcion.label_tag }}
+                            {{ form.descripcion }}
+                            <div class="error-list" id="errors-diagnostico-{{ forloop.counter0 }}-descripcion">{{ form.descripcion.errors }}</div>
                         </div>
-                    {% endif %}
-                    {% if form.id %}{{ form.id }}{% endif %}
-                    {% for field in form.visible_fields %}
-                        {% if field.name != 'DELETE' %}
-                            <div class="fieldWrapper mb-2 {% if field.errors %}has-error{% endif %}">
-                                {{ field.label_tag }}
-                                {{ field }}
-                                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                                {% if field.errors %}
-                                    <div class="field-errors alert-danger mt-1">
-                                        {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                    {{ form.DELETE.as_hidden }}
-                    <button type="button" class="btn btn-danger btn-sm remove-form-btn">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                    <hr class="my-3">
-                </div>
+                        
+                        {# Es crucial renderizar el campo DELETE para que el formset sepa qué eliminar #}
+                        <div style="display: none;">{{ form.DELETE }}</div> 
+                        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 {% endfor %}
             </div>
-            <div id="empty-diagnostico-form" class="ingredient-form diagnostico-form" style="display:none;">
-                 {% if diagnostico_formset.empty_form.id %}{{ diagnostico_formset.empty_form.id }}{% endif %}
-                 {% for field in diagnostico_formset.empty_form.visible_fields %}
-                    {% if field.name != 'DELETE' %}
-                        <div class="fieldWrapper mb-2">
-                            {{ field.label_tag }}
-                            {{ field }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                {{ diagnostico_formset.empty_form.DELETE.as_hidden }}
-                <button type="button" class="btn btn-danger btn-sm remove-form-btn">
-                    <i class="fas fa-trash"></i> Eliminar
-                </button>
-                <hr class="my-3">
-            </div>
-            <button type="button" id="add-diagnostico-btn" class="btn btn-secondary mt-2">
+            <button type="button" id="add-diagnostico-btn" class="btn btn-secondary add-form-btn">
                 <i class="fas fa-plus"></i> Añadir Diagnóstico
             </button>
         </fieldset>
 
-        <fieldset class="form-group">
+        <!-- Sección de Plan de Estudio -->
+        <fieldset>
             <legend>Plan de Estudio</legend>
+
             {{ plan_formset.management_form }}
-            {% if plan_formset.non_form_errors %}
-                <div class="alert alert-danger non-field-errors">
-                     {% for error in plan_formset.non_form_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-            <div id="plan-form-list" class="formset-list">
+            <div id="plan-non-form-errors" class="error-list">
+                {{ plan_formset.non_form_errors }}
+            </div>
+
+            <div id="plan-form-list">
                 {% for form in plan_formset %}
-                <div class="ingredient-form plan-form" id="plan-form-{{ forloop.counter0 }}">
-                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                           {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    <div class="dynamic-form-item" id="plan-form-{{ forloop.counter0 }}">
+                        {# ======================================================= #}
+                        {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
+                        {{ form.plan_id }}
+                        {{ form.evaluacion }}
+                        {{ form.completado }}
+                        {{ form.fecha_visita }}
+                        {{ form.asesoramiento_evoluciones }}
+                        {# ======================================================= #}
+
+                        <div class="field-wrapper">
+                            {{ form.accion.label_tag }}
+                            {{ form.accion }}
+                            <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-accion">{{ form.accion.errors }}</div>
                         </div>
-                    {% endif %}
-                    {% if form.id %}{{ form.id }}{% endif %}
-                     {% for field in form.visible_fields %}
-                        {% if field.name != 'DELETE' and field.name != 'fecha_visita' and field.name != 'completado' %}
-                            <div class="fieldWrapper mb-2 {% if field.errors %}has-error{% endif %}">
-                                {{ field.label_tag }}
-                                {{ field }}
-                                {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
-                                {% if field.errors %}
-                                    <div class="field-errors alert-danger mt-1">
-                                        {% for error in field.errors %}<span>{{ error }}</span>{% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                    {{ form.DELETE.as_hidden }}
-                    <button type="button" class="btn btn-danger btn-sm remove-form-btn">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                    <hr class="my-3">
-                </div>
+
+                        <div style="display: none;">{{ form.DELETE }}</div>
+                        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 {% endfor %}
             </div>
-            <div id="empty-plan-form" class="ingredient-form plan-form" style="display:none;">
-                {% if plan_formset.empty_form.id %}{{ plan_formset.empty_form.id }}{% endif %}
-                {% for field in plan_formset.empty_form.visible_fields %}
-                     {% if field.name != 'DELETE' and field.name != 'fecha_visita' and field.name != 'completado' %}
-                        <div class="fieldWrapper mb-2">
-                            {{ field.label_tag }}
-                            {{ field }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-                {{ plan_formset.empty_form.DELETE.as_hidden }}
-                <button type="button" class="btn btn-danger btn-sm remove-form-btn">
-                    <i class="fas fa-trash"></i> Eliminar
-                </button>
-                <hr class="my-3">
-            </div>
-            <button type="button" id="add-plan-btn" class="btn btn-secondary mt-2">
+            <button type="button" id="add-plan-btn" class="btn btn-secondary add-form-btn">
                 <i class="fas fa-plus"></i> Añadir Acción del Plan
             </button>
         </fieldset>
 
-        <div class="form-actions mt-4">
-            <button type="submit" class="btn btn-primary">Guardar Evaluación</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submit-button">
+                <i class="fas fa-save"></i> Guardar Evaluación
+            </button>
         </div>
     </form>
 </div>
 
+<!-- ================================================================= -->
+<!-- ========= PLANTILLAS JS CORREGIDAS ============================== -->
+<!-- ================================================================= -->
+
+<!-- Plantilla para nuevos formularios de Diagnóstico (invisible) -->
+<div id="empty-diagnostico-form-template" style="display:none;">
+    <div class="dynamic-form-item" id="diagnostico-form-__prefix__">
+        {{ diagnostico_formset.empty_form.diagnostico_id }}
+        {{ diagnostico_formset.empty_form.evaluacion }}
+        {{ diagnostico_formset.empty_form.orden }}
+        <div class="field-wrapper">
+            {{ diagnostico_formset.empty_form.descripcion.label_tag }}
+            {{ diagnostico_formset.empty_form.descripcion }}
+            <div class="error-list" id="errors-diagnostico-__prefix__-descripcion"></div>
+        </div>
+        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Plantilla para nuevos formularios de Plan (invisible) -->
+<div id="empty-plan-form-template" style="display:none;">
+    <div class="dynamic-form-item" id="plan-form-__prefix__">
+        {{ plan_formset.empty_form.plan_id }}
+        {{ plan_formset.empty_form.evaluacion }}
+        {{ plan_formset.empty_form.completado }}
+        {{ plan_formset.empty_form.fecha_visita }}
+        {{ plan_formset.empty_form.asesoramiento_evoluciones }}
+        <div class="field-wrapper">
+            {{ plan_formset.empty_form.accion.label_tag }}
+            {{ plan_formset.empty_form.accion }}
+            <div class="error-list" id="errors-plan-__prefix__-accion"></div>
+        </div>
+        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- ========= INICIO DE LAS CORRECCIONES EN LAS PLANTILLAS ========== -->
+<!-- ================================================================= -->
+
+<!-- Plantilla para nuevos formularios de Diagnóstico (invisible) -->
+<div id="empty-diagnostico-form-template" style="display:none;">
+    <div class="dynamic-form-item" id="diagnostico-form-__prefix__">
+        {{ diagnostico_formset.empty_form.id }}
+        <div class="field-wrapper">
+            {{ diagnostico_formset.empty_form.descripcion.label_tag }}
+            {{ diagnostico_formset.empty_form.descripcion }}
+            <div class="error-list" id="errors-diagnostico-__prefix__-descripcion"></div>
+        </div>
+        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Plantilla para nuevos formularios de Plan (invisible) -->
+<div id="empty-plan-form-template" style="display:none;">
+    <div class="dynamic-form-item" id="plan-form-__prefix__">
+        {{ plan_formset.empty_form.id }}
+        <div class="field-wrapper">
+            {{ plan_formset.empty_form.accion.label_tag }}
+            {{ plan_formset.empty_form.accion }}
+            <!-- También añadir campos ocultos aquí para que los nuevos formularios los tengan -->
+            <div style="display:none;">
+                {{ plan_formset.empty_form.completado }}
+                {{ plan_formset.empty_form.fecha_visita }}
+                {{ plan_formset.empty_form.asesoramiento_evoluciones }}
+            </div>
+            <div class="error-list" id="errors-plan-__prefix__-accion"></div>
+        </div>
+        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<!-- =============================================================== -->
+<!-- ========= FIN DE LAS CORRECCIONES EN LAS PLANTILLAS =========== -->
+<!-- =============================================================== -->
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    function initializeFormset(prefix) {
-        const addMoreBtn = document.getElementById(`add-${prefix}-btn`);
-        const totalFormsInput = document.getElementById(`id_${prefix}s-TOTAL_FORMS`); // Note 's' added for Django default prefixing
-        const emptyFormTemplateEl = document.getElementById(`empty-${prefix}-form`);
-        const formListContainer = document.getElementById(`${prefix}-form-list`);
-        const formRowClass = `${prefix}-form`; // Used to identify form divs
-
-        if (!addMoreBtn || !totalFormsInput || !emptyFormTemplateEl || !formListContainer) {
-            console.error(`Error: Missing elements for formset with prefix '${prefix}'. Check IDs and classes.`);
+    
+    /**
+     * Gestiona un formset completo: añadir, eliminar y re-etiquetar formularios.
+     * @param {string} prefix - 'diagnostico' o 'plan'.
+     */
+    function setupFormset(prefix) {
+        const formList = document.getElementById(`${prefix}-form-list`);
+        const addBtn = document.getElementById(`add-${prefix}-btn`);
+        const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+        // CORRECCIÓN: Apuntamos a la plantilla con la estructura HTML completa
+        const emptyFormTemplate = document.getElementById(`empty-${prefix}-form-template`);
+        
+        if (!formList || !addBtn || !totalFormsInput || !emptyFormTemplate) {
+            console.error(`Faltan elementos para el formset '${prefix}'.`);
             return;
         }
 
-        addMoreBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            let currentFormCount = parseInt(totalFormsInput.value);
-
-            const newFormNode = emptyFormTemplateEl.cloneNode(true);
-            newFormNode.style.display = ''; // Make it visible
-            newFormNode.setAttribute('id', `${formRowClass}-${currentFormCount}`); // Set unique ID for the new form div
-
-            // Replace '__prefix__' in all relevant attributes of the new form's children
-            const regex = new RegExp(`${prefix}s-__prefix__`, 'g'); // Correct regex for Django formset naming
-            newFormNode.innerHTML = newFormNode.innerHTML.replace(regex, `${prefix}s-${currentFormCount}`);
-
-            // Explicitly update IDs if they are structured differently or used by other JS
-             newFormNode.querySelectorAll('*').forEach(el => {
-                if (el.id && el.id.includes('__prefix__')) {
-                    el.id = el.id.replace(/__prefix__/g, currentFormCount);
-                }
-                if (el.name && el.name.includes('__prefix__')) {
-                    el.name = el.name.replace(/__prefix__/g, currentFormCount);
-                }
-                if (el.htmlFor && el.htmlFor.includes('__prefix__')) {
-                    el.htmlFor = el.htmlFor.replace(/__prefix__/g, currentFormCount);
-                }
-            });
-
-
-            // Clear any potential ID field from the template if it was copied from an existing form
-            const idFieldInNewForm = newFormNode.querySelector(`input[name$="-id"]`);
-            if (idFieldInNewForm) {
-                idFieldInNewForm.value = '';
-            }
-
-            // Ensure the DELETE field is not checked
-            const deleteInputInNewForm = newFormNode.querySelector(`input[type="hidden"][name$="-DELETE"]`);
-            if (deleteInputInNewForm) {
-                deleteInputInNewForm.value = ''; // Ensure it's not 'on' or 'true'
-            }
-            const deleteCheckboxInNewForm = newFormNode.querySelector(`input[type="checkbox"][name$="-DELETE"]`);
-             if (deleteCheckboxInNewForm) {
-                deleteCheckboxInNewForm.checked = false;
-            }
-
-
-            formListContainer.appendChild(newFormNode);
-            totalFormsInput.value = currentFormCount + 1;
+        // --- AÑADIR FORMULARIO ---
+        addBtn.addEventListener('click', () => {
+            const formIndex = parseInt(totalFormsInput.value);
+            // CORRECCIÓN: El HTML ya está estructurado, solo reemplazamos el prefijo.
+            const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIndex);
+            
+            // Creamos un nodo temporal para insertar el HTML y luego añadirlo al DOM.
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newFormHtml;
+            const newFormElement = tempDiv.firstElementChild; // Obtenemos el <div class="dynamic-form-item">
+            
+            formList.appendChild(newFormElement);
+            totalFormsInput.value = formIndex + 1;
         });
 
-        formListContainer.addEventListener('click', function(e) {
-            const removeButton = e.target.closest('.remove-form-btn');
-            if (removeButton) {
-                e.preventDefault();
-                const formDiv = removeButton.closest(`.${formRowClass}`);
-                if (formDiv) {
-                    // Find the hidden DELETE input field for this form
-                    const deleteInput = formDiv.querySelector(`input[type="hidden"][name$="-DELETE"]`);
-                    if (deleteInput) {
-                        deleteInput.value = 'on'; // Mark for deletion
-                        formDiv.style.display = 'none'; // Hide the form
+        // --- ELIMINAR FORMULARIO (delegación de eventos) ---
+        formList.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.remove-form-btn');
+            if (!removeBtn) return;
+
+            const formItem = removeBtn.closest('.dynamic-form-item');
+            const deleteInput = formItem.querySelector('input[id$="-DELETE"]');
+
+            if (deleteInput) {
+                // Si el formulario ya existe en la BD, lo marcamos para eliminar.
+                deleteInput.checked = true;
+                formItem.style.display = 'none';
+            } else {
+                // Si es un formulario nuevo (no tiene input 'DELETE'), lo eliminamos del DOM.
+                formItem.remove();
+                // Nota: No se decrementa TOTAL_FORMS. Django lo maneja correctamente al ignorar los índices que faltan.
+            }
+        });
+    }
+
+    setupFormset('diagnostico');
+    setupFormset('plan');
+
+    // --- MANEJO DEL ENVÍO CON AJAX ---
+    const form = document.getElementById('evaluacion-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const submitButton = document.getElementById('submit-button');
+        const formData = new FormData(form);
+        const url = form.action;
+
+        // Deshabilitar botón para evitar envíos múltiples
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        // Limpiar errores previos
+        document.querySelectorAll('.error-list').forEach(el => el.innerHTML = '');
+        document.getElementById('form-errors-global').style.display = 'none';
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            if (response.status === 400) {
+                return response.json().then(data => Promise.reject(data));
+            }
+            return Promise.reject({_error: 'Error del servidor. Intente de nuevo más tarde.'});
+        })
+        .then(data => {
+            if (data.success && data.redirect_url) {
+                window.location.href = data.redirect_url;
+            }
+        })
+        .catch(errorData => {
+            // Manejar y mostrar errores de validación
+            if (errorData.errors) {
+                console.log("Errores recibidos:", errorData.errors);
+                for (const [key, value] of Object.entries(errorData.errors)) {
+                    // Adaptamos la búsqueda del div de error para que coincida con la clave del backend
+                    const errorDiv = document.getElementById(`errors-${key}`);
+                    if (errorDiv) {
+                        let errorHtml = '';
+                        value.forEach(err => {
+                            // Django 4+ anida errores en 'message'
+                            errorHtml += `<p>${err.message || err}</p>`;
+                        });
+                        errorDiv.innerHTML = errorHtml;
+                    } else if (key.endsWith('-non-form')) {
+                        const globalFormsetErrors = document.getElementById(`${key}-errors`);
+                         if(globalFormsetErrors){
+                             globalFormsetErrors.innerHTML = `<p>${value}</p>`;
+                         }
                     } else {
-                         // Try to find a checkbox if hidden one is not there (less ideal)
-                        const deleteCheckbox = formDiv.querySelector(`input[type="checkbox"][name$="-DELETE"]`);
-                        if(deleteCheckbox){
-                            deleteCheckbox.checked = true;
-                            formDiv.style.display = 'none'; // Hide the form
-                        } else {
-                            console.warn("Could not find DELETE input for form:", formDiv);
-                        }
+                        // Errores no asociados a un campo específico
+                        const globalErrors = document.getElementById('form-errors-global');
+                        globalErrors.innerHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                        globalErrors.style.display = 'block';
                     }
                 }
+                 // Scroll al primer error
+                const firstError = document.querySelector('.error-list:not(:empty)');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                const globalErrors = document.getElementById('form-errors-global');
+                globalErrors.textContent = errorData._error || 'Ocurrió un error inesperado.';
+                globalErrors.style.display = 'block';
             }
+        })
+        .finally(() => {
+            // Reactivar el botón
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save"></i> Guardar Evaluación';
         });
-    }
-
-    initializeFormset('diagnostico');
-    initializeFormset('plan');
+    });
 });
 </script>
-
-<!-- Estilos CSS (repetidos de base2.html para completitud, pueden ser centralizados) -->
-<style>
-    .form-container { max-width: 900px; margin: 20px auto; padding: 20px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1, h4 { text-align: center; margin-bottom: 20px; }
-    .form-group { margin-bottom: 1.5rem; }
-    fieldset.form-group { border: 1px solid #dee2e6; padding: 20px; margin-bottom: 20px; border-radius: 5px; background-color: #fff; }
-    legend {
-        width: auto;
-        padding: 0 10px;
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: #333;
-        border-bottom: 2px solid #007bff;
-        margin-bottom: 15px;
-    }
-    .ingredient-form, .diagnostico-form, .plan-form {
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #e0e0e0;
-        border-radius: 5px;
-        background-color: #fdfdfd;
-        position: relative;
-    }
-    .fieldWrapper { margin-bottom: 1rem; }
-    .fieldWrapper label { display: block; margin-bottom: .5rem; font-weight: 500; color: #555; }
-    .fieldWrapper input[type="text"],
-    .fieldWrapper input[type="number"],
-    .fieldWrapper input[type="date"],
-    .fieldWrapper textarea,
-    .fieldWrapper select {
-        width: 100%;
-        padding: .5rem .75rem;
-        font-size: 1rem;
-        color: #495057;
-        background-color: #fff;
-        border: 1px solid #ced4da;
-        border-radius: .25rem;
-        box-sizing: border-box;
-    }
-    .fieldWrapper input[type="checkbox"].form-check-input {
-        margin-right: 0.5rem;
-        vertical-align: middle;
-        width: auto;
-    }
-
-    .form-actions { text-align: right; margin-top: 30px; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 400; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; border-radius: .25rem; transition: all .15s ease-in-out; }
-    .btn-primary { color: #fff; background-color: #007bff; border-color: #007bff; }
-    .btn-primary:hover { background-color: #0056b3; border-color: #0056b3; }
-    .btn-secondary { color: #fff; background-color: #6c757d; border-color: #6c757d; }
-    .btn-secondary:hover { background-color: #545b62; border-color: #4e555b; }
-    .btn-danger.btn-sm {
-        padding: .25rem .5rem;
-        font-size: .875rem;
-        line-height: 1.5;
-        border-radius: .2rem;
-        margin-top: 10px;
-    }
-    .btn-danger.btn-sm i { margin-right: 3px; }
-
-    .mt-1 { margin-top: .25rem !important; }
-    .mt-2 { margin-top: .5rem !important; }
-    .mt-4 { margin-top: 1.5rem !important; }
-    .mb-2 { margin-bottom: .5rem !important; }
-    .my-3 { margin-top: 1rem !important; margin-bottom: 1rem !important; border: 0; border-top: 1px solid #eee;}
-    .alert.alert-danger.non-field-errors { margin-bottom: 1rem; }
-    .field-errors.alert-danger { /* For individual field errors */
-        color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
-        padding: .5rem .75rem; border: 1px solid transparent; border-radius: .25rem;
-        font-size: 0.875em;
-    }
-    .field-errors.alert-danger span { display: block; }
-    .fas { margin-right: 5px; }
-</style>
-
 {% endblock %}

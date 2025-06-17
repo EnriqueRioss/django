@@ -7,12 +7,14 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from django.forms import inlineformset_factory, DateInput
 
 
 from .models import (
     HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales, DesarrolloPsicomotor,
     AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica, Genetistas,
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio
 )
 
 # --- General Purpose Forms ---
@@ -686,8 +688,63 @@ class ExamenFisicoForm(ModelForm):
 
 
 
+class EvaluacionGeneticaForm(forms.ModelForm):
+    class Meta:
+        model = EvaluacionGenetica
+        fields = ['signos_clinicos']
+        widgets = {
+            'signos_clinicos': forms.Textarea(attrs={
+                'rows': 10,
+                'class': 'form-control'
+            }),
+        }
 
+class DiagnosticoPresuntivoForm(forms.ModelForm):
+    class Meta:
+        model = DiagnosticoPresuntivo
+        fields = '__all__' # Correcto, mantenemos esto.
+        widgets = {
+            'descripcion': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ingrese el diagnóstico presuntivo'
+            }),
+            'evaluacion': forms.HiddenInput(),
+            # ===== NUEVA LÍNEA CRUCIAL =====
+            # Le decimos a Django que el campo 'orden' existe pero no es visible.
+            'orden': forms.HiddenInput(), 
+        }
 
+class PlanEstudioForm(forms.ModelForm):
+    class Meta:
+        model = PlanEstudio
+        fields = '__all__' # Correcto, mantenemos esto.
+        widgets = {
+            'accion': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Descripción de la acción'
+            }),
+            'completado': forms.HiddenInput(),
+            'fecha_visita': forms.HiddenInput(),
+            'asesoramiento_evoluciones': forms.HiddenInput(),
+            'evaluacion': forms.HiddenInput(),
+        }
+
+# Factories para los formsets
+DiagnosticoFormSet = inlineformset_factory(
+    EvaluacionGenetica,
+    DiagnosticoPresuntivo,
+    form=DiagnosticoPresuntivoForm,
+    extra=1,
+    can_delete=True
+)
+
+PlanEstudioFormSet = inlineformset_factory(
+    EvaluacionGenetica,
+    PlanEstudio,
+    form=PlanEstudioForm,
+    extra=1,
+    can_delete=True
+)
 class ReportSearchForm(forms.Form):
     buscar_paciente = forms.CharField(
         required=False,

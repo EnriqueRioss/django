@@ -69,11 +69,16 @@
         <div class="form-group"><label for="{{ form.observaciones_pliegues.id_for_label }}">Observaciones Pliegues</label>{{ form.observaciones_pliegues }}<div class="field-errors" id="error_{{ form.observaciones_pliegues.id_for_label }}"></div></div>
 
         <div class="form-actions">
-            {% if pareja %}
-                <button type="submit" name="save_and_finish" class="btn-primary"><i class="fas fa-check-double"></i> Guardar y Continuar a Evaluación (Pareja)</button>
-                {% if otro_proposito %}<button type="submit" name="save_and_go_to_other" class="btn-secondary"><i class="fas fa-arrow-right"></i> Guardar e Ir a Examen de {{ otro_proposito.nombres }}</button>{% endif %}
-            {% else %}
-                <button type="submit" name="save_and_finish" class="btn-primary">Siguiente</button>
+            <!-- Este botón siempre lleva al siguiente paso lógico (Evaluación Genética) -->
+            <button type="submit" name="save_and_finish" class="btn-primary">
+                <i class="fas fa-check-double"></i> Guardar y Continuar a Evaluación Genética
+            </button>
+            
+            <!-- Este botón solo aparece si hay otro miembro de la pareja con examen PENDIENTE -->
+            {% if otro_proposito_pendiente %}
+                <button type="submit" name="save_and_go_to_other" class="btn-secondary">
+                    <i class="fas fa-arrow-right"></i> Guardar e Ir a Examen de {{ otro_proposito_pendiente.nombres }}
+                </button>
             {% endif %}
         </div>
     </form>

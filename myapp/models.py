@@ -313,13 +313,13 @@ class EvaluacionGenetica(models.Model):
     evaluacion_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
         'Propositos',
-        on_delete=models.CASCADE, # Importante: Esto ya asegura que si Proposito se borra, EvaluacionGenetica se borra
+        on_delete=models.CASCADE,
         null=True,
         blank=True
     )
     pareja = models.ForeignKey(
         'Parejas',
-        on_delete=models.CASCADE, # Importante: Esto ya asegura que si Pareja se borra, EvaluacionGenetica se borra
+        on_delete=models.CASCADE,
         null=True,
         blank=True
     )
@@ -327,32 +327,38 @@ class EvaluacionGenetica(models.Model):
         verbose_name="Signos Clínicos Relevantes",
         blank=True,
         null=True,
-        help_text="Describa los signos clínicos más relevantes"
+        help_text="Describa los signos clínicos más relevantes que inician esta evaluación."
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
-            # models.CheckConstraint(  # <--- COMENTA O ELIMINA ESTA SECCIÓN
-            #     check=(
-            #         models.Q(proposito__isnull=False, pareja__isnull=True) |
-            #         models.Q(proposito__isnull=True, pareja__isnull=False)
-            #     ),
-            #     name='check_evaluacion_proposito_or_pareja'
-            # ),                                # <--- HASTA AQUÍ
+            # Regla 1: Debe estar asociado a un propósito O a una pareja, pero no a ambos.
+            models.CheckConstraint(
+                check=(
+                    models.Q(proposito__isnull=False, pareja__isnull=True) |
+                    models.Q(proposito__isnull=True, pareja__isnull=False)
+                ),
+                name='check_evaluacion_proposito_or_pareja'
+            ),
+            # Regla 2: Un propósito solo puede tener UNA evaluación genética.
             models.UniqueConstraint(
                 fields=['proposito'],
                 name='unique_evaluacion_proposito',
                 condition=models.Q(proposito__isnull=False)
             ),
+            # Regla 3: Una pareja solo puede tener UNA evaluación genética.
             models.UniqueConstraint(
                 fields=['pareja'],
                 name='unique_evaluacion_pareja',
                 condition=models.Q(pareja__isnull=False)
             )
         ]
+        verbose_name = "Evaluación Genética"
+        verbose_name_plural = "Evaluaciones Genéticas"
 
-    def clean(self): # Tu validación a nivel de aplicación sigue aquí y es crucial
+    def clean(self):
+        # Validación a nivel de aplicación para mensajes de error claros
         if self.proposito and self.pareja:
             raise ValidationError("La evaluación genética no puede estar relacionada con un propósito y una pareja al mismo tiempo.")
         if not self.proposito and not self.pareja:
@@ -367,15 +373,17 @@ class EvaluacionGenetica(models.Model):
         if self.proposito:
             return f"Evaluación Genética de {self.proposito}"
         elif self.pareja:
-            return f"Evaluación Genética de Pareja {self.pareja_id if self.pareja else 'N/A'}"
+            return f"Evaluación Genética de Pareja {self.pareja.pareja_id if self.pareja else 'N/A'}"
         return f"Evaluación Genética ID: {self.evaluacion_id}"
 
+
+# 2. NUEVO MODELO 'DETALLE' PARA DIAGNÓSTICOS
 class DiagnosticoPresuntivo(models.Model):
     diagnostico_id = models.AutoField(primary_key=True)
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
-        on_delete=models.CASCADE,
-        related_name='diagnosticos_presuntivos'
+        on_delete=models.CASCADE, # Si se borra la evaluación, se borran sus diagnósticos.
+        related_name='diagnosticos_presuntivos' # Permite acceder desde una evaluacion: `eval.diagnosticos_presuntivos.all()`
     )
     descripcion = models.TextField(
         verbose_name="Diagnóstico Presuntivo",
@@ -383,50 +391,55 @@ class DiagnosticoPresuntivo(models.Model):
     )
     orden = models.PositiveIntegerField(
         default=0,
-        help_text="Orden de importancia (0=primero)"
+        help_text="Orden de importancia (0=más probable, 1=segundo, etc.)"
     )
 
     class Meta:
-        ordering = ['orden']
+        ordering = ['orden'] # Por defecto se mostrarán ordenados por importancia.
+        verbose_name = "Diagnóstico Presuntivo"
         verbose_name_plural = "Diagnósticos Presuntivos"
 
     def __str__(self):
-        return f"Diagnóstico {self.orden}: {self.descripcion[:50]}..."
+        return f"Diagnóstico #{self.orden + 1}: {self.descripcion[:50]}..."
 
+
+# 3. NUEVO MODELO 'DETALLE' PARA PLANES DE ESTUDIO / CONSULTAS
 class PlanEstudio(models.Model):
     plan_id = models.AutoField(primary_key=True)
     evaluacion = models.ForeignKey(
         EvaluacionGenetica,
-        on_delete=models.CASCADE,
-        related_name='planes_estudio'
+        on_delete=models.CASCADE, # Si se borra la evaluación, se borra su historial de planes.
+        related_name='planes_estudio' # Permite acceder desde una evaluacion: `eval.planes_estudio.all()`
     )
     accion = models.TextField(
-        verbose_name="Acción a realizar",
-        help_text="Describa un paso del plan de estudio"
+        verbose_name="Acción a realizar / Exámenes solicitados",
+        help_text="Describa el plan de estudio, exámenes o pasos a seguir para la próxima consulta."
     )
-    completado = models.BooleanField(default=False)
+    completado = models.BooleanField(
+        default=False,
+        verbose_name="Plan Completado"
+    )
     fecha_visita = models.DateField(
         null=True,
         blank=True,
-        verbose_name="Fecha de Visita"
+        verbose_name="Fecha de Próxima Visita / Límite"
     )
     asesoramiento_evoluciones = models.TextField(
-        verbose_name="Asesoramiento y Evoluciones",
+        verbose_name="Asesoramiento y Evoluciones (Resultados de la consulta)",
         null=True,
-        blank=True
+        blank=True,
+        help_text="Llenar este campo cuando el paciente regrese y el plan se marque como completado."
     )
 
     class Meta:
-        ordering = ['fecha_visita']
-        verbose_name_plural = "Planes de Estudio"
-
-    def save(self, *args, **kwargs):
-        if self.completado and not self.fecha_visita:
-            self.fecha_visita = timezone.now().date()
-        super().save(*args, **kwargs)
+        ordering = ['-fecha_visita', '-plan_id'] # Muestra los más recientes primero.
+        verbose_name = "Plan de Estudio / Consulta"
+        verbose_name_plural = "Planes de Estudio / Consultas"
 
     def __str__(self):
-        return f"{self.accion[:30]}... ({'Completado' if self.completado else 'Pendiente'})"
+        estado = 'Completado' if self.completado else 'Pendiente'
+        fecha = f" (Visita: {self.fecha_visita})" if self.fecha_visita else ""
+        return f"Plan: {self.accion[:40]}... [{estado}]{fecha}"
 
 class EvolucionDesarrollo(models.Model):
     evolucion_id = models.AutoField(primary_key=True)

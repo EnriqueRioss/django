@@ -18,6 +18,8 @@ from datetime import datetime
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 
+from django.contrib.contenttypes.models import ContentType
+
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -25,20 +27,22 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from django.contrib.auth.models import User
 # CAMBIO IMPORTANTE: Importamos 'modelformset_factory' directamente aquí
-from django.forms import modelformset_factory
+
+from django import forms
+
 
 
 from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
     Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales,
-    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task,Parejas
 )
 from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
-    ExamenFisicoForm, ParejaPropositosForm, 
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm
+    ExamenFisicoForm, ParejaPropositosForm, EvaluacionGeneticaForm,
+    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet
 )
 
 from django.views.decorators.cache import patch_cache_control
@@ -495,7 +499,13 @@ def crear_antecedentes_preconcepcionales(request, historia_id, tipo, objeto_id):
                 elif 'save_and_exam_p2' in request.POST and pareja_obj:
                     redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': pareja_obj.proposito_id_2.proposito_id}) + f"?pareja_id={pareja_obj.pareja_id}"
                 else:
-                    redirect_url = reverse('flow_completion')
+                   if tipo == 'proposito' and proposito_obj:
+                        redirect_url = reverse('evaluacion_genetica_crear_editar', kwargs={'historia_id': historia.historia_id, 'tipo': "proposito", 'objeto_id': proposito_obj.proposito_id})
+                   elif tipo == 'pareja' and pareja_obj:
+                        redirect_url = reverse('evaluacion_genetica_crear_editar', kwargs={'historia_id': historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja_obj.pareja_id})
+                
+                if not redirect_url: redirect_url = reverse('index')
+
                 
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
@@ -546,8 +556,12 @@ def crear_examen_fisico(request, proposito_id):
     if pareja_id:
         pareja = get_object_or_404(Parejas.objects.select_related('proposito_id_1', 'proposito_id_2'), pk=pareja_id)
         otro_proposito = pareja.proposito_id_2 if proposito.pk == pareja.proposito_id_1.pk else pareja.proposito_id_1
+        # Comprobamos si el otro propósito AÚN necesita un examen físico
         if otro_proposito and not ExamenFisico.objects.filter(proposito=otro_proposito).exists():
              otro_proposito_id_faltante = otro_proposito.proposito_id
+        else:
+            # Si el otro propósito ya tiene examen, no ofrecemos el botón para ir a él.
+            otro_proposito = None 
     
     if request.method == 'POST':
         form = ExamenFisicoForm(request.POST, instance=examen_existente)
@@ -559,12 +573,23 @@ def crear_examen_fisico(request, proposito_id):
             messages.success(request, f"Examen físico para {proposito.nombres} {action_verb}.")
 
             redirect_url = None
-            if 'save_and_go_to_other' in request.POST and otro_proposito:
+            # --- INICIO DE LA LÓGICA DE REDIRECCIÓN CORREGIDA Y MEJORADA ---
+            if 'save_and_go_to_other' in request.POST and otro_proposito_id_faltante:
+                # Esta lógica solo se activa si el botón fue presionado y si realmente hay un examen pendiente.
                 messages.info(request, f"Ahora puede completar el examen para {otro_proposito.nombres}.")
-                redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': otro_proposito.proposito_id}) + f"?pareja_id={pareja.pareja_id}"
+                redirect_url = reverse('examen_fisico_crear_editar', kwargs={'proposito_id': otro_proposito_id_faltante}) + f"?pareja_id={pareja.pareja_id}"
             else:
-                # En cualquier otro caso de éxito (guardado simple), redirige a la página de finalización.
-                redirect_url = reverse('flow_completion')
+                # Para CUALQUIER otro botón de submit (o si no hay más exámenes pendientes en la pareja).
+                # El siguiente paso lógico es la Evaluación Genética.
+                context_tipo = 'pareja' if pareja else 'proposito'
+                context_objeto_id = pareja.pareja_id if pareja else proposito.proposito_id
+                
+                redirect_url = reverse('evaluacion_genetica_crear_editar', kwargs={
+                    'historia_id': proposito.historia.historia_id,
+                    'tipo': context_tipo,
+                    'objeto_id': context_objeto_id
+                })
+            # --- FIN DE LA LÓGICA DE REDIRECCIÓN CORREGIDA Y MEJORADA ---
             
             if is_ajax:
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})
@@ -573,10 +598,10 @@ def crear_examen_fisico(request, proposito_id):
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar Examen Físico. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
+            request.session['form_data'] = request.POST.copy()
+            return redirect(request.path_info)
     else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
+        form_data = request.session.pop('form_data', None)
         if form_data:
             form = ExamenFisicoForm(form_data, instance=examen_existente)
         else:
@@ -585,10 +610,110 @@ def crear_examen_fisico(request, proposito_id):
 
     context = {
         'form': form, 'proposito': proposito, 'editing': bool(examen_existente),
-        'pareja': pareja, 'otro_proposito': otro_proposito,
-        'otro_proposito_id_faltante': otro_proposito_id_faltante
+        'pareja': pareja, 
+        # Pasamos el objeto completo del otro propósito si existe y su examen está pendiente.
+        'otro_proposito_pendiente': otro_proposito
     }
     return render(request, 'examen_fisico.html', context)
+
+
+@login_required
+@genetista_or_admin_required
+@never_cache
+
+@transaction.atomic # Envuelve toda la vista en una transacción para garantizar la integridad de los datos
+def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
+    # 1. Determinar el objeto padre (Proposito o Pareja)
+    # NOTA: historia_id no se usa en tus modelos, pero lo mantengo por si lo necesitas para breadcrumbs, etc.
+    try:
+        if tipo == 'proposito':
+            parent_object = get_object_or_404(Propositos, pk=objeto_id)
+            lookup_kwargs = {'proposito': parent_object}
+        elif tipo == 'pareja':
+            parent_object = get_object_or_404(Parejas, pk=objeto_id)
+            lookup_kwargs = {'pareja': parent_object}
+        else:
+            messages.error(request, "Tipo de objeto no válido.")
+            return redirect('index') # O una página de error apropiada
+    except Exception as e:
+        messages.error(request, f"No se pudo encontrar el objeto de referencia: {e}")
+        return redirect('index')
+
+    # 2. Obtener o crear la instancia de EvaluacionGenetica
+    # get_or_create es perfecto para manejar tanto la creación como la edición en una sola vista.
+    evaluacion_instance, created = EvaluacionGenetica.objects.get_or_create(
+        **lookup_kwargs,
+        defaults={'signos_clinicos': ''} # Puedes poner valores por defecto si lo deseas
+    )
+
+    # 3. Procesar la petición POST (envío del formulario)
+    if request.method == 'POST':
+        form = EvaluacionGeneticaForm(request.POST, instance=evaluacion_instance)
+        diagnostico_formset = DiagnosticoFormSet(request.POST, instance=evaluacion_instance, prefix='diagnostico')
+        plan_formset = PlanEstudioFormSet(request.POST, instance=evaluacion_instance, prefix='plan')
+        
+        # Validar todo junto
+        if form.is_valid() and diagnostico_formset.is_valid() and plan_formset.is_valid():
+            # La transacción @atomic se encargará de hacer commit si todo va bien,
+            # o rollback si hay un error.
+            form.save()
+            diagnostico_formset.save()
+            plan_formset.save()
+
+            messages.success(request, '¡Evaluación genética guardada exitosamente!')
+            
+            # Si la petición es AJAX, devolvemos una respuesta JSON
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Cambia 'paciente_detail' por la URL a la que quieras redirigir al usuario
+                redirect_url = reverse('index') # Ejemplo de URL de redirección
+                return JsonResponse({'success': True, 'redirect_url': redirect_url})
+            
+            # Si no es AJAX, hacemos una redirección normal
+            return redirect('index') # Cambia a tu URL de éxito
+        
+        else:
+            # Si hay errores y la petición es AJAX, los empaquetamos en un JSON
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                errors = {}
+                # Combinar errores del formulario principal y los formsets
+                errors.update(form.errors.get_json_data())
+                
+                # Procesar errores de los formsets para que sean fáciles de usar en JS
+                for i, form_errors in enumerate(diagnostico_formset.errors):
+                    if form_errors:
+                        for field, error_list in form_errors.items():
+                            errors[f'diagnostico-{i}-{field}'] = error_list
+                for i, form_errors in enumerate(plan_formset.errors):
+                    if form_errors:
+                        for field, error_list in form_errors.items():
+                            errors[f'plan-{i}-{field}'] = error_list
+
+                # Errores globales de los formsets (ej: se necesita al menos 1)
+                if diagnostico_formset.non_form_errors():
+                    errors['diagnostico-non-form'] = diagnostico_formset.non_form_errors()
+                if plan_formset.non_form_errors():
+                    errors['plan-non-form'] = plan_formset.non_form_errors()
+
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            
+            # Si no es AJAX, se re-renderizará la página con los errores (comportamiento normal)
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+
+    # 4. Procesar la petición GET (mostrar el formulario)
+    else:
+        form = EvaluacionGeneticaForm(instance=evaluacion_instance)
+        diagnostico_formset = DiagnosticoFormSet(instance=evaluacion_instance, prefix='diagnostico')
+        plan_formset = PlanEstudioFormSet(instance=evaluacion_instance, prefix='plan')
+
+    context = {
+        'form': form,
+        'diagnostico_formset': diagnostico_formset,
+        'plan_formset': plan_formset,
+        'parent_object': parent_object, # Para mostrar información en el encabezado
+        'historia_id': historia_id, # Pasa el historia_id al contexto si lo usas
+    }
+    return render(request, 'diagnosticos_plan.html', context)
+
 
 @login_required
 @all_roles_required

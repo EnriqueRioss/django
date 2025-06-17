@@ -16,9 +16,22 @@ admin.site.register(PeriodoNeonatal)
 admin.site.register(Propositos)
 admin.site.register(DesarrolloPsicomotor)
 admin.site.register(InformacionPadres)
-admin.site.register(PlanEstudio)
-admin.site.register(DiagnosticoPresuntivo)
-admin.site.register(EvaluacionGenetica)
+class DiagnosticoPresuntivoInline(admin.TabularInline):
+    model = DiagnosticoPresuntivo
+    extra = 1 # Muestra un campo vacío para añadir uno nuevo.
+    ordering = ('orden',)
+
+class PlanEstudioInline(admin.StackedInline):
+    model = PlanEstudio
+    extra = 0 # No mostrar uno nuevo por defecto, ya que se crean con el tiempo.
+    ordering = ('-fecha_visita', '-plan_id')
+
+@admin.register(EvaluacionGenetica)
+class EvaluacionGeneticaAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'proposito', 'pareja', 'fecha_creacion')
+    inlines = [DiagnosticoPresuntivoInline, PlanEstudioInline]
+    search_fields = ('proposito__nombres', 'proposito__apellidos', 'pareja__proposito_id_1__nombres')
+
 admin.site.register(ExamenFisico,Dateexamen)
 admin.site.register(EvolucionDesarrollo)
 admin.site.register(Genealogia)

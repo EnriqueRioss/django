@@ -166,97 +166,102 @@
         {% endblock %}
     </div>   
 
-<SCript>
-     function setupAjaxForm(formId) {
-        const form = document.getElementById(formId);
-        if (!form) {
-            console.error(`Form with id "${formId}" not found.`);
-            return;
-        }
-
-        form.addEventListener('submit', function (event) {
-            event.preventDefault(); // Prevent traditional form submission
-
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.innerHTML = 'Enviando...';
-            submitButton.disabled = true;
-
-
-            // Clear previous errors
-            form.querySelectorAll('.field-errors').forEach(el => el.innerHTML = '');
-            const nonFieldErrorsDiv = form.querySelector('.non-field-errors');
-            if (nonFieldErrorsDiv) nonFieldErrorsDiv.innerHTML = '';
-
-
-            const formData = new FormData(form);
-            const url = form.action || window.location.href;
-
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+<script>
+        function setupAjaxForm(formId) {
+            const form = document.getElementById(formId);
+            if (!form) {
+                console.error(`Form with ID "${formId}" not found.`);
+                return;
+            }
+        
+            let clickedButton = null;
+        
+            // 1. Captura qué botón de envío fue clickeado
+            form.querySelectorAll('button[type="submit"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    clickedButton = this;
+                });
+            });
+        
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Detener el envío normal
+        
+                const formData = new FormData(form);
+        
+                // 2. Añade el nombre y valor del botón clickeado al FormData
+                if (clickedButton) {
+                    formData.append(clickedButton.name, clickedButton.value || '');
                 }
-            })
-            .then(response => {
-                if (!response.ok && response.status !== 400) { // 400 is expected for validation errors
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Success! Redirect to the next page.
-                    window.location.href = data.redirect_url;
-                } else {
-                    // Validation failed. Display errors.
-                    if (data.errors) {
-                        for (const fieldName in data.errors) {
-                            const errorList = data.errors[fieldName];
-                            if (fieldName === '__all__') {
-                                // Handle non-field errors
-                                if (nonFieldErrorsDiv) {
-                                    errorList.forEach(error => {
-                                        const errorElement = document.createElement('p');
-                                        errorElement.textContent = error;
-                                        nonFieldErrorsDiv.appendChild(errorElement);
-                                    });
-                                }
-                            } else {
-                                // Handle field-specific errors
-                                const field = document.getElementById(`id_${fieldName}`);
-                                const errorDiv = document.getElementById(`error_id_${fieldName}`); // Updated to match template
-                                if (errorDiv) {
-                                    errorList.forEach(error => {
-                                        const errorElement = document.createElement('span');
-                                        errorElement.textContent = error;
-                                        errorDiv.appendChild(errorElement);
-                                    });
-                                } else if (field) { // Fallback if no specific error div
-                                    console.warn(`No error div found for field: ${fieldName}. Errors:`, errorList);
+        
+                // Limpiar errores previos
+                form.querySelectorAll('.field-errors').forEach(el => el.innerHTML = '');
+                const nonFieldErrors = form.querySelector('.non-field-errors');
+                if (nonFieldErrors) nonFieldErrors.innerHTML = '';
+        
+        
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        // El CSRF token ya está en el FormData, no es necesario en headers
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.redirect_url) {
+                        // Redirección exitosa
+                        window.location.href = data.redirect_url;
+                    } else {
+                        // Manejar errores de validación
+                        if (data.errors) {
+                            // Errores globales del formulario
+                            if (data.errors.__all__) {
+                                data.errors.__all__.forEach(error => {
+                                    if(nonFieldErrors) nonFieldErrors.innerHTML += `<span>${error}</span>`;
+                                });
+                            }
+                            // Errores específicos de cada campo
+                            for (const fieldName in data.errors) {
+                                if (fieldName !== '__all__') {
+                                    const errorDiv = document.getElementById(`error_id_${fieldName}`);
+                                    const fieldErrorContainer = form.querySelector(`#error_id_${fieldName}`);
+        
+                                    if (fieldErrorContainer) {
+                                        let errorHtml = '';
+                                        data.errors[fieldName].forEach(error => {
+                                            errorHtml += `<span>${error.message || error}</span>`;
+                                        });
+                                        fieldErrorContainer.innerHTML = errorHtml;
+                                    }
                                 }
                             }
+                        } else {
+                             if(nonFieldErrors) nonFieldErrors.innerHTML = '<span>Ocurrió un error inesperado.</span>';
                         }
                     }
-                    submitButton.innerHTML = originalButtonText;
-                    submitButton.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('There was a problem with the fetch operation:', error);
-                if (nonFieldErrorsDiv) {
-                    nonFieldErrorsDiv.innerHTML = '<p>Ocurrió un error inesperado. Por favor, intente de nuevo.</p>';
-                } else {
-                    alert('Ocurrió un error inesperado. Por favor, intente de nuevo.');
-                }
-                submitButton.innerHTML = originalButtonText;
-                submitButton.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error en la petición AJAX:', error);
+                    if(nonFieldErrors) nonFieldErrors.innerHTML = '<span>Error de conexión. Intente de nuevo.</span>';
+                });
+        
+                // Resetear el botón clickeado para el próximo envío
+                clickedButton = null;
             });
-        });
-    }
-</SCript>
+        }
+      
+
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if 'POPUP:' in message.message %}
+                    alert("{{ message.message|slice:'7:'|escapejs }}");
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
 </body>
 
 </html>
