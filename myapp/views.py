@@ -812,6 +812,11 @@ def gestion_usuarios_view(request):
         'form_errors_exist': bool(user_creation_form_instance.errors)
     }
     return render(request, 'gestion_usuarios.html', context)
+
+
+@login_required
+def ver_historias(request):
+    return render(request, 'ver_historias.html')
     
 # --- El resto de las vistas no manejan formularios complejos y estaban correctas ---
 # (Las incluyo aquí sin cambios para que el archivo esté completo)
