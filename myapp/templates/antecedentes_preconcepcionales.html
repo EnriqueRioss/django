@@ -10,62 +10,71 @@
     <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
 </head>
 
-<body>
+<div class="contenedor-formulario">
 
-    <div class="form-container">
-        <h1>Antecedentes Familiares Preconcepcionales</h1>
-        <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
-        <p class="context-info">
-            Para: {{ context_object_name }}
-            {% if editing %} (Modo Edición){% endif %}
-        </p>
-        <br>
+    <form method="post" enctype="multipart/form-data" id="antecedentes-preconcepcionales-form">
+        {% csrf_token %}
 
-        <form method="post" enctype="multipart/form-data" id="antecedentes-preconcepcionales-form">
-            {% csrf_token %}
+        <div class="form-step active">
+            <div class="step-content-header">
+                <i class="fas fa-file-medical"></i>
+                <h2>Antecedentes Familiares Preconcepcionales</h2>
+            </div>
+
+            <p class="step-subtitle">Datos de antecedentes familiares</p>
+            <p class="historia-info">Nº de Historia Clínica: {{ historia.numero_historia }}</p>
+            <p class="context-info">
+                Para: {{ context_object_name }}
+                {% if editing %} (Modo Edición){% endif %}
+            </p>
+            <br>
+            
             <div class="alert alert-danger non-field-errors"></div>
 
-            <div class="form-group-medio">
-                <div class="half-width">
-                    <label for="{{ form.antecedentes_padre.id_for_label }}">Antecedentes del Padre</label>
-                    {{ form.antecedentes_padre }}
-                    <div class="field-errors" id="error_{{ form.antecedentes_padre.id_for_label }}"></div>
-                </div>
-                <div class="half-width">
-                    <label for="{{ form.antecedentes_madre.id_for_label }}">Antecedentes de la Madre</label>
-                    {{ form.antecedentes_madre }}
-                    <div class="field-errors" id="error_{{ form.antecedentes_madre.id_for_label }}"></div>
-                </div>
-            </div>
+            <div class="antecedentes-familiares-section">
 
-            <div class="form-group">
-                <label for="{{ form.estado_salud_padre.id_for_label }}">Estado de Salud del Padre</label>
-                {{ form.estado_salud_padre }}
-                <div class="field-errors" id="error_{{ form.estado_salud_padre.id_for_label }}"></div>
-            </div>
-            <div class="form-group">
-                <label for="{{ form.estado_salud_madre.id_for_label }}">Estado de Salud de la Madre</label>
-                {{ form.estado_salud_madre }}
-                <div class="field-errors" id="error_{{ form.estado_salud_madre.id_for_label }}"></div>
-            </div>
-
-            <div class="form-group-medio">
-                <div class="half-width">
-                    <label for="{{ form.fecha_union_pareja.id_for_label }}">Fecha de Unión de la Pareja</label>
-                    {{ form.fecha_union_pareja }}
-                    <div class="field-errors" id="error_{{ form.fecha_union_pareja.id_for_label }}"></div>
+                <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="{{ form.antecedentes_padre.id_for_label }}">Antecedentes del Padre</label>
+                        {{ form.antecedentes_padre }}
+                        <div class="field-errors" id="error_{{ form.antecedentes_padre.id_for_label }}"></div>
+                    </div>
+                    <div class="half-width">
+                        <label for="{{ form.antecedentes_madre.id_for_label }}">Antecedentes de la Madre</label>
+                        {{ form.antecedentes_madre }}
+                        <div class="field-errors" id="error_{{ form.antecedentes_madre.id_for_label }}"></div>
+                    </div>
                 </div>
-                <div class="half-width">
-                    <label for="{{ form.consanguinidad.id_for_label }}">Consanguinidad</label>
-                    {{ form.consanguinidad }}
-                    <div class="field-errors" id="error_{{ form.consanguinidad.id_for_label }}"></div>
-                </div>
-            </div>
 
-            <div class="form-group">
-                <label for="{{ form.grado_consanguinidad.id_for_label }}">Grado de Consanguinidad</label>
-                {{ form.grado_consanguinidad }}
-                <div class="field-errors" id="error_{{ form.grado_consanguinidad.id_for_label }}"></div>
+                <div class="form-group">
+                    <label for="{{ form.estado_salud_padre.id_for_label }}">Estado de Salud del Padre</label>
+                    {{ form.estado_salud_padre }}
+                    <div class="field-errors" id="error_{{ form.estado_salud_padre.id_for_label }}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.estado_salud_madre.id_for_label }}">Estado de Salud de la Madre</label>
+                    {{ form.estado_salud_madre }}
+                    <div class="field-errors" id="error_{{ form.estado_salud_madre.id_for_label }}"></div>
+                </div>
+
+                <div class="form-group-medio">
+                    <div class="half-width">
+                        <label for="{{ form.fecha_union_pareja.id_for_label }}">Fecha de Unión de la Pareja</label>
+                        {{ form.fecha_union_pareja }}
+                        <div class="field-errors" id="error_{{ form.fecha_union_pareja.id_for_label }}"></div>
+                    </div>
+                    <div class="half-width">
+                        <label for="{{ form.consanguinidad.id_for_label }}">Consanguinidad</label>
+                        {{ form.consanguinidad }}
+                        <div class="field-errors" id="error_{{ form.consanguinidad.id_for_label }}"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.grado_consanguinidad.id_for_label }}">Grado de Consanguinidad</label>
+                    {{ form.grado_consanguinidad }}
+                    <div class="field-errors" id="error_{{ form.grado_consanguinidad.id_for_label }}"></div>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -87,9 +96,10 @@
                         Examen Físico para {{ objeto.proposito_id_2.nombres }}
                     </button>
                 {% endif %}
-            </div>
-        </form>
-    </div>
+            </div>            
+        </div>
+    </form>  
+</div>
 
     <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
     <script>
@@ -97,6 +107,5 @@
         setupAjaxForm('antecedentes-preconcepcionales-form');
     });
     </script>
-</body>
 
 {% endblock form_content %}

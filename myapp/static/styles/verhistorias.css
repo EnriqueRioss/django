@@ -589,7 +589,7 @@ table {
   display: none;
   position: absolute;
   right: 0;
-  background-color: var(--white);
+  background-color: var(--white) !important;
   border: 1px solid var(--border-gray);
   box-shadow: 0 8px 16px rgba(0,0,0,0.1);
   min-width: 16rem; 
@@ -610,20 +610,12 @@ table {
 /* Dropdown PARA LAS PRIMERAS 2 FILAS (hacia abajo) */
 tr:nth-child(1) .dropdown-content,
 tr:nth-child(2) .dropdown-content {
-  background-color: var(--white);
-  border: 1px solid var(--border-gray);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  min-width: 16rem; 
   top: 100%; /* Abre hacia abajo */
   right: 0;
 }
 
 /* Dropdown PARA LAS DEMÁS FILAS (hacia arriba) */
 tr:nth-child(n+3) .dropdown-content {
-  background-color: var(--white);
-  border: 1px solid var(--border-gray);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  min-width: 16rem; 
   bottom: 100%; /* Abre hacia arriba */
   right: 0;
 }
