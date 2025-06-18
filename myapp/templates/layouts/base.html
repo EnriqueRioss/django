@@ -69,7 +69,7 @@
                     {% if user.is_authenticated and user.genetistas %}
                         {% if user.genetistas.rol == 'GEN' or user.genetistas.rol == 'ADM' %}
                         <li class="nav-item">
-                            <a href="{% url 'historia_crear' %}" class="nav-link">
+                            <a href="{% url 'ver_historias' %}" class="nav-link">
                                 <i class="fas fa-file-alt"></i>
                                 <span class="text">Historias Clínicas</span>
                             </a>

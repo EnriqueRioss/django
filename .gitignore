@@ -1,4 +1,7 @@
 env/
 venv/
+.venv/
+*.env/
 env-jose/
+.env-jose/
 __pycache__

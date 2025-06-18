@@ -1,0 +1,233 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <title>REPORTES | IIG - LUZ</title>
+    <link rel="stylesheet" href="{% static '/styles/verhistorias.css' %}">
+</head>
+
+<div class="main-content">
+    <main class="barra-content">
+        <header class="content-header">
+            <div class="breadcrumb">
+                <a href="{% url 'index' %}" class="breadcrumb-item">Inicio</a>
+                <span class="breadcrumb-separator">></span>
+                <span class="breadcrumb-item active">Historias Clínicas</span>
+            </div>
+        </header>
+
+        <!-- Contenido del reporte-->
+        <div class="historias-content">
+            <!-- Header -->
+            <div class="contenido-header">
+                <div class="header-content">
+                    <h1>Historias Clínicas Genéticas</h1>
+                    <p>Gestiona y consulta todas las historias clínicas del sistema</p>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'historia_crear' %}" class="btn-primary">
+                        <i class="fas fa-file-alt"></i>
+                        Nueva Historia
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
+                    <p>Utiliza los filtros para encontrar información específica</p>
+                </div>
+                <div class="card-content">
+                    <form method="GET" action="" id="report-search-form">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="buscar_historia">Buscar Historia</label>
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" name="buscar_historia" id="buscar_historia">
+                                </div>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="estados">Estado</label>
+                                <div class="estado_historia">
+                                    <select name="estado_historia" id="estado_historia">
+                                        <option value="">Seleccionar estado</option>
+                                        <option value="todos">Todos los estados</option>
+                                        <option value="borrador">Borrador</option>
+                                        <option value="finalizada">finalizada</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="genetista">Genetista</label>
+                                <select name="genetista" id="genetista">
+                                        <option value="">Seleccionar genetista</option>
+                                        <option value="todos">Todos los genetistas</option>
+                                        <option value="Alexandra">Dra. Alexandra</option>
+                                        <option value="Oscar">Dr. Oscar</option>
+                                        <option value="Carolina">Dra. Carolina</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="motivo_consulta">Motivo de Consulta</label>
+                                <select name="motivo_consulta" id="motivo_consulta">
+                                        <option value="">Seleccionar motivo</option>
+                                        <option value="todos">Todos los motivoss</option>
+                                        <option value="Alexandra">Proposito-diagnostico</option>
+                                        <option value="Oscar">Pareja-Prenatal</option>
+                                        <option value="Carolina">Pareja-Preconcepcional</option>
+                                        <option value="Carolina">Pareja-Asesoramiento Prenupcial</option>
+                                    </select>
+                            </div>
+    
+                            <div class="filter-actions">
+                                <button type="submit" class="btn-buscar">
+                                    <i class="fas fa-search"></i>
+                                    Buscar
+                                </button>
+                                <a href="#" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Resultados de Búsqueda</h2>
+                        <p>Registro(s) encontrado(s).</p>
+                </div>
+                <div class="card-content">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>N° Historia</th>
+                                    <th>Paciente</th>
+                                    <th>Motivo</th>
+                                    <th>Estado</th>
+                                    <th>Genetista</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>HC-7412589</td>
+                                    <td>Carla Ramirez</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge default">finalizada</span></td>
+                                    <td>Dra. Alexandra</td>
+                                    <td>20/10/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
+                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
+                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458963</td>
+                                    <td>Maria Oliveros</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge default">finalizada</span></td>
+                                    <td>Dra. Alexandra</td>
+                                    <td>17/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
+                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
+                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                   <tr>
+                                    <td>HC-7458963</td>
+                                    <td>Andrés Corzo</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>17/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
+                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
+                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+
+<script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
+
+<script>
+    // Para el comportamiento del dropdown, que se despliegue al hacer click al boton de acciones y no solo hacer hover
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleccionar todos los dropdowns
+    const dropdowns = document.querySelectorAll('.dropdown');
+    
+    // Añadir evento click a cada botón de dropdown
+    dropdowns.forEach(dropdown => {
+        const btn = dropdown.querySelector('.btn-icon');
+        const content = dropdown.querySelector('.dropdown-content');
+        
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Cerrar otros dropdowns abiertos
+            document.querySelectorAll('.dropdown-content').forEach(item => {
+                if (item !== content) {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Alternar el dropdown actual
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+        });
+    });
+
+
+
+    // Cerrar dropdowns al hacer clic fuera de ellos
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-content').forEach(content => {
+            content.style.display = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}
