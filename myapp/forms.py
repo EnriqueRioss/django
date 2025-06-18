@@ -723,8 +723,12 @@ class PlanEstudioForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Descripción de la acción'
             }),
+            'fecha_visita': forms.DateInput(attrs={
+                'type': 'date', # Esto creará un input de fecha nativo del navegador
+                'class': 'form-control'
+            }),
             'completado': forms.HiddenInput(),
-            'fecha_visita': forms.HiddenInput(),
+            
             'asesoramiento_evoluciones': forms.HiddenInput(),
             'evaluacion': forms.HiddenInput(),
         }
@@ -735,7 +739,11 @@ DiagnosticoFormSet = inlineformset_factory(
     DiagnosticoPresuntivo,
     form=DiagnosticoPresuntivoForm,
     extra=1,
-    can_delete=True
+    can_delete=True,
+    # === LÍNEAS A AÑADIR ===
+    min_num=0, # Permite explícitamente que se envíen CERO formularios.
+    validate_min=False # No lances un error de validación si se envían cero.
+    # ========================
 )
 
 PlanEstudioFormSet = inlineformset_factory(
@@ -743,7 +751,12 @@ PlanEstudioFormSet = inlineformset_factory(
     PlanEstudio,
     form=PlanEstudioForm,
     extra=1,
-    can_delete=True
+    can_delete=True,
+    
+    # === LÍNEAS A AÑADIR ===
+    min_num=0, # Permite explícitamente que se envíen CERO formularios.
+    validate_min=False # No lances un error de validación si se envían cero.
+    # ========================
 )
 class ReportSearchForm(forms.Form):
     buscar_paciente = forms.CharField(
@@ -837,6 +850,8 @@ class ReportSearchForm(forms.Form):
     
 
 class AdminUserCreationForm(forms.ModelForm):
+    # === CAMBIO 1: Añadir el campo username explícitamente ===
+    username = forms.CharField(max_length=150, required=True, label="Nombre de usuario", widget=forms.TextInput(attrs={'placeholder': 'Ej: j.perez'}))
     first_name = forms.CharField(max_length=30, required=True, label="Nombre", widget=forms.TextInput(attrs={'placeholder': 'Nombre del usuario'}))
     last_name = forms.CharField(max_length=150, required=True, label="Apellido", widget=forms.TextInput(attrs={'placeholder': 'Apellido del usuario'}))
     email = forms.EmailField(required=True, label="Email", widget=forms.EmailInput(attrs={'placeholder': 'correo@ejemplo.com'}))
@@ -856,21 +871,25 @@ class AdminUserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email'] 
+        # === CAMBIO 2: Añadir 'username' a los fields ===
+        fields = ['username', 'first_name', 'last_name', 'email'] 
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.fields['associated_genetista'].widget.attrs['style'] = 'display:none;' # MODIFICACIÓN: Eliminado para que el JS controle la visibilidad del DIV padre.
         self.fields['associated_genetista'].label_suffix = "" 
-        # Set a user-friendly display for the genetista choices
         self.fields['associated_genetista'].label_from_instance = lambda obj: obj.user.get_full_name() or obj.user.username
+    
+    # === CAMBIO 3: Añadir validación para el nuevo campo username ===
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Un usuario con este nombre de usuario ya existe.")
+        return username
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("Un usuario con este email ya existe.")
-        if User.objects.filter(username=email).exists():
-            raise forms.ValidationError("Un usuario con este nombre de usuario (derivado del email) ya existe.")
         return email
 
     def clean_password_confirm(self):
@@ -889,16 +908,14 @@ class AdminUserCreationForm(forms.ModelForm):
             self.add_error('associated_genetista', "Debe seleccionar un genetista asociado para el rol Lector.")
         
         if rol and rol != 'LEC' and associated_genetista:
-            # Silently clear if not Lector, will be handled in save() too.
-            # Or you could raise an error:
-            # self.add_error('associated_genetista', "El genetista asociado solo es aplicable al rol Lector.")
             pass
             
         return cleaned_data
 
     def save(self, commit=True):
+        # === CAMBIO 4: Usar el nuevo campo 'username' al crear el usuario ===
         user = User(
-            username=self.cleaned_data['email'], 
+            username=self.cleaned_data['username'], 
             email=self.cleaned_data['email'],
             first_name=self.cleaned_data['first_name'],
             last_name=self.cleaned_data['last_name'],

@@ -620,7 +620,6 @@ def crear_examen_fisico(request, proposito_id):
 @login_required
 @genetista_or_admin_required
 @never_cache
-
 @transaction.atomic # Envuelve toda la vista en una transacción para garantizar la integridad de los datos
 def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
     # 1. Determinar el objeto padre (Proposito o Pareja)
@@ -917,6 +916,7 @@ def signout(request):
 
 @login_required
 @all_roles_required
+@never_cache
 def reports_view(request):
     form = ReportSearchForm(request.GET or None, user=request.user)
     results = []

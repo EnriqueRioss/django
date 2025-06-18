@@ -297,7 +297,7 @@
                         {{ form.plan_id }}
                         {{ form.evaluacion }}
                         {{ form.completado }}
-                        {{ form.fecha_visita }}
+                     
                         {{ form.asesoramiento_evoluciones }}
                         {# ======================================================= #}
 
@@ -305,6 +305,11 @@
                             {{ form.accion.label_tag }}
                             {{ form.accion }}
                             <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-accion">{{ form.accion.errors }}</div>
+                        </div>
+                        <div class="field-wrapper">
+                            {{ form.fecha_visita.label_tag }}
+                            {{ form.fecha_visita }}
+                            <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-fecha_visita">{{ form.fecha_visita.errors }}</div>
                         </div>
 
                         <div style="display: none;">{{ form.DELETE }}</div>
@@ -354,13 +359,17 @@
         {{ plan_formset.empty_form.plan_id }}
         {{ plan_formset.empty_form.evaluacion }}
         {{ plan_formset.empty_form.completado }}
-        {{ plan_formset.empty_form.fecha_visita }}
+
         {{ plan_formset.empty_form.asesoramiento_evoluciones }}
         <div class="field-wrapper">
             {{ plan_formset.empty_form.accion.label_tag }}
             {{ plan_formset.empty_form.accion }}
             <div class="error-list" id="errors-plan-__prefix__-accion"></div>
         </div>
+        <div class="field-wrapper">
+            {{ plan_formset.empty_form.fecha_visita.label_tag }}
+            {{ plan_formset.empty_form.fecha_visita }}
+            <div class="error-list" id="errors-plan-__prefix__-fecha_visita">
         <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
             <i class="fas fa-trash"></i>
         </button>
