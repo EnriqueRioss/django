@@ -17,7 +17,7 @@
             </div>
         </header>
 
-        <!-- Contenido del reporte-->
+        <!-- Contenido de la historia-->
         <div class="historias-content">
             <!-- Header -->
             <div class="contenido-header">
@@ -33,7 +33,165 @@
                 </div>
             </div>
 
-            <!-- Filtros -->
+            <!--<div class="tabs-content">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>Lista de Usuarios</h2>
+                        <p>Gestiona todos los usuarios del sistema</p>
+                        <form action="">
+                            <div class="table-filters">
+                                <div class="search-input">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" placeholder="Buscar por nombre, numero de historia..." name="buscar-historia" id="buscar-historia-input">
+                                </div>
+                                <select name="estado_historia" id="estado_historia">
+                                    <option value="">Filtrar por estado</option>
+                                    <option value="todos">Todos</option>
+                                    <option value="finalizada">Finalizada</option>
+                                    <option value="borrador">Borrador</option>
+                                </select>
+                                <select name="motivo_historia" id="motivo_historia">
+                                    <option value="">Filtrar por motivo</option>
+                                    <option value="todos">Todos</option>
+                                    <option value="Proposito-diagnostico">Proposito-diagnostico</option>
+                                    <option value="Pareja-Asesoramiento">Pareja-Asesoramiento Prenupcial</option>
+                                    <option value="Pareja-Preconcepcional">Pareja-Preconcepcional</option>
+                                    <option value="Pareja-Prenatal">Pareja-Prenatal</option>
+                                </select>
+                                <select name="genetista" id="genetista">
+                                    <option value="">Filtrar por genetista</option>
+                                    <option value="todos">Todos</option>
+                                    <option value="Alexandra">Dra. Alexandra</option>
+                                    <option value="Carolina">Dra. Carolina</option>
+                                    <option value="Oscar">Dr. Oscar</option>
+                                </select>
+                                <button type="submit" class="btn-buscar"><i class="fas fa-search"></i>Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>N° Historia</th>
+                                        <th>Paciente</th>
+                                        <th>Motivo</th>
+                                        <th>Estado</th>
+                                        <th>Genetista</th>
+                                        <th>Fecha</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                    <td>HC-7412589</td>
+                                    <td>Carla Ramirez</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge default">finalizada</span></td>
+                                    <td>Dra. Alexandra</td>
+                                    <td>20/10/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458963</td>
+                                    <td>Maria Oliveros</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge default">finalizada</span></td>
+                                    <td>Dra. Alexandra</td>
+                                    <td>17/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458963</td>
+                                    <td>Andrés Corzo</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>17/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458969</td>
+                                    <td>XXXXXXXX XXXXX</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>30/08/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458964</td>
+                                    <td>XXXXXXX XXXXXX</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>20/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
+
+            
             <div class="content-card">
                 <div class="card-header">
                     <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
@@ -100,7 +258,7 @@
             <div class="content-card">
                 <div class="card-header">
                     <h2>Resultados de Búsqueda</h2>
-                        <p>Registro(s) encontrado(s).</p>
+                    <p>Registro(s) encontrado(s).</p>
                 </div>
                 <div class="card-content">
                     <div class="table-container">
@@ -130,9 +288,9 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
-                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
-                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
                                             </div>
                                         </div>
                                     </td>
@@ -150,14 +308,14 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
-                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
-                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
                                             </div>
                                         </div>
                                     </td>
                                 </tr>
-                                   <tr>
+                                <tr>
                                     <td>HC-7458963</td>
                                     <td>Andrés Corzo</td>
                                     <td>Proposito-diagnostico</td>
@@ -170,9 +328,49 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="#"><i class="fas fa-eye"></i> Ver Detalles</a>
-                                                <a href="#"><i class="fas fa-edit"></i> Editar </a>
-                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a> <!--ESTO NO CREO QUE VAYA, ES PARA OCUPAR ESPACIOOOOO-->
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458969</td>
+                                    <td>XXXXXXXX XXXXX</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>30/08/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>HC-7458964</td>
+                                    <td>XXXXXXX XXXXXX</td>
+                                    <td>Proposito-diagnostico</td>
+                                    <td><span class="badge secondary">Borrador</span></td>
+                                    <td>Dra. Carolina</td>
+                                    <td>20/03/2024</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn-icon">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="dropdown-content">
+                                                <button class="edit-historia" id="edit-historia"><i class="fas fa-edit"></i> Editar</button>
+                                                <button class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</button>
+                                                 <button class="danger"><i class="fas fa-download"></i> Descargar PDF</button> 
                                             </div>
                                         </div>
                                     </td>
@@ -182,7 +380,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 </div>
