@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from decouple import config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6(#$^awf6j4+^x1b6gnvmhu&vf%$tft8(r0jrk$6nw0%h_qy)0'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -106,11 +106,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
 EMAIL_PORT = 587                 # Puerto para TLS
 EMAIL_USE_TLS = True             # Usar Transport Layer Security (es más seguro)
-EMAIL_HOST_USER = 'jerv120p@gmail.com' # <<< CAMBIA ESTO por tu dirección de Gmail
-EMAIL_HOST_PASSWORD = 'wcys atvk mdxo tiac' # <<< CAMBIA ESTO por tu contraseña de aplicación de 16 letras
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 # Opcional pero recomendado: Dirección de correo por defecto para envíos
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 
 AUTH_PASSWORD_VALIDATORS = [
