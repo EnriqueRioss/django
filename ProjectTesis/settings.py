@@ -1,8 +1,4 @@
-import os
-from dotenv import load_dotenv
 
-
-load_dotenv()
 """
 Django settings for ProjectTesis project.
 
@@ -16,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -101,6 +99,19 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
+
+# --- CONFIGURACIÓN DE CORREO ELECTRÓNICO ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
+EMAIL_PORT = 587                 # Puerto para TLS
+EMAIL_USE_TLS = True             # Usar Transport Layer Security (es más seguro)
+EMAIL_HOST_USER = 'jerv120p@gmail.com' # <<< CAMBIA ESTO por tu dirección de Gmail
+EMAIL_HOST_PASSWORD = 'wcys atvk mdxo tiac' # <<< CAMBIA ESTO por tu contraseña de aplicación de 16 letras
+
+# Opcional pero recomendado: Dirección de correo por defecto para envíos
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

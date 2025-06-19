@@ -17,6 +17,10 @@ import csv
 from datetime import datetime
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
+from django.conf import settings
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -26,6 +30,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 # CAMBIO IMPORTANTE: Importamos 'modelformset_factory' directamente aquí
 
 from django import forms
@@ -42,7 +48,7 @@ from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
     ExamenFisicoForm, ParejaPropositosForm, EvaluacionGeneticaForm,
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet
+    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm
 )
 
 from django.views.decorators.cache import patch_cache_control
@@ -750,6 +756,7 @@ def ver_proposito(request, proposito_id):
     
 
 
+
 @login_required
 @admin_required
 @never_cache
@@ -1151,6 +1158,61 @@ def _get_pacientes_queryset_for_role(user):
         else:
             return Propositos.objects.none()
     return Propositos.objects.none()
+
+
+
+@require_POST
+@login_required
+@admin_required
+def reset_password_admin(request, user_id):
+    user_to_reset = get_object_or_404(User, pk=user_id)
+    form = PasswordResetAdminForm(request.POST)
+
+    if form.is_valid():
+        new_password = form.cleaned_data['new_password']
+        
+        # 1. Guardar la nueva contraseña en la base de datos
+        user_to_reset.set_password(new_password)
+        user_to_reset.save()
+
+        # 2. Intentar enviar el correo de notificación
+        if user_to_reset.email:
+            try:
+                # Preparamos el contexto para las plantillas de correo
+                context = {
+                    'user': user_to_reset,
+                    'new_password': new_password
+                }
+                
+                # Renderizamos tanto la plantilla HTML como la de texto plano
+                html_message = render_to_string('emails/password_reset_notification.html', context)
+                plain_message = render_to_string('emails/password_reset_notification.txt', context)
+
+                send_mail(
+                    subject='Tu contraseña ha sido restablecida - IIG LUZ',
+                    message=plain_message,  # Mensaje de texto plano como fallback
+                    from_email=settings.EMAIL_HOST_USER, # Usamos el correo configurado en settings
+                    recipient_list=[user_to_reset.email],
+                    html_message=html_message, # Adjuntamos la versión HTML
+                    fail_silently=False, # Si falla, lanzará una excepción
+                )
+                messages.success(request, f"Contraseña para '{user_to_reset.username}' restablecida y notificación enviada a {user_to_reset.email}.")
+
+            except Exception as e:
+                # Si el envío falla, la contraseña ya fue cambiada, pero informamos al admin del error.
+                messages.warning(request, f"La contraseña para '{user_to_reset.username}' fue restablecida, pero falló el envío del correo de notificación. Revisa la configuración del servidor. Error: {e}")
+        
+        else:
+            # Si el usuario no tiene email, solo informamos que no se pudo notificar.
+            messages.info(request, f"La contraseña para '{user_to_reset.username}' fue restablecida. No se envió notificación porque el usuario no tiene un correo registrado.")
+
+    else:
+        # Si el formulario no es válido (ej. contraseñas no coinciden), mostramos un error más específico.
+        error_message = form.errors.get('__all__') or ["Error desconocido en el formulario."]
+        messages.error(request, f"Error al restablecer la contraseña: {error_message[0]}")
+
+    return redirect('gestion_usuarios')
+
 
 @login_required
 @all_roles_required

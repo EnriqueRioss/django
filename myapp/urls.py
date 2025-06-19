@@ -47,7 +47,7 @@ urlpatterns = [
     path('gestion/usuarios/', views.gestion_usuarios_view, name='gestion_usuarios'),
     path('gestion/usuarios/toggle-status/<int:user_id>/', views.toggle_user_active_status, name='toggle_user_active'),
     path('gestion/usuarios/delete/<int:user_id>/', views.delete_user_admin, name='delete_user_admin'),
-
+path('gestion/usuarios/reset-password/<int:user_id>/', views.reset_password_admin, name='reset_password_admin'),
  
 
 

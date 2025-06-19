@@ -161,7 +161,7 @@
                                             </button>
                                             <div class="dropdown-content">
                                                 <button class="edit-user" id="edit-user"><i class="fas fa-edit"></i> Editar</button>
-                                                <button class="modificar-pass" id="modificar-pass"><i class="fas fa-key"></i> Reestablecer Contraseña</button>
+                                                <button class="modificar-pass" data-user-id="{{ user_obj.id }}" data-user-name="{{ user_obj.username }}"><i class="fas fa-key"></i> Reestablecer Contraseña</button>
                                                 
                                                 <form method="POST" action="{% url 'toggle_user_active' user_obj.id %}" class="dropdown-form-action">
                                                     {% csrf_token %}
@@ -341,21 +341,23 @@
 <div class="modal" id="modificarPassModal">
     <div class="modal-content" style="max-width: 50rem;">
         <div class="modal-header">
-            <h2><i class="fas fa-key"></i>Reestablecer Contraseña</h2>
+            <h2><i class="fas fa-key"></i> Reestablecer Contraseña</h2>
             <button type="button" class="modal-close" id="closeModificarPassModalBtn">×</button>
         </div>
-        <form method="POST" action="" id="modificarPassForm">
+        <!-- La acción se establecerá dinámicamente con JavaScript -->
+        <form method="POST" action="" id="modificarPassForm"> 
+            {% csrf_token %}
             <div class="modal-body">
-                <p>Reestablece la contraseña del usuario para (nombre del usuario).</p>
+                <p id="reset-pass-text">Estás a punto de restablecer la contraseña para un usuario.</p>
                 
                 <div class="form-group">
-                    <label for="new-pass">Nueva Contraseña</label>
-                    <input type="password" name="new-password" id="new-password">
-                    <p>Minimo 8 caracteres, debe incluir mayúsculas, minúsculas y números</p>
+                    <label for="id_new_password">Nueva Contraseña</label>
+                    <input type="password" name="new_password" id="id_new_password" class="form-input" required minlength="8">
+                    <p class="help-text">Mínimo 8 caracteres. Se recomienda usar mayúsculas, minúsculas y números.</p>
                 </div>
                 <div class="form-group">
-                    <label for="confirm-pass">Confirmar Contraseña</label>
-                    <input type="password" name="confirm-pass" id="confirm-pass">
+                    <label for="id_confirm_password">Confirmar Contraseña</label>
+                    <input type="password" name="confirm_password" id="id_confirm_password" class="form-input" required>
                 </div>
                 <div class="aviso-card">
                     <div class="aviso-header">
@@ -363,15 +365,13 @@
                         <h3>Importante</h3>
                     </div>
                     <div class="aviso-content">
-                        <p>Esta acción reestablecerá inmediatamente la contraseña del usuario y cerrará 
-                            sus sesiones activas.
-                        </p>
+                        <p>Esta acción cambiará la contraseña del usuario inmediatamente. Se intentará enviar una notificación por correo electrónico con la nueva contraseña.</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="cancelModificarPassModalBtn">Cancelar</button>
-                <button type="submit" name="modificar_pass_submit" class="btn-primary">Reestablecer Contraseña</button>
+                <button type="submit" name="modificar_pass_submit" class="btn-primary">Confirmar y Restablecer</button>
             </div>
         </form>
     </div>
@@ -519,6 +519,47 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+const modifyPassModal = document.getElementById('modificarPassModal');
+    const modifyPassForm = document.getElementById('modificarPassForm');
+    const resetPassText = document.getElementById('reset-pass-text');
+    document.querySelectorAll('.modificar-pass').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.dataset.userId;
+            const userName = this.dataset.userName;
+            
+            // Construir la URL para el action del formulario
+            const actionUrl = `/gestion/usuarios/reset-password/${userId}/`;
+            
+            // Actualizar el formulario y el texto del modal
+            modifyPassForm.action = actionUrl;
+            resetPassText.innerHTML = `Estás a punto de restablecer la contraseña para el usuario: <strong>${userName}</strong>`;
+            
+            // Limpiar campos de contraseña anteriores
+            modifyPassForm.reset();
+            
+            // Abrir el modal
+            if (modifyPassModal) modifyPassModal.classList.add('active');
+        });
+    });
+
+    // Cerrar el modal de contraseña
+    const closeModifyPassModalBtn = document.getElementById('closeModificarPassModalBtn');
+    const cancelModifyPassModalBtn = document.getElementById('cancelModificarPassModalBtn');
+
+    function closeModifyPassModal() {
+        if (modifyPassModal) modifyPassModal.classList.remove('active');
+    }
+
+    if (closeModifyPassModalBtn) closeModifyPassModalBtn.addEventListener('click', closeModifyPassModal);
+    if (cancelModifyPassModalBtn) cancelModifyPassModalBtn.addEventListener('click', closeModifyPassModal);
+    if (modifyPassModal) {
+        modifyPassModal.addEventListener('click', function(event) {
+            if (event.target === modifyPassModal) {
+                closeModifyPassModal();
+            }
+        });
+    }
 
 
 

@@ -934,3 +934,21 @@ class AdminUserCreationForm(forms.ModelForm):
                 gen_profile.associated_genetista = None 
             gen_profile.save()
         return user
+    
+class PasswordResetAdminForm(forms.Form):
+    new_password = forms.CharField(
+        label="Nueva Contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'form-input', 'required': True, 'minlength': '8'}),
+        help_text="Mínimo 8 caracteres."
+    )
+    confirm_password = forms.CharField(
+        label="Confirmar Nueva Contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'form-input', 'required': True})
+    )
+
+    def clean_confirm_password(self):
+        password = self.cleaned_data.get('new_password')
+        password_confirm = self.cleaned_data.get('confirm_password')
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Las contraseñas no coinciden.")
+        return password_confirm
