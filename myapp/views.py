@@ -823,6 +823,10 @@ def gestion_usuarios_view(request):
 @login_required
 def ver_historias(request):
     return render(request, 'ver_historias.html')
+
+@login_required
+def autorizaciones_view(request):
+    return render(request, 'autorizaciones.html')
     
 # --- El resto de las vistas no manejan formularios complejos y estaban correctas ---
 # (Las incluyo aquí sin cambios para que el archivo esté completo)

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 /*--------------- GENERAL -------------------------- */
@@ -15,6 +14,19 @@
     --info-background: #e1ebf6;
     --info-border: #abcef6;
     --info-text: #1b5ec9;
+
+
+    --white: #ffffff;
+    --text-color: #212529;          /* For dropdown text */
+    --light-gray: #f8f9fa;          /* For dropdown hover */
+    --medium-gray: #86888b;         /* For generic modal borders, form inputs */
+    --dark-gray: #343a40;           /* For generic modal close button text */
+    --danger-color: #dc3545;        /* For errors, destructive actions */
+    --success-color: #28a745;       /* For success badges */
+    --update-color: #17775f;
+    --warning-color: #ffc107;
+    --info-color:#125c86;
+
 }
 
 html {
@@ -378,6 +390,33 @@ form{
     line-height: 1.5;
 }
 
+/*----------------------*/
+
+
+/*-------- MENSAJE DE EDICIÓN / INFORMACIÓN DE LA HISTORIA ---------*/
+.historia-info{
+    color: var(--info-color);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.editing-info{
+    color: var(--medium-gray);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    font-weight: 400;
+}
+
+.context-info{
+    color: var(--medium-gray);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    font-weight: 400;
+}
 
 .form-group-medio {
     display: flex;
@@ -595,7 +634,7 @@ form{
 
 /* Efecto hover común para todos los botones */
 .form-actions button:hover {
-    transform: translateY(-3px); /* Efecto de "levantamiento" */
+   /* transform: translateY(-3px);  Efecto de "levantamiento" */
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 

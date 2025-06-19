@@ -4,4 +4,8 @@ venv/
 *.env/
 env-jose/
 .env-jose/
-__pycache__
+__pycache__/
+
+*.pyc
+*.pyo
+*.pyd

@@ -83,7 +83,7 @@ li{
 }
 
 
-/* ----------------- REPORTES ---------------- */
+/* ----------------- Historias ---------------- */
 .historias-content {
   padding-top: 2.5rem;
   display: flex;
@@ -159,7 +159,7 @@ button i {
 }
 
 
-/* Filters Card */
+ ----- Filters Card ----------
 .content-card {
   background-color: var(--background-color);
   border-radius: 0.5rem;
@@ -289,12 +289,14 @@ a i{
 
 .table-container {
   overflow-x: auto;
+  position: relative;
+  margin-bottom: 2rem;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .table th {
@@ -310,10 +312,10 @@ a i{
 
 .table td {
   padding: 1rem 1rem;
-  border-bottom: 1px solid var(--border);
   white-space: nowrap;
   font-size: 1.4rem;
   border-bottom: 1px solid var(--border-gray);
+  vertical-align: middle;
 }
 
 .table tr:last-child td {
@@ -357,13 +359,214 @@ a i{
 }
 
 
+
+/*
+---------- PARA EL CONTENEDOR DE LOS FILTROS Y TABLA----------
+----------- Tabs ------------
+.tabs-content{
+    color: var(--primary-darkerblue);
+    display: none;
+    padding: 0.5rem; 
+    animation: fadeIn 0.5s ease;
+    border: 1px solid var(--border-gray);
+    border-radius: 0.5rem;
+}
+
+.tabs-content.active{
+    display: block;
+}
+
+@keyframes fadeIn{
+    from { opacity: 0; transform: translateY(10px) ;}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+
+-------- Content Cards --------
+.content-card{
+    background-color: var(--background-color); 
+    border-radius: 0.5rem;
+    overflow: hidden; 
+}
+
+.card-header{
+    padding: 2rem;
+}
+
+.card-header h2{
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-darkerblue);
+}
+
+.card-header p{
+    font-size: 1.3rem;
+    color: var(--primary-darkerblue);
+    margin: 0;
+}
+
+
+
+-------- Table Filters --------
+.table-filters{
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.search-input{
+    position: relative;
+    flex-grow: 1;
+}
+
+.search-input i{
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--complement-blue);
+    font-size: 1.4rem;
+}
+
+.search-input input{
+    width: 100%;
+    padding: 1rem 1.5rem 1rem 3.5rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 0.5rem;
+    background-color: var(--background-color);
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+}
+
+.search-input input::placeholder {
+    color: var(--border-gray);
+}
+
+.table-filters select{
+    width: 20%;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 0.5rem;
+    background-color: var(--background-color);
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    cursor: pointer;
+}
+
+.btn-buscar{
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background-color: var(--complement-blue);
+  border: 1px solid var(--complement-blue);
+  border-radius: 0.5rem;
+  color: var(--lighter-blue);
+  font-size: 1.2rem;
+  font-family: "Poppins", serif;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+
+--------Tabla---------
+
+.table-container {
+  position: relative;
+  overflow: visible;
+  margin-bottom: 2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th{
+    text-align: left;
+    padding: 1rem 1rem;
+    color: var(--primary-darkerblue);
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 1.4rem;
+    border-bottom: 1px solid var(--border-gray);
+}
+
+.table td{
+    padding: 1rem 1rem;
+    border-bottom: 1px solid var(--border-gray);
+    white-space: nowrap;
+    font-size: 1.4rem;
+    color: var(--primary-darkerblue);
+    vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+
+---------- Badges --------------
+.badge {
+  display: inline-block;
+  padding: 0.4em 0.8em; 
+  border-radius: 1.2rem; 
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1; 
+  text-align: center;
+}
+
+.badge.default {
+  background-color: var(--primary-darkerblue);
+  color: var(--white);
+}
+
+.badge.secondary {
+  background-color: var(--secondary-light);
+  color: var(--white);
+}
+
+.badge.success {
+  background-color: var(--success-color);
+  color: var(--white);
+}
+
+.badge.warning {
+  background-color: var(--warning-color);
+  color: var(--text-color); 
+}
+
+.badge.destructive {
+  background-color: var(--danger-color);
+  color: var(--white);
+}
+
+.badge.outline {
+  background-color: transparent;
+  border: 1px solid var(--medium-gray);
+  color: var(--text-color);
+}
+
+.badge-group {
+  display: flex;
+  gap: 0.5rem; 
+  flex-wrap: wrap;
+}
+
+
+
+-----------------------------------
+*/
+
+
 /* ------------ Dropdown ------------- */
 .dropdown {
   position: relative;
   display: inline-block;
 }
 
-/* Opcional: para evitar que el hover afecte el comportamiento */
+/* Para evitar que el hover afecte el comportamiento */
 .dropdown:hover .dropdown-content {
     display: none; /* Anula el hover */
 }
@@ -386,7 +589,7 @@ a i{
   display: none;
   position: absolute;
   right: 0;
-  background-color: var(--white);
+  background-color: var(--white) !important;
   border: 1px solid var(--border-gray);
   box-shadow: 0 8px 16px rgba(0,0,0,0.1);
   min-width: 16rem; 
@@ -403,9 +606,24 @@ a i{
   margin-bottom: 0;
 }
 
+
+/* Dropdown PARA LAS PRIMERAS 2 FILAS (hacia abajo) */
+tr:nth-child(1) .dropdown-content,
+tr:nth-child(2) .dropdown-content {
+  top: 100%; /* Abre hacia abajo */
+  right: 0;
+}
+
+/* Dropdown PARA LAS DEMÁS FILAS (hacia arriba) */
+tr:nth-child(n+3) .dropdown-content {
+  bottom: 100%; /* Abre hacia arriba */
+  right: 0;
+}
+
+
 .dropdown-content button {
-    border: none;
-    background: none;
+  border: none;
+  background: none;
   color: var(--primary-darkerblue);
   padding: 1.2rem 1.6rem;
   text-decoration: none;
