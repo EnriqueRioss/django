@@ -952,3 +952,96 @@ class PasswordResetAdminForm(forms.Form):
         if password and password_confirm and password != password_confirm:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return password_confirm
+    
+class AdminUserEditForm(forms.ModelForm):
+    # Campos del modelo User
+    username = forms.CharField(max_length=150, required=True, label="Nombre de usuario")
+    first_name = forms.CharField(max_length=30, required=True, label="Nombre")
+    last_name = forms.CharField(max_length=150, required=True, label="Apellido")
+    email = forms.EmailField(required=True, label="Email")
+
+    # Campos del modelo Genetistas (se manejan por separado)
+    ROLE_CHOICES_WITH_EMPTY = [('', 'Seleccionar rol')] + list(Genetistas.ROL_CHOICES)
+    rol = forms.ChoiceField(choices=ROLE_CHOICES_WITH_EMPTY, required=True, label="Rol")
+    
+    associated_genetista = forms.ModelChoiceField(
+        queryset=Genetistas.objects.filter(rol='GEN').select_related('user'), 
+        required=False, 
+        label="Genetista Asociado",
+        help_text="Requerido si el rol es Lector.",
+        empty_label="Seleccionar genetista asociado"
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacemos que la lista de genetistas asociados sea más legible
+        self.fields['associated_genetista'].label_from_instance = lambda obj: obj.user.get_full_name() or obj.user.username
+
+        # ===== CAMBIO CRUCIAL: Añadimos los atributos aquí =====
+        self.fields['rol'].widget.attrs.update({
+            'class': 'form-input',
+            'id': 'edit_rol'
+        })
+        self.fields['associated_genetista'].widget.attrs.update({
+            'class': 'form-input',
+            'id': 'edit_associated_genetista'
+        })
+        # =======================================================
+
+        # Si el formulario se instancia con un usuario (para edición),
+        # poblamos los campos 'rol' y 'associated_genetista' desde su perfil.
+        if self.instance and self.instance.pk:
+            try:
+                genetista_profile = self.instance.genetistas
+                self.fields['rol'].initial = genetista_profile.rol
+                self.fields['associated_genetista'].initial = genetista_profile.associated_genetista
+            except Genetistas.DoesNotExist:
+                # Si por alguna razón el usuario no tiene perfil, lo dejamos en blanco
+                pass
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        # Comprobamos si otro usuario (excluyendo el actual) ya tiene este nombre de usuario
+        if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Un usuario con este nombre de usuario ya existe.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # Comprobamos si otro usuario (excluyendo el actual) ya tiene este email
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Un usuario con este email ya existe.")
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rol = cleaned_data.get('rol')
+        associated_genetista = cleaned_data.get('associated_genetista')
+
+        # La misma validación que en el formulario de creación
+        if rol == 'LEC' and not associated_genetista:
+            self.add_error('associated_genetista', "Debe seleccionar un genetista asociado para el rol Lector.")
+        
+        return cleaned_data
+
+    def save(self, commit=True):
+        # Guardamos el objeto User (username, email, etc.)
+        user = super().save(commit=False)
+        
+        if commit:
+            user.save()
+            # Ahora, actualizamos el perfil de Genetista relacionado
+            gen_profile, created = Genetistas.objects.get_or_create(user=user)
+            
+            gen_profile.rol = self.cleaned_data['rol']
+            if gen_profile.rol == 'LEC':
+                gen_profile.associated_genetista = self.cleaned_data['associated_genetista']
+            else:
+                gen_profile.associated_genetista = None # Limpiamos si el rol no es Lector
+            
+            gen_profile.save()
+        return user

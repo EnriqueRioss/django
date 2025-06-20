@@ -48,7 +48,7 @@ from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
     ExamenFisicoForm, ParejaPropositosForm, EvaluacionGeneticaForm,
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm
+    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm,AdminUserEditForm
 )
 
 from django.views.decorators.cache import patch_cache_control
@@ -720,6 +720,38 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
     return render(request, 'diagnosticos_plan.html', context)
 
 
+
+@require_POST # Esta vista solo debe aceptar peticiones POST
+@login_required
+@admin_required
+def edit_user_admin(request, user_id):
+    user_to_edit = get_object_or_404(User, pk=user_id)
+    form = AdminUserEditForm(request.POST, instance=user_to_edit)
+
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                form.save()
+            messages.success(request, f"Usuario '{user_to_edit.username}' actualizado exitosamente.")
+        except Exception as e:
+            messages.error(request, f"Error al actualizar el usuario: {e}")
+    else:
+        # Si el formulario no es válido, creamos un mensaje de error detallado
+        error_list = []
+        for field, errors in form.errors.items():
+            field_name = form.fields[field].label or field
+            error_list.append(f"{field_name}: {', '.join(errors)}")
+        error_message = "No se pudo actualizar el usuario. Errores: " + "; ".join(error_list)
+        messages.error(request, error_message)
+
+    return redirect('gestion_usuarios')
+
+# ====== FIN DEL CÓDIGO A AÑADIR EN views.py ======
+
+
+
+
+
 @login_required
 @all_roles_required
 def ver_proposito(request, proposito_id):
@@ -757,6 +789,8 @@ def ver_proposito(request, proposito_id):
 
 
 
+# views.py
+
 @login_required
 @admin_required
 @never_cache
@@ -764,6 +798,7 @@ def gestion_usuarios_view(request):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
+        # ... (la lógica del POST para crear usuario se queda igual) ...
         if 'create_user_submit' in request.POST:
             form = AdminUserCreationForm(request.POST)
             if form.is_valid():
@@ -793,6 +828,12 @@ def gestion_usuarios_view(request):
     form_data = request.session.pop('form_data', None) # <<< PRG FIX
     user_creation_form_instance = AdminUserCreationForm(form_data) if form_data else AdminUserCreationForm()
     
+    # ====== INICIO DEL CÓDIGO A AÑADIR EN views.py ======
+    # Creamos una instancia del formulario de edición para usar en el modal de edición.
+    # Esto nos permite tener campos pre-configurados con los IDs y clases correctos.
+    user_edit_form_instance = AdminUserEditForm()
+    # ====== FIN DEL CÓDIGO A AÑADIR EN views.py ======
+
     total_users_count = User.objects.count()
     active_users_count = User.objects.filter(is_active=True).count()
     role_counts = Genetistas.objects.aggregate(
@@ -811,6 +852,9 @@ def gestion_usuarios_view(request):
 
     context = {
         'user_creation_form': user_creation_form_instance,
+        # ====== INICIO DE LA LÍNEA A AÑADIR EN views.py ======
+        'user_edit_form': user_edit_form_instance, # Pasamos el nuevo formulario al contexto
+        # ====== FIN DE LA LÍNEA A AÑADIR EN views.py ======
         'total_users': total_users_count, 'active_users': active_users_count,
         'admin_users_count': role_counts['admin_count'], 'genetista_users_count': role_counts['genetista_count'], 'lector_users_count': role_counts['lector_count'],
         'users_list': users_qs, 'search_query': search_query, 'current_role_filter': role_filter,

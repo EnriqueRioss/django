@@ -49,7 +49,7 @@ urlpatterns = [
     path('gestion/usuarios/toggle-status/<int:user_id>/', views.toggle_user_active_status, name='toggle_user_active'),
     path('gestion/usuarios/delete/<int:user_id>/', views.delete_user_admin, name='delete_user_admin'),
 path('gestion/usuarios/reset-password/<int:user_id>/', views.reset_password_admin, name='reset_password_admin'),
- 
+path('gestion/usuarios/edit/<int:user_id>/', views.edit_user_admin, name='edit_user_admin'), 
 
 
 ]

@@ -135,7 +135,6 @@
                             <tbody>
                                 {% for user_obj in users_list %}
                                 <tr>
-                                    <!-- === CAMBIO 6: Corregir las columnas de la tabla para mostrar los datos correctos === -->
                                     <td>{{ user_obj.username }}</td>
                                     <td>{{ user_obj.first_name|default:"N/A" }}</td>
                                     <td>{{ user_obj.last_name|default:"N/A" }}</td>
@@ -160,7 +159,18 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <button class="edit-user" id="edit-user"><i class="fas fa-edit"></i> Editar</button>
+                                                <!-- ====== INICIO DE CAMBIO: Botón de editar con data-attributes ====== -->
+                                                <button class="edit-user" 
+                                                    data-user-id="{{ user_obj.id }}"
+                                                    data-username="{{ user_obj.username }}"
+                                                    data-first-name="{{ user_obj.first_name|default:'' }}"
+                                                    data-last-name="{{ user_obj.last_name|default:'' }}"
+                                                    data-email="{{ user_obj.email }}"
+                                                    data-rol="{{ user_obj.genetistas.rol|default:'' }}"
+                                                    data-genetista-id="{{ user_obj.genetistas.associated_genetista_id|default:'' }}">
+                                                    <i class="fas fa-edit"></i> Editar
+                                                </button>
+                                                <!-- ====== FIN DE CAMBIO: Botón de editar con data-attributes ====== -->
                                                 <button class="modificar-pass" data-user-id="{{ user_obj.id }}" data-user-name="{{ user_obj.username }}"><i class="fas fa-key"></i> Reestablecer Contraseña</button>
                                                 
                                                 <form method="POST" action="{% url 'toggle_user_active' user_obj.id %}" class="dropdown-form-action">
@@ -233,7 +243,6 @@
         <div class="modal-body">
             <p>Completa la información para crear un nuevo usuario en el sistema.</p>
             
-            <!-- === CAMBIO 5: Añadir el campo para el nombre de usuario en el modal === -->
             <div class="form-group">
                 {{ user_creation_form.username.label_tag }}
                 {{ user_creation_form.username }}
@@ -269,7 +278,7 @@
                 {{ user_creation_form.rol }}
                 {% if user_creation_form.rol.errors %}<ul class="errorlist">{% for error in user_creation_form.rol.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
             </div>
-            <div class="form-group" id="associatedGenetistaGroup" style="display:none;"> <!-- Initially hidden -->
+            <div class="form-group" id="associatedGenetistaGroup" style="display:none;">
                 {{ user_creation_form.associated_genetista.label_tag }}
                 {{ user_creation_form.associated_genetista }}
                 {% if user_creation_form.associated_genetista.help_text %}<p class="help-text">{{ user_creation_form.associated_genetista.help_text }}</p>{% endif %}
@@ -284,46 +293,45 @@
     </div>
 </div>
 
-
-
-
-
-<!-- Modal para editar la información del usuario -->
+<!-- ====== INICIO DE CAMBIO: Modal de Edición completamente funcional ====== -->
 <div class="modal" id="editUserModal">
     <div class="modal-content" style="max-width: 55rem;">
         <div class="modal-header">
-            <h2><i class="fas fa-user"></i>Editar Usuario</h2>
+            <h2><i class="fas fa-user-edit"></i> Editar Usuario</h2>
             <button type="button" class="modal-close" id="closeEditUserModalBtn">×</button>
         </div>
+        <!-- El 'action' se establecerá con JavaScript -->
         <form method="POST" action="" id="editUserForm">
+            {% csrf_token %}
             <div class="modal-body">
-                <p>Modifica la información del usuario (nombre del usuario).</p>
+                <p>Modifica la información del usuario <strong id="edit-username-text"></strong>.</p>
                 
                 <div class="form-group">
-                    <label for="user-name">Usuario</label>
-                    <input type="text" name="username" id="username">
+                    <label for="edit_username">Nombre de usuario</label>
+                    <input type="text" name="username" id="edit_username" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" name="email" id="email">
+                    <label for="edit_first_name">Nombre</label>
+                    <input type="text" name="first_name" id="edit_first_name" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label for="user-role">Rol</label>
-                    <select id="user-role" class="form-input" required>
-                        <option value="">Seleccionar rol</option>
-                        <option value="admin">Administrador</option>
-                        <option value="genetista">Genetista</option>
-                        <option value="lectura">Solo Lectura</option>
-                    </select>
+                    <label for="edit_last_name">Apellido</label>
+                    <input type="text" name="last_name" id="edit_last_name" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label for="user-role">Estado</label>
-                    <select id="user-state" class="form-input" required>
-                    <option value="">Seleccionar estado</option>
-                    <option value="admin">Activo</option>
-                    <option value="genetista">Inactivo</option>
-                    <option value="lectura">Suspendido</option>
-                    </select>
+                    <label for="edit_email">Email</label>
+                    <input type="email" name="email" id="edit_email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    {{ user_edit_form.rol.label_tag }}
+                    <!-- Ahora usamos el nuevo formulario de edición. No se necesitan filtros. -->
+                    {{ user_edit_form.rol }}
+                </div>
+                <div class="form-group" id="editAssociatedGenetistaGroup" style="display:none;">
+                    {{ user_edit_form.associated_genetista.label_tag }}
+                    <!-- Lo mismo aquí, usamos el nuevo formulario. -->
+                    {{ user_edit_form.associated_genetista }}
+                    <p class="help-text">{{ user_edit_form.associated_genetista.help_text }}</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -333,9 +341,7 @@
         </form>
     </div>
 </div>
-
-
-
+<!-- ====== FIN DE CAMBIO: Modal de Edición ====== -->
 
 <!-- Modal para modificar la contraseña del usuario -->
 <div class="modal" id="modificarPassModal">
@@ -344,7 +350,6 @@
             <h2><i class="fas fa-key"></i> Reestablecer Contraseña</h2>
             <button type="button" class="modal-close" id="closeModificarPassModalBtn">×</button>
         </div>
-        <!-- La acción se establecerá dinámicamente con JavaScript -->
         <form method="POST" action="" id="modificarPassForm"> 
             {% csrf_token %}
             <div class="modal-body">
@@ -377,256 +382,132 @@
     </div>
 </div>
 
-
-
-
-
+<!-- ====== INICIO DE CAMBIO: JavaScript actualizado ====== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching logic
+    // ---- Lógica de Tabs ----
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
             tabButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
-            document.querySelectorAll('.tabs-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tabs-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(this.getAttribute('data-tab')).classList.add('active');
         });
     });
 
-    // Modal Nuevo Usuario control
-    const newUserModal = document.getElementById('newUserModal');
-    const newUserBtn = document.getElementById('new-user-btn');
-    const closeNewUserModalBtn = document.getElementById('closeNewUserModalBtn');
-    const cancelNewUserModalBtn = document.getElementById('cancelNewUserModalBtn');
+    // ---- Lógica de Alertas ----
+    document.querySelectorAll('.alert .close').forEach(button => {
+        button.addEventListener('click', function() { this.parentElement.style.display = 'none'; });
+    });
 
-    if (newUserBtn) {
-        newUserBtn.addEventListener('click', function() {
-            if (newUserModal) newUserModal.classList.add('active');
+    // ---- Lógica de Dropdowns de Acciones ----
+    document.querySelectorAll('.dropdown .btn-icon').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            let content = this.nextElementSibling;
+            // Cerrar otros dropdowns
+            document.querySelectorAll('.dropdown-content').forEach(item => {
+                if (item !== content) item.style.display = 'none';
+            });
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
         });
-    }
-    if (closeNewUserModalBtn) {
-        closeNewUserModalBtn.addEventListener('click', function() {
-            if (newUserModal) {
-                newUserModal.classList.remove('active');
-                // Optional: Reset form if desired when closing with 'x' or 'cancel'
-                // document.getElementById('newUserForm').reset();
-                // associatedGenetistaGroup.style.display = 'none'; // Ensure it's hidden on reset
-            }
-        });
-    }
-    if (cancelNewUserModalBtn) {
-        cancelNewUserModalBtn.addEventListener('click', function() {
-            if (newUserModal) {
-                newUserModal.classList.remove('active');
-                 // Optional: Reset form
-                // document.getElementById('newUserForm').reset();
-                // associatedGenetistaGroup.style.display = 'none';
-            }
-        });
-    }
-    if (newUserModal) {
-        newUserModal.addEventListener('click', function(event) {
-            if (event.target === newUserModal) {
-                newUserModal.classList.remove('active');
-                 // Optional: Reset form
-                // document.getElementById('newUserForm').reset();
-                // associatedGenetistaGroup.style.display = 'none';
-            }
-        });
-    }
-    
-    // Conditional display for Associated Genetista field
-    // Ensure you target the select within the #newUserForm
-    const rolSelect = document.querySelector('#newUserForm select[name="rol"]'); 
-    const associatedGenetistaGroup = document.getElementById('associatedGenetistaGroup');
+    });
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-content').forEach(content => content.style.display = 'none');
+    });
 
-    function toggleAssociatedGenetistaField() {
-        if (rolSelect && associatedGenetistaGroup) {
-            if (rolSelect.value === 'LEC') { // 'LEC' is the value for Lector role
-                associatedGenetistaGroup.style.display = 'block';
-            } else {
-                associatedGenetistaGroup.style.display = 'none';
+    // ---- Lógica para el campo condicional de Genetista Asociado ----
+    function setupConditionalField(rolSelector, groupSelector) {
+        const rolSelect = document.querySelector(rolSelector);
+        const associatedGroup = document.querySelector(groupSelector);
+        
+        function toggleField() {
+            if (rolSelect && associatedGroup) {
+                associatedGroup.style.display = rolSelect.value === 'LEC' ? 'block' : 'none';
             }
         }
+        
+        if (rolSelect) {
+            rolSelect.addEventListener('change', toggleField);
+            toggleField(); // Llamada inicial
+        }
+        return toggleField; // Devuelve la función para poder llamarla desde fuera
     }
 
-    if (rolSelect) {
-        rolSelect.addEventListener('change', toggleAssociatedGenetistaField);
-        // Initial check in case the form is re-rendered with a value (e.g., after validation error)
-        toggleAssociatedGenetistaField(); 
-    }
+    // ---- Modal de CREAR Usuario ----
+    const newUserModal = document.getElementById('newUserModal');
+    const toggleCreateGenetistaField = setupConditionalField('#newUserForm #id_rol', '#associatedGenetistaGroup');
+    
+    document.getElementById('new-user-btn')?.addEventListener('click', () => newUserModal.classList.add('active'));
+    document.getElementById('closeNewUserModalBtn')?.addEventListener('click', () => newUserModal.classList.remove('active'));
+    document.getElementById('cancelNewUserModalBtn')?.addEventListener('click', () => newUserModal.classList.remove('active'));
+    newUserModal?.addEventListener('click', e => { if (e.target === newUserModal) newUserModal.classList.remove('active'); });
 
-    // Re-open modal if there are form errors on page load
-    // The form_errors_exist variable should be set by Django template rendering
+    // Si hay errores de creación, reabrir el modal
     const formErrorsExist = {{ form_errors_exist|yesno:"true,false" }};
     if (formErrorsExist && newUserModal) {
         newUserModal.classList.add('active');
-        // Ensure the conditional field visibility is also re-evaluated
-        toggleAssociatedGenetistaField(); 
+        toggleCreateGenetistaField();
     }
 
-    // Dismiss alerts
-    document.querySelectorAll('.alert .close').forEach(function(button) {
-        button.addEventListener('click', function() {
-            this.parentElement.style.display = 'none';
+    // ---- Modal de EDITAR Usuario ----
+    const editUserModal = document.getElementById('editUserModal');
+    const editUserForm = document.getElementById('editUserForm');
+    const toggleEditGenetistaField = setupConditionalField('#editUserForm #edit_rol', '#editAssociatedGenetistaGroup');
+
+    document.querySelectorAll('.edit-user').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const data = this.dataset;
+            
+            // Actualizar action del formulario
+            editUserForm.action = `/gestion/usuarios/edit/${data.userId}/`;
+
+            // Poblar campos del formulario
+            document.getElementById('edit-username-text').textContent = data.username;
+            document.getElementById('edit_username').value = data.username;
+            document.getElementById('edit_first_name').value = data.firstName;
+            document.getElementById('edit_last_name').value = data.lastName;
+            document.getElementById('edit_email').value = data.email;
+            document.getElementById('edit_rol').value = data.rol;
+            document.getElementById('edit_associated_genetista').value = data.genetistaId;
+
+            // Asegurarse de que el campo condicional se muestra/oculta correctamente
+            toggleEditGenetistaField();
+            
+            editUserModal.classList.add('active');
         });
     });
-
-}); 
-
-
-
-// Para el comportamiento del dropdown, que se despliegue al hacer click al boton de acciones y no solo hacer hover
-document.addEventListener('DOMContentLoaded', function() {
-    // Seleccionar todos los dropdowns
-    const dropdowns = document.querySelectorAll('.dropdown');
     
-    // Añadir evento click a cada botón de dropdown
-    dropdowns.forEach(dropdown => {
-        const btn = dropdown.querySelector('.btn-icon');
-        const content = dropdown.querySelector('.dropdown-content');
-        
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            // Cerrar otros dropdowns abiertos
-            document.querySelectorAll('.dropdown-content').forEach(item => {
-                if (item !== content) {
-                    item.style.display = 'none';
-                }
-            });
-            
-            // Alternar el dropdown actual
-            if (content.style.display === 'block') {
-                content.style.display = 'none';
-            } else {
-                content.style.display = 'block';
-            }
-        });
-    });
+    document.getElementById('closeEditUserModalBtn')?.addEventListener('click', () => editUserModal.classList.remove('active'));
+    document.getElementById('cancelEditUserModalBtn')?.addEventListener('click', () => editUserModal.classList.remove('active'));
+    editUserModal?.addEventListener('click', e => { if (e.target === editUserModal) editUserModal.classList.remove('active'); });
 
 
-
-    // Cerrar dropdowns al hacer clic fuera de ellos
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.dropdown-content').forEach(content => {
-            content.style.display = 'none';
-        });
-    });
-});
-
-const modifyPassModal = document.getElementById('modificarPassModal');
+    // ---- Modal de REESTABLECER Contraseña ----
+    const modifyPassModal = document.getElementById('modificarPassModal');
     const modifyPassForm = document.getElementById('modificarPassForm');
-    const resetPassText = document.getElementById('reset-pass-text');
+    
     document.querySelectorAll('.modificar-pass').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const userId = this.dataset.userId;
             const userName = this.dataset.userName;
             
-            // Construir la URL para el action del formulario
-            const actionUrl = `/gestion/usuarios/reset-password/${userId}/`;
-            
-            // Actualizar el formulario y el texto del modal
-            modifyPassForm.action = actionUrl;
-            resetPassText.innerHTML = `Estás a punto de restablecer la contraseña para el usuario: <strong>${userName}</strong>`;
-            
-            // Limpiar campos de contraseña anteriores
+            modifyPassForm.action = `/gestion/usuarios/reset-password/${userId}/`;
+            document.getElementById('reset-pass-text').innerHTML = `Estás a punto de restablecer la contraseña para el usuario: <strong>${userName}</strong>`;
             modifyPassForm.reset();
             
-            // Abrir el modal
-            if (modifyPassModal) modifyPassModal.classList.add('active');
+            modifyPassModal.classList.add('active');
         });
     });
 
-    // Cerrar el modal de contraseña
-    const closeModifyPassModalBtn = document.getElementById('closeModificarPassModalBtn');
-    const cancelModifyPassModalBtn = document.getElementById('cancelModificarPassModalBtn');
-
-    function closeModifyPassModal() {
-        if (modifyPassModal) modifyPassModal.classList.remove('active');
-    }
-
-    if (closeModifyPassModalBtn) closeModifyPassModalBtn.addEventListener('click', closeModifyPassModal);
-    if (cancelModifyPassModalBtn) cancelModifyPassModalBtn.addEventListener('click', closeModifyPassModal);
-    if (modifyPassModal) {
-        modifyPassModal.addEventListener('click', function(event) {
-            if (event.target === modifyPassModal) {
-                closeModifyPassModal();
-            }
-        });
-    }
-
-
-
-/*Para las modales de edición de usuario y de contraseña*/
-document.addEventListener('DOMContentLoaded', function() {
-    // Modal de Editar Usuario
-    const editUserModal = document.getElementById('editUserModal');
-    const editUserBtn = document.getElementById('edit-user');
-    const closeEditUserModalBtn = document.getElementById('closeEditUserModalBtn');
-    const cancelEditUserModalBtn = document.getElementById('cancelEditUserModalBtn');
-
-    // Modal de Modificar Contraseña
-    const modifyPassModal = document.getElementById('modificarPassModal');
-    const modifyPassBtn = document.getElementById('modificar-pass');
-    const closeModifyPassModalBtn = document.getElementById('closeModificarPassModalBtn');
-    const cancelModifyPassModalBtn = document.getElementById('cancelModificarPassModalBtn');
-
-    // Función para cerrar todas las modales
-    function closeAllModals() {
-        if (editUserModal) editUserModal.classList.remove('active');
-        if (modifyPassModal) modifyPassModal.classList.remove('active');
-    }
-
-    // Eventos para Editar Usuario
-    if (editUserBtn) {
-        editUserBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeAllModals();
-            if (editUserModal) editUserModal.classList.add('active');
-        });
-    }
-
-    // Eventos para Modificar Contraseña
-    if (modifyPassBtn) {
-        modifyPassBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeAllModals();
-            if (modifyPassModal) modifyPassModal.classList.add('active');
-        });
-    }
-
-    // Eventos de cierre para ambas modales
-    [closeEditUserModalBtn, cancelEditUserModalBtn].forEach(btn => {
-        if (btn) {
-            btn.addEventListener('click', closeAllModals);
-        }
-    });
-
-    [closeModifyPassModalBtn, cancelModifyPassModalBtn].forEach(btn => {
-        if (btn) {
-            btn.addEventListener('click', closeAllModals);
-        }
-    });
-
-    // Cerrar al hacer clic fuera del contenido
-    [editUserModal, modifyPassModal].forEach(modal => {
-        if (modal) {
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    closeAllModals();
-                }
-            });
-        }
-    });
+    document.getElementById('closeModificarPassModalBtn')?.addEventListener('click', () => modifyPassModal.classList.remove('active'));
+    document.getElementById('cancelModificarPassModalBtn')?.addEventListener('click', () => modifyPassModal.classList.remove('active'));
+    modifyPassModal?.addEventListener('click', e => { if (e.target === modifyPassModal) modifyPassModal.classList.remove('active'); });
 });
-
 </script>
-
+<!-- ====== FIN DE CAMBIO: JavaScript actualizado ====== -->
 
 {% endblock %}
