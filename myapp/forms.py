@@ -14,7 +14,7 @@ from .models import (
     HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales, DesarrolloPsicomotor,
     AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica, Genetistas,
-    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio,Autorizaciones
 )
 
 # --- General Purpose Forms ---
@@ -77,6 +77,7 @@ class HistoriasForm(ModelForm):
         return numero_historia
 
 class PadresPropositoForm(forms.Form):
+    
     padre_nombres = forms.CharField(max_length=100, label="Nombres del Padre", strip=True)
     padre_apellidos = forms.CharField(max_length=100, label="Apellidos del Padre", strip=True)
     padre_escolaridad = forms.CharField(max_length=100, required=False, label="Escolaridad del Padre", strip=True)
@@ -1045,3 +1046,47 @@ class AdminUserEditForm(forms.ModelForm):
             
             gen_profile.save()
         return user
+    
+class AutorizacionForm(forms.ModelForm):
+    # Campo personalizado para el selector del representante que no está en el modelo directamente
+    representante_selector = forms.ModelChoiceField(
+        queryset=InformacionPadres.objects.none(),
+        required=False,
+        label="Representante (Padre/Madre)",
+        empty_label="Seleccione un representante..."
+    )
+
+    class Meta:
+        model = Autorizaciones
+        fields = ['autorizacion_examenes', 'archivo_autorizacion']
+        widgets = {
+            'autorizacion_examenes': forms.Select(choices=[('', 'Seleccione...'), (True, 'Sí'), (False, 'No')]),
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Extraemos el propósito que pasaremos desde la vista
+        proposito = kwargs.pop('proposito', None)
+        super().__init__(*args, **kwargs)
+
+        # Si el propósito es menor, poblamos el queryset del selector de representantes
+        if proposito and proposito.is_minor():
+            padres_qs = InformacionPadres.objects.filter(proposito=proposito).order_by('tipo')
+            self.fields['representante_selector'].queryset = padres_qs
+            self.fields['representante_selector'].label_from_instance = lambda obj: f"{obj.get_tipo_display()}: {obj.nombres} {obj.apellidos}"
+            
+            # Si ya hay una instancia con un representante, lo seleccionamos
+            if self.instance and self.instance.representante_padre:
+                self.fields['representante_selector'].initial = self.instance.representante_padre
+        else:
+             # Si no es menor, no necesitamos este campo
+             del self.fields['representante_selector']
+
+    def save(self, commit=True):
+        # Antes de guardar, asignamos el valor del selector al campo real del modelo
+        instance = super().save(commit=False)
+        if 'representante_selector' in self.cleaned_data:
+            instance.representante_padre = self.cleaned_data.get('representante_selector')
+        
+        if commit:
+            instance.save()
+        return instance

@@ -10,7 +10,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>{% block title %}GenClinic - IIG LUZ{% endblock %}</title>
     <link rel="stylesheet" href="{% static '/styles/stylesside.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'styles/chatbot.css' %}">
 </head>
 <body>
 
@@ -164,7 +166,30 @@
 
         {% block content %}
         {% endblock %}
-    </div>   
+        
+    </div>  
+    <div id="chatbot-container" class="chatbot-container">
+        <div class="chatbot-header">
+            <h3><i class="fas fa-robot"></i> GenAssist</h3>
+            <button id="chatbot-close-btn" class="chatbot-close-btn">×</button>
+        </div>
+        <div id="chatbot-messages" class="chatbot-messages">
+            <!-- Los mensajes se insertarán aquí -->
+        </div>
+        <div id="chatbot-suggestions" class="chatbot-suggestions">
+            <!-- Las sugerencias se insertarán aquí -->
+        </div>
+        <form id="chatbot-form" class="chatbot-form">
+            <input type="text" id="chatbot-input" placeholder="Escribe tu pregunta..." autocomplete="off" disabled>
+            <button type="submit" id="chatbot-send-btn" disabled>
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+    <!-- Botón Flotante para abrir el chat -->
+    <button id="chatbot-fab" class="chatbot-fab">
+        <i class="fas fa-brain"></i>
+    </button> 
 
 <script>
         function setupAjaxForm(formId) {
@@ -262,6 +287,7 @@
         {% endif %}
     });
 </script>
+<script src="{% static 'js/chatbot.js' %}"></script>
 </body>
 
 </html>

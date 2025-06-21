@@ -42,13 +42,13 @@ from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
     Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales,
-    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task,Parejas
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task,Parejas,Autorizaciones
 )
 from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
     ExamenFisicoForm, ParejaPropositosForm, EvaluacionGeneticaForm,
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm,AdminUserEditForm
+    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm,AdminUserEditForm,AutorizacionForm
 )
 
 from django.views.decorators.cache import patch_cache_control
@@ -670,7 +670,11 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
             # Si la petición es AJAX, devolvemos una respuesta JSON
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 # Cambia 'paciente_detail' por la URL a la que quieras redirigir al usuario
-                redirect_url = reverse('index') # Ejemplo de URL de redirección
+                redirect_url = reverse('autorizaciones_crear', kwargs={
+                'historia_id': historia_id,
+                'tipo': tipo,
+                'objeto_id': objeto_id
+            }) # Ejemplo de URL de redirección
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})
             
             # Si no es AJAX, hacemos una redirección normal
@@ -869,8 +873,78 @@ def ver_historias(request):
     return render(request, 'ver_historias.html')
 
 @login_required
-def autorizaciones_view(request):
-    return render(request, 'autorizaciones.html')
+@genetista_or_admin_required
+@never_cache
+@transaction.atomic
+def autorizaciones_view(request, historia_id, tipo, objeto_id):
+    historia = get_object_or_404(HistoriasClinicas, pk=historia_id)
+    propositos_a_procesar = []
+    
+    # Determinar el(los) propósito(s) a procesar
+    if tipo == 'proposito':
+        proposito = get_object_or_404(Propositos, pk=objeto_id)
+        propositos_a_procesar.append(proposito)
+    elif tipo == 'pareja':
+        pareja = get_object_or_404(Parejas.objects.select_related('proposito_id_1', 'proposito_id_2'), pk=objeto_id)
+        propositos_a_procesar.append(pareja.proposito_id_1)
+        propositos_a_procesar.append(pareja.proposito_id_2)
+    else:
+        messages.error(request, "Contexto no válido.")
+        return redirect('index')
+
+    if request.method == 'POST':
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        all_forms_valid = True
+        errors = {}
+
+        for proposito in propositos_a_procesar:
+            prefix = f'form_{proposito.proposito_id}'
+            
+            # Obtener o crear la instancia de Autorizacion para este propósito
+            autorizacion_instance, _ = Autorizaciones.objects.get_or_create(proposito=proposito)
+            
+            form = AutorizacionForm(request.POST, request.FILES, instance=autorizacion_instance, prefix=prefix, proposito=proposito)
+
+            if form.is_valid():
+                autorizacion = form.save(commit=False)
+                autorizacion.proposito = proposito # Asegurarse de que el propósito está asignado
+                autorizacion.save()
+            else:
+                all_forms_valid = False
+                # Agregamos los errores con el prefijo correcto para que JS los encuentre
+                for field, error_list in form.errors.items():
+                    errors[f"{prefix}-{field}"] = error_list
+
+        if all_forms_valid:
+            messages.success(request, "¡Historia clínica completada exitosamente!")
+            redirect_url = reverse('index')
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect_url': redirect_url})
+            return redirect(redirect_url)
+        else:
+            if is_ajax:
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            messages.error(request, "Por favor, corrija los errores en el formulario.")
+            # La recarga de la página se manejará con la lógica GET a continuación
+
+    # Lógica para la petición GET (o si falla el POST no-AJAX)
+    autorizacion_contexts = []
+    for proposito in propositos_a_procesar:
+        instance, _ = Autorizaciones.objects.get_or_create(proposito=proposito)
+        form = AutorizacionForm(instance=instance, proposito=proposito, prefix=f'form_{proposito.proposito_id}')
+        
+        context_item = {
+            'proposito': proposito,
+            'form': form,
+            'is_minor': proposito.is_minor(),
+        }
+        autorizacion_contexts.append(context_item)
+
+    context = {
+        'autorizacion_contexts': autorizacion_contexts,
+        'historia': historia
+    }
+    return render(request, 'autorizaciones.html', context)
     
 # --- El resto de las vistas no manejan formularios complejos y estaban correctas ---
 # (Las incluyo aquí sin cambios para que el archivo esté completo)

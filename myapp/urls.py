@@ -36,6 +36,8 @@ urlpatterns = [
     path('propositos/<int:proposito_id>/', views.ver_proposito, name='proposito_detalle'), 
     path('historias/<int:historia_id>/<str:tipo>/<int:objeto_id>/evaluacion-genetica/', 
          views.diagnosticos_plan_estudio, name='evaluacion_genetica_crear_editar'),
+         path('historias/<int:historia_id>/<str:tipo>/<int:objeto_id>/autorizaciones/',
+         views.autorizaciones_view, name='autorizaciones_crear'),
 
 
 

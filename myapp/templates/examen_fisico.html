@@ -69,6 +69,7 @@
         <div class="form-group"><label for="{{ form.observaciones_pliegues.id_for_label }}">Observaciones Pliegues</label>{{ form.observaciones_pliegues }}<div class="field-errors" id="error_{{ form.observaciones_pliegues.id_for_label }}"></div></div>
 
         <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
             <!-- Este botón siempre lleva al siguiente paso lógico (Evaluación Genética) -->
             <button type="submit" name="save_and_finish" class="btn-primary">
                 <i class="fas fa-check-double"></i> Guardar y Continuar a Evaluación Genética

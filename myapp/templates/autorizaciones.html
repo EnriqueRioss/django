@@ -9,44 +9,122 @@
 </head>
 
 <div class="contenedor-formulario">
-        <form>
-            <div class="form-step active">
+    <!-- El ID es importante para el script AJAX -->
+    <form id="autorizacion-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for ctx in autorizacion_contexts %}
+        <div class="form-step active" style="margin-bottom: 2rem; border-top: 2px solid #007bff; padding-top: 1rem;">
             <div class="step-content-header">
-                <i class="fas fa-file"></i>
-                <h2>Autorización</h2>
+                <i class="fas fa-file-signature"></i>
+                <h2>Autorización para: {{ ctx.proposito.nombres }} {{ ctx.proposito.apellidos }}</h2>
             </div>
 
-            <p class="step-subtitle">Datos de la autorización del Paciente o Representante</p>
+            <p class="step-subtitle">Datos de la autorización para el Paciente o su Representante.</p>
 
-            <p class="historia-info"></p>
-            <p class="editing-info"><em>Modo Edición: Actualizando datos del propósito.</em></p><br><br>
-           
-            <div class="alert alert-danger non-field-errors"></div>
+            <!-- Contenedor para errores no asociados a un campo específico -->
+            <div class="alert alert-danger non-field-errors" data-prefix="{{ ctx.form.prefix }}"></div>
 
-            <div id="autorizaciones-section">
-                <div class="form-group-tres">
-                    <div class="third-width">
-                        <label for="autorizacion_examenes">Autorización para Exámenes</label>
-                        <select id="autorizacion_examenes" name="autorizacion_examenes">
-                            <option value="">Seleccione...</option>
-                            <option value="true">Sí</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                    <div class="third-width">
-                        <label for="archivo_autorizacion">Archivo de Autorización</label>
-                        <input type="file" id="archivo_autorizacion" name="archivo_autorizacion">
-                    </div>
-                    <div class="third-width">
-                        <label for="representante-paciente">Representante o Paciente</label>
-                        <input type="text" id="representante-paciente" name="representante-paciente">
-                    </div>
+            <div class="form-group-tres">
+                <div class="third-width">
+                    <label for="{{ ctx.form.autorizacion_examenes.id_for_label }}">{{ ctx.form.autorizacion_examenes.label }}</label>
+                    {{ ctx.form.autorizacion_examenes }}
+                    <div class="error-message" data-field-name="{{ ctx.form.prefix }}-autorizacion_examenes"></div>
+                </div>
+                <div class="third-width">
+                    <label for="{{ ctx.form.archivo_autorizacion.id_for_label }}">{{ ctx.form.archivo_autorizacion.label }}</label>
+                    {{ ctx.form.archivo_autorizacion }}
+                     <div class="error-message" data-field-name="{{ ctx.form.prefix }}-archivo_autorizacion"></div>
+                </div>
+                <div class="third-width">
+                    {% if ctx.is_minor %}
+                        <label for="{{ ctx.form.representante_selector.id_for_label }}">{{ ctx.form.representante_selector.label }}</label>
+                        {{ ctx.form.representante_selector }}
+                        <div class="error-message" data-field-name="{{ ctx.form.prefix }}-representante_selector"></div>
+                    {% else %}
+                        <label>Representante o Paciente</label>
+                        <p class="form-static-info"><strong>{{ ctx.proposito.nombres }} {{ ctx.proposito.apellidos }}</strong> (Mayor de edad)</p>
+                    {% endif %}
                 </div>
             </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Guardar</button>
-            </div>
-        </form>
+        </div>
+        {% endfor %}
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">Anterior</button>
+            <button type="submit" class="btn-primary">Finalizar y Guardar Historia Clínica</button>
+        </div>
+    </form>
 </div>
+
+<!-- Script AJAX para el envío asíncrono -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('autorizacion-form');
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Limpiar errores previos
+        document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        document.querySelectorAll('.alert-danger.non-field-errors').forEach(el => {
+            el.textContent = '';
+            el.style.display = 'none';
+        });
+
+        const formData = new FormData(form);
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        submitButton.disabled = true;
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                // No se necesita 'X-CSRFToken', FormData ya lo incluye si el input está en el form.
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirigir a la URL de éxito proporcionada por la vista
+                window.location.href = data.redirect_url;
+            } else {
+                // Mostrar errores de validación
+                Object.keys(data.errors).forEach(key => {
+                    const errorMessages = data.errors[key].map(e => e.message || e).join(' ');
+                    const fieldErrorElement = document.querySelector(`.error-message[data-field-name="${key}"]`);
+                    
+                    if (fieldErrorElement) {
+                        fieldErrorElement.textContent = errorMessages;
+                    } else {
+                        // Errores no asociados a un campo (non-field-errors)
+                        // Necesitamos encontrar el contenedor de errores correcto usando el prefijo
+                        const prefix = key.split('-')[0];
+                        const nonFieldErrorsContainer = document.querySelector(`.alert-danger.non-field-errors[data-prefix="${prefix}"]`);
+                        if (nonFieldErrorsContainer) {
+                             nonFieldErrorsContainer.textContent += errorMessages + ' ';
+                             nonFieldErrorsContainer.style.display = 'block';
+                        }
+                    }
+                });
+                // Mensaje genérico de error si hay errores
+                alert("Hubo errores en el formulario. Por favor, revíselos.");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error de red. Por favor, intente de nuevo.');
+        })
+        .finally(() => {
+            // Restaurar el botón
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+        });
+    });
+});
+</script>
+
 {% endblock form_content %}

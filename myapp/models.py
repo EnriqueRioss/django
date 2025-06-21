@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import date
 
 # Create your models here.
 
@@ -236,14 +237,43 @@ class AntecedentesPersonales(models.Model):
 
 class Autorizaciones(models.Model):
     autorizacion_id = models.AutoField(primary_key=True)
-    proposito = models.ForeignKey('Propositos', on_delete=models.CASCADE, null=True, blank=True, unique=True)
-    autorizacion_examenes = models.BooleanField(null=True, blank=True)
-    archivo_autorizacion = models.FileField(null=True, blank=True) 
-    padre = models.ForeignKey('InformacionPadres', on_delete=models.CASCADE, null=True, blank=True, unique=True)
+    proposito = models.OneToOneField(
+        'Propositos', 
+        on_delete=models.CASCADE, 
+        related_name='autorizacion'
+    )
+    autorizacion_examenes = models.BooleanField(
+        default=False,
+        verbose_name="¿Autoriza la realización de exámenes genéticos?"
+    )
+    archivo_autorizacion = models.FileField(
+        upload_to='autorizaciones/', 
+        null=True, 
+        blank=True,
+        verbose_name="Archivo de Autorización Firmado"
+    )
+    representante_padre = models.ForeignKey(
+        'InformacionPadres',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="El padre/madre que autoriza, solo si el propósito es menor de edad."
+    )
+    fecha_autorizacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Autorizacion {self.autorizacion_id} para {self.proposito if self.proposito else 'N/A'}"
+        autoriza = "Nadie"
+        if self.representante_padre:
+            autoriza = f"Representante: {self.representante_padre.nombres}"
+        else:
+            autoriza = f"El mismo paciente"
 
+        return f"Autorización para {self.proposito.nombres} (Autoriza: {autoriza})"
+
+    def clean(self):
+        super().clean()
+        if self.representante_padre and self.representante_padre.proposito != self.proposito:
+            raise ValidationError("El representante seleccionado no corresponde a los padres de este propósito.")
 class DesarrolloPsicomotor(models.Model):
     desarrollo_id = models.AutoField(primary_key=True)
     proposito = models.ForeignKey(
@@ -603,7 +633,7 @@ class InformacionPadres(models.Model):
     lugar_nacimiento = models.CharField(max_length=100, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     edad = models.IntegerField(null=True, blank=True)
-    identificacion = models.CharField(max_length=20, null=True, blank=True)
+    identificacion = models.CharField(max_length=20, null=True, blank=True,unique=True)
     grupo_sanguineo = models.CharField(max_length=2, choices=[('A', 'A'), ('B', 'B'), ('AB', 'AB'), ('O', 'O')], null=True, blank=True)
     factor_rh = models.CharField(max_length=10, choices=[('Positivo', 'Positivo'), ('Negativo', 'Negativo')], null=True, blank=True)
     telefono = models.CharField(max_length=15, null=True, blank=True)
@@ -771,6 +801,17 @@ class Propositos(models.Model):
         default=ESTADO_ACTIVO, # Por defecto se crea como 'Activo'
         verbose_name="Estado del Propósito"
     )
+
+    def is_minor(self):
+        """
+        Verifica si el propósito es menor de 18 años.
+        Retorna True si es menor, False si es mayor o igual, None si no hay fecha de nacimiento.
+        """
+        if not self.fecha_nacimiento:
+            return None 
+        today = date.today()
+        age = today.year - self.fecha_nacimiento.year - ((today.month, today.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day))
+        return age < 18
 
     def __str__(self):
         # Actualizamos el __str__ para que muestre el estado
