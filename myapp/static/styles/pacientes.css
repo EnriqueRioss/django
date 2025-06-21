@@ -401,6 +401,8 @@ a i{
   color: var(--muted-foreground);
 }
 
+
+
 /* ------------ Contacto -----------------*/
 .contact-info {
   display: flex;
@@ -493,16 +495,17 @@ a i{
   background-color: var(--white);
   border-radius: 1rem;
   width: 90%;
-  max-width: 90rem;
+  max-width: 95rem;
   max-height: 80vh;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  overflow: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable; /* Reserva espacio para el scrollbar, evitando el salto */
   transition: scale(0.95);
   transition: transform 0.3s ease;
 }
 
 .modal-header {
-  padding: 2.5rem 2rem 1rem 3rem;
+  padding: 2.5rem 2rem 1rem 3.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -549,7 +552,7 @@ a i{
 
 /* ----------- Modal Tabs ------------*/
 .modal-tabs{
-  padding: 1rem 2.5rem;
+  padding: 1rem 3.5rem 2rem 3.5rem;
 }
 
 .tabs-header {
@@ -608,7 +611,6 @@ a i{
 } 
 
 
-
 /* Grid de información */
 .info-grid {
   display: grid;
@@ -665,6 +667,265 @@ a i{
   color: var(--primary-darkerblue);
 }
 
+
+
+/*------------ PESTAÑA DE HISTORIA CLINICA ----------*/
+.tab-content-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.4rem;
+}
+
+.tab-main-title{
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--primary-darkerblue);
+  margin: 0;
+}
+
+
+.btn-primary{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background-color: var(--lighter-blue);
+  color: var(--primary-darkerblue);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem 1.6rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  font-family: "Poppins", serif;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover{
+  background-color: var(--primary-darkerblue);
+  color: var(--background-color);
+}
+
+.btn-icon{
+  font-size: 1.6rem;
+  color: var(--primary-darkerblue);
+}
+
+
+        /*----- LISTA DE CONSULTAS DEL PACIENTE -----*/
+.history-list{
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.history-card{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: var(--white);
+  border: 2px solid var(--lighter-blue);
+  border-radius: 1rem;
+  padding: 2.4rem;
+}
+
+.card-main-content{
+  flex-grow: 1;
+}
+
+.history-card .historia-card-header{
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.history-id{
+  font-family: "Poppins", serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--dark-gray);
+  background-color: var(--white);
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid var(--dark-gray);
+}
+
+      /* ------ Badges de estado ------- */
+.history-card .badge {
+  padding: 0.4rem 0.8rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.badge.status-completed {
+  background-color: var(--buttons-blue);
+  border: none;
+  color: var(--background-color);
+}
+
+.badge.status-review {
+  background-color: var(--background-color);
+  color: var(--complement-blue);
+  border: 1px solid var(--complement-blue);
+}
+
+
+      /* ---- Títulos y metadata ---- */
+.history-title {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+  color: var(--primary-darkerblue);
+  margin: 0 0 0.4rem 0;
+}
+
+.history-subtitle {
+  font-size: 0.9rem;
+  color: var(--medium-gray);
+  margin: 0 0 1.6rem 0;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.6rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+  color: var(--primary-darkerblue);
+}
+
+.meta-icon {
+  font-size: 1.6rem;
+  color: var(--primary-darkerblue);
+}
+
+      /* ---- Tags o etiquetas inferiores ----- */
+.history-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.tag {
+  background-color: var(--background-color);
+  color: var(--buttons-blue);
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.8rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+
+/*------------PESTAÑA DE DIAGNOSTICOS Y PRUEBAS---------------*/
+
+
+/* Grid principal de dos columnas */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 2.4rem;
+}
+
+
+        /*-----Estilo base de las tarjetas de análisis-----*/
+.analysis-card {
+  background-color: var(--white);
+  border: 2px solid var(--lighter-blue); 
+  border-radius: 1rem;
+  padding: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.analysis-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.analysis-card-header i{
+ font-size: 1.6rem;
+}
+
+.analysis-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-darkerblue);
+  margin: 0;
+}
+
+
+        /*----------Contenedor para la lista de ítems de análisis----------*/
+.analysis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+
+.analysis-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1rem;
+  border-radius: 1rem;
+  font-size: 1.35rem; 
+  color: var(--dark-gray);
+}
+
+/*Examenes*/
+.analysis-card.pending .analysis-item {
+  background-color: #fffbeb;
+}
+
+/*Diagnosticos*/
+.analysis-card.completed .analysis-item {
+  background-color: #ebebeb; 
+}
+
+.analysis-name {
+  font-weight: 500;
+}
+
+
+      /* ----------Estilo para las badges de estado----------- */
+.analysis-item .badge {
+  padding: 0.4rem 1.2rem;
+  border-radius: 9999px; 
+  font-size: 1rem; 
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.badge.status-pending,
+.badge.status-in-progress {
+  background-color: #fef3c7; 
+  color: #92400e; 
+  border: 1px solid #fde68a;
+}
+
+.badge.status-completed {
+  background-color: #1f2937; /* Gris oscuro */
+  color: #ffffff;
+}
+
+
+.badge.status-discard{
+  background-color: transparent;
+  color: #1f2937;
+}
+
+
+    
 
 /* Responsive */
 @media (max-width: 768px) {

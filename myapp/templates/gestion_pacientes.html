@@ -10,7 +10,7 @@
 </head>
 <body>
 
-  <div class="app-container">
+<div class="app-container">
     
     <div class="main-content">
         <main class="barra-content">
@@ -238,98 +238,215 @@
             </div>
         </main>
     </div>
-  </div>
+</div>
 
   <!-- Modal de detalle de paciente -->
-  <div class="modal" id="verPacienteModal">
+<div class="modal" id="verPacienteModal">
     <div class="modal-content">
-      <div class="modal-header">
-        <div class="patient-modal-title">
-          <div class="patient-avatar large">
-            <img alt="" class="avatar-img">
-            <span class="avatar-fallback">MG</span>
-          </div>
-          <div>
-            <h2 class="patient-name">María González</h2>
-            <p class="patient-id muted">ID: P001</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-tabs">
-        <div class="tabs-header">
-          <button class="tab-btn active" data-tab="personal-info">Información Personal</button>
-          <button class="tab-btn" data-tab="medical-record">Historias Clínicas</button>
-          <button class="tab-btn" data-tab="tests">Análisis y Pruebas</button>
+        <div class="modal-header">
+            <div class="patient-modal-title">
+            <div class="patient-avatar large">
+                <img alt="" class="avatar-img">
+                <span class="avatar-fallback">MG</span>
+            </div>
+            <div>
+                <h2 class="patient-name">María González</h2>
+                <p class="patient-id muted">ID: P001</p>
+            </div>
+            </div>
         </div>
 
-        <div class="tab-content active" id="personal-info">
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Datos Personales</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="info-item">
-                            <i class="fas fa-calendar"></i>
-                            <span class="info-text">Edad: 34 años</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-phone"></i>
-                            <span class="info-text">+34 612 345 678</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-envelope"></i>
-                            <span class="info-text">maria.gonzalez@email.com</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-map-pin"></i>
-                            <span class="info-text">Calle Mayor 123, Madrid</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="modal-tabs">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="personal-info">Información Personal</button>
+                <button class="tab-btn" data-tab="medical-record">Historias Clínicas</button>
+                <button class="tab-btn" data-tab="tests">Análisis y Pruebas</button>
+            </div>
 
-                <div class="info-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Información Médica</h3>
+            <div class="tab-content active" id="personal-info">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Datos Personales</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="info-item">
+                                <i class="fas fa-calendar"></i>
+                                <span class="info-text">Edad: 34 años</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-phone"></i>
+                                <span class="info-text">+34 612 345 678</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-envelope"></i>
+                                <span class="info-text">maria.gonzalez@email.com</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-map-pin"></i>
+                                <span class="info-text">Calle Mayor 123, Madrid</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-content">
-                        <div class="info-row">
-                            <span class="info-label">Genetista asignado:</span>
-                            <span class="badge">Dr. García</span>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Información Médica</h3>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Estado:</span>
-                            <span class="badge badge-active">Activo</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Última visita:</span>
-                            <span class="info-text">2024-01-15</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Historias clínicas:</span>
-                            <span class="badge">3</span>
+                        <div class="card-content">
+                            <div class="info-row">
+                                <span class="info-label">Genetista asignado:</span>
+                                <span class="badge">Dr. García</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Estado:</span>
+                                <span class="badge badge-active">Activo</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Última visita:</span>
+                                <span class="info-text">2024-01-15</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Evoluciones:</span>
+                                <span class="badge">2</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="tab-content" id="medical-record">
+                <div class="tab-content-header">
+                    <h3 class="tab-main-title">Historia Clínica Genética</h3>
+                    <button class="btn-primary">
+                        <i class="fas fa-plus" class="btn-icon"></i>
+                        Nueva Consulta
+                    </button>
+                </div>
+
+                <!--Historial del paciente-->
+                <div class="history-list">
+
+                    <!--Tarjeta de consulta clinica 1-->
+                    <div class="history-card">
+                        <div class="card-main-content">
+                            <div class="historia-card-header">
+                                <span class="badge history-id">HC-001</span>
+                                <span class="badge status-completed">Completado</span>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="history-title">Consulta Inicial</h4>
+                                <p class="history-subtitle">Sindrome de Marfan - Sospecha</p>
+                                <div class="history-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>2024-01-15</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Dra. Gamboa</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="history-tags">
+                                <span class="tag">Ecocardiograma</span>
+                                <span class="tag">Analisis Genético</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Tarjeta de consulta clinica 2-->
+                    <div class="history-card">
+                        <div class="card-main-content">
+                            <div class="historia-card-header">
+                                <span class="badge history-id">HC-001</span>
+                                <span class="badge status-completed">Completado</span>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="history-title">Consulta de Seguimiento</h4>
+                                <p class="history-subtitle">Sindrome de Marfan - Confirmado</p>
+                                <div class="history-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span>2024-02-15</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>Dra. Gamboa</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="history-tags">
+                                <span class="tag">Secuenciacion completa</span>
+                                <span class="tag">Analisis familiar</span>
+                            </div>
+                        </div>
+                    </div>              
+                </div>  
+            </div>
+
+            <div class="tab-content" id="tests">
+                <div class="tab-content-header">
+                    <h3 class="tab-main-title">Diagnósticos y Pruebas Genéticas</h3>
+                    <button class="btn-primary">
+                        <i class="fas fa-plus" class="btn-icon"></i>
+                            Nuevo Diagnóstico
+                    </button>
+                </div>
+
+                <!-- Dos columnas para tarjetas -->
+                <div class="analysis-grid">
+
+                    <!--Tarjeta de examenes-->
+                    <div class="analysis-card pending">
+                        <div class="analysis-card-header">
+                            <i class="fas fa-clock" class="analysis-card-icon"></i>
+                            <h4 class="analysis-card-title">Examenes pendientes</h4>
+                        </div>
+                        <div class="analysis-list">
+                            <div class="analysis-item">
+                                <span class="analysis-name">Secuenciacion Exoma completo</span>
+                                <span class="badge status-pending">Pendiente</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="analysis-name">Analisis Cromosomico</span>
+                                <span class="badge status-in-progress">En proceso</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Tarjeta de diagnosticos completados-->
+                    <div class="analysis-card completed">
+                        <div class="analysis-card-header">
+                            <i class="fas fa-dna" class="analysis-card-icon"></i>
+                            <h4 class="analysis-card-title">Diagnosticos</h4>
+                        </div>
+                        <div class="analysis-list">
+                            <div class="analysis-item">
+                                <span class="analysis-name">Sindrome de Marfan</span>
+                                <span class="badge status-completed">Confirmado</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="analysis-name">Sindrome de Down</span>
+                                <span class="badge status-discard">Descartado</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+            
         </div>
 
-        <div class="tab-content" id="medical-record">
-            <h2>Hola</h2>
-        </div>
-
-        <div class="tab-content" id="tests">
-            <h2>Adios</h2>
-        </div>
-      </div>
-      <button type="button" class="modal-close" id="closeVerPacienteModalBtn">×</button>
+        <button type="button" class="modal-close" id="closeVerPacienteModalBtn">×</button>
+      
     </div>
-  </div>
+</div>
 
 
 
-  <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
     // Modal de Editar Paciente
     const verPacienteModal = document.getElementById('verPacienteModal');
@@ -386,6 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-  </script>
+</script>
 
 {% endblock %}
