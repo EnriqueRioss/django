@@ -239,14 +239,18 @@ def crear_paciente(request, historia_id):
     if user_profile.rol == 'GEN' and historia.genetista != user_profile:
         raise PermissionDenied("No tiene permiso para modificar pacientes de esta historia clínica.")
     
+    # Buscamos si ya existe un propósito para esta historia para entrar en modo edición
     existing_proposito = Propositos.objects.filter(historia=historia).first()
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
+        # Pasamos `instance=existing_proposito` para que el form sepa si está editando.
         form = PropositosForm(request.POST, request.FILES, instance=existing_proposito)
         if form.is_valid():
             try:
+                # El método save personalizado asociará la historia
                 proposito = form.save(historia=historia)
+                
                 request.session.pop('form_data', None)
                 action_verb = 'actualizado' if existing_proposito else 'creado'
                 messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {action_verb} exitosamente.")
@@ -255,30 +259,32 @@ def crear_paciente(request, historia_id):
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
                 return redirect(redirect_url)
-            except (IntegrityError, Exception) as e:
+            except Exception as e:
                 error_msg = f"Error al guardar el paciente: {e}"
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
-        else: # Form is invalid
+                request.session['form_data'] = request.POST.copy()
+                return redirect(request.path_info)
+        else:
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar el paciente. Corrija los errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
+            request.session['form_data'] = request.POST.copy()
+            return redirect(request.path_info)
     else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
+        form_data = request.session.pop('form_data', None)
         if form_data:
             form = PropositosForm(form_data, instance=existing_proposito)
         else:
+            # Pasamos la instancia al form para que sepa que está en modo edición
             form = PropositosForm(instance=existing_proposito)
         
         if existing_proposito and not form_data:
             messages.info(request, f"Editando información para: {existing_proposito.nombres} {existing_proposito.apellidos}")
             
     return render(request, "Crear_paciente.html", {'form': form, 'historia': historia, 'editing': bool(existing_proposito)})
+
 
 @login_required
 @genetista_or_admin_required
@@ -364,12 +370,19 @@ def padres_proposito(request, historia_id, proposito_id):
         raise PermissionDenied("No tiene permiso para modificar esta información.")
 
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    
+    # Obtenemos las instancias existentes para pasarlas al formulario
+    padre_instance = InformacionPadres.objects.filter(proposito=proposito, tipo='Padre').first()
+    madre_instance = InformacionPadres.objects.filter(proposito=proposito, tipo='Madre').first()
+    editing = bool(padre_instance or madre_instance)
 
     if request.method == 'POST':
-        form = PadresPropositoForm(request.POST)
+        # Pasamos las instancias al formulario para que pueda validar correctamente
+        form = PadresPropositoForm(request.POST, padre_instance=padre_instance, madre_instance=madre_instance)
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # Lógica de guardado con update_or_create (esta parte ya era correcta)
                     padre_defaults = {k[len('padre_'):]: v for k, v in form.cleaned_data.items() if k.startswith('padre_')}
                     padre_defaults_clean = {k:v for k,v in padre_defaults.items() if v is not None or k in ['nombres','apellidos']}
                     padre_defaults_clean['grupo_sanguineo'] = padre_defaults_clean.get('grupo_sanguineo') or None
@@ -393,28 +406,31 @@ def padres_proposito(request, historia_id, proposito_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
-        else: # Form is invalid
+                request.session['form_data'] = request.POST.copy()
+                return redirect(request.path_info)
+        else:
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, "No se pudo guardar información de padres. Corrija errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
+            request.session['form_data'] = request.POST.copy()
+            return redirect(request.path_info)
     else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
+        form_data = request.session.pop('form_data', None)
+        form_kwargs = {'padre_instance': padre_instance, 'madre_instance': madre_instance}
+        
         if form_data:
-            form = PadresPropositoForm(form_data)
+            form = PadresPropositoForm(form_data, **form_kwargs)
         else:
-            padre = InformacionPadres.objects.filter(proposito=proposito, tipo='Padre').first()
-            madre = InformacionPadres.objects.filter(proposito=proposito, tipo='Madre').first()
             initial_data = {}
-            if padre: initial_data.update({f'padre_{f.name}': getattr(padre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre, f.name)})
-            if madre: initial_data.update({f'madre_{f.name}': getattr(madre, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre, f.name)})
-            form = PadresPropositoForm(initial=initial_data if initial_data else None)
-            if initial_data: messages.info(request, "Editando información de padres.")
+            if padre_instance: initial_data.update({f'padre_{f.name}': getattr(padre_instance, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(padre_instance, f.name)})
+            if madre_instance: initial_data.update({f'madre_{f.name}': getattr(madre_instance, f.name) for f in InformacionPadres._meta.fields if f.name not in ['padre_id', 'proposito', 'tipo'] and hasattr(madre_instance, f.name)})
+            
+            form_kwargs['initial'] = initial_data if initial_data else None
+            form = PadresPropositoForm(**form_kwargs)
 
-    return render(request, "Padres_proposito.html", {'form': form, 'historia': historia, 'proposito': proposito})
+            if editing and not form_data: messages.info(request, "Editando información de padres.")
+
+    return render(request, "Padres_proposito.html", {'form': form, 'historia': historia, 'proposito': proposito, 'editing': editing})
 
 @login_required
 @genetista_or_admin_required

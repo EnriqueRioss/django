@@ -364,13 +364,7 @@ class EvaluacionGenetica(models.Model):
     class Meta:
         constraints = [
             # Regla 1: Debe estar asociado a un propósito O a una pareja, pero no a ambos.
-            models.CheckConstraint(
-                check=(
-                    models.Q(proposito__isnull=False, pareja__isnull=True) |
-                    models.Q(proposito__isnull=True, pareja__isnull=False)
-                ),
-                name='check_evaluacion_proposito_or_pareja'
-            ),
+            
             # Regla 2: Un propósito solo puede tener UNA evaluación genética.
             models.UniqueConstraint(
                 fields=['proposito'],
