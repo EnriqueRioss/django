@@ -74,6 +74,15 @@ class HistoriasForm(ModelForm):
         numero_historia = self.cleaned_data.get('numero_historia')
         if numero_historia is not None and numero_historia <= 0:
             raise forms.ValidationError("El número de historia debe ser un valor positivo.")
+        
+        query = HistoriasClinicas.objects.filter(numero_historia=numero_historia)
+        
+        if self.instance and self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+        
+        if query.exists():
+            raise forms.ValidationError("Ya existe otra historia clínica con este número.")
+            
         return numero_historia
 
 class PadresPropositoForm(forms.Form):

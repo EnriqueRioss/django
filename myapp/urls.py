@@ -24,7 +24,8 @@ urlpatterns = [
     # Redirector for the generic "Pacientes" sidebar link
     path('pacientes/', views.pacientes_redirect_view, name="pacientes_list_redirect"),
 
-    path('historias/crear/', views.crear_historia, name="historia_crear"),
+    path('historias/crear/', views.crear_editar_historia, name="historia_crear"),
+path('historias/<int:historia_id>/editar/', views.crear_editar_historia, name="historia_editar"),
     path('historias/<int:historia_id>/paciente/crear/', views.crear_paciente, name="paciente_crear"),
     path('historias/<int:historia_id>/pareja/crear/', views.crear_pareja, name="pareja_crear"),
     path('historias/<int:historia_id>/proposito/<int:proposito_id>/padres/', views.padres_proposito, name="padres_proposito_crear"),

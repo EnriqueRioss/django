@@ -128,24 +128,62 @@ all_roles_required = role_required(['GEN', 'ADM', 'LEC'])
 
 
 # --- Main Clinical Views ---
+
 @login_required
 @genetista_or_admin_required
 @never_cache
-def crear_historia(request):
+def crear_editar_historia(request, historia_id=None):
+    """
+    Vista HÍBRIDA para crear y editar una Historia Clínica.
+    - Modo Edición Explícito: si se accede a /historias/<id>/editar/.
+    - Modo Edición Implícito: si se accede a /historias/crear/ pero hay un ID en la sesión.
+    - Modo Creación: si se accede a /historias/crear/ y no hay ID en la sesión.
+    """
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    instance = None
+    editing = False
+    
+    # 1. Prioridad 1: ID explícito en la URL
+    if historia_id:
+        instance = get_object_or_404(HistoriasClinicas, pk=historia_id)
+        editing = True
+    # 2. Prioridad 2: ID implícito guardado en la sesión (para el botón "Atrás")
+    elif 'historia_en_progreso_id' in request.session:
+        try:
+            # Verificamos que la historia en sesión aún exista
+            instance = HistoriasClinicas.objects.get(pk=request.session['historia_en_progreso_id'])
+            editing = True
+        except HistoriasClinicas.DoesNotExist:
+            # Si no existe, limpiamos la sesión y procedemos a crear
+            del request.session['historia_en_progreso_id']
+            
+    if editing and instance:
+        # Comprobación de permisos para cualquier modo de edición
+        user_profile = request.user.genetistas
+        if user_profile.rol == 'GEN' and instance.genetista != user_profile:
+            raise PermissionDenied("No tiene permiso para editar esta historia clínica.")
 
     if request.method == 'POST':
-        form = HistoriasForm(request.POST)
+        form = HistoriasForm(request.POST, instance=instance)
+        
         if form.is_valid():
             try:
-                genetista_profile = request.user.genetistas
                 historia = form.save(commit=False)
-                if genetista_profile.rol in ['GEN', 'ADM']:
-                    historia.genetista = genetista_profile
+                
+                if not editing: # Solo se asigna el genetista en la creación real
+                    genetista_profile = request.user.genetistas
+                    if genetista_profile.rol in ['GEN', 'ADM']:
+                        historia.genetista = genetista_profile
+                
                 historia.save()
                 
-                request.session.pop('form_data', None) # Limpiar datos de sesión en caso de éxito
-                messages.success(request, f"Historia Clínica N° {historia.numero_historia} creada exitosamente.")
+                # *** CLAVE DEL ENFOQUE HÍBRIDO ***
+                # Guardamos el ID de la historia recién creada/editada en la sesión.
+                request.session['historia_en_progreso_id'] = historia.pk
+                
+                request.session.pop('form_data', None)
+                action_verb = "actualizada" if editing else "creada"
+                messages.success(request, f"Historia Clínica N° {historia.numero_historia} {action_verb} exitosamente.")
                 
                 motivo = form.cleaned_data['motivo_tipo_consulta']
                 redirect_map = {
@@ -161,33 +199,36 @@ def crear_historia(request):
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
                 return redirect(redirect_url)
 
+            # (El resto del manejo de errores se mantiene igual)
             except IntegrityError:
                 error_msg = f"Ya existe una historia clínica con el número '{form.cleaned_data.get('numero_historia', '')}'. Revise por favor."
                 if is_ajax:
                     return JsonResponse({'success': False, 'errors': {'numero_historia': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
-                
+                request.session['form_data'] = request.POST.copy()
+                return redirect(request.path_info)
             except Genetistas.DoesNotExist:
                 error_msg = 'Perfil de genetista no encontrado.'
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
+                if is_ajax: return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
                 messages.error(request, error_msg)
-                request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-                return redirect(request.path_info) # <<< PRG FIX
-        else: # Form is invalid
-            if is_ajax:
-                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+                request.session['form_data'] = request.POST.copy()
+                return redirect(request.path_info)
+        else:
+            if is_ajax: return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            messages.error(request, "No se pudo guardar la historia. Corrija los errores.")
+            request.session['form_data'] = request.POST.copy()
+            return redirect(request.path_info)
             
-            messages.error(request, "No se pudo crear la historia. Corrija los errores.")
-            request.session['form_data'] = request.POST.copy() # <<< PRG FIX
-            return redirect(request.path_info) # <<< PRG FIX
     else: # GET request
-        form_data = request.session.pop('form_data', None) # <<< PRG FIX
-        form = HistoriasForm(form_data) if form_data else HistoriasForm()
+        form_data = request.session.pop('form_data', None)
+        form = HistoriasForm(form_data or None, instance=instance)
 
-    return render(request, "historia_clinica.html", {'form1': form})
+    context = {
+        'form1': form,
+        'editing': editing,
+        'historia': instance
+    }
+    return render(request, "historia_clinica.html", context)
 
 @login_required
 @genetista_or_admin_required
@@ -872,6 +913,8 @@ def gestion_usuarios_view(request):
 def ver_historias(request):
     return render(request, 'ver_historias.html')
 
+# views.py
+
 @login_required
 @genetista_or_admin_required
 @never_cache
@@ -900,24 +943,29 @@ def autorizaciones_view(request, historia_id, tipo, objeto_id):
         for proposito in propositos_a_procesar:
             prefix = f'form_{proposito.proposito_id}'
             
-            # Obtener o crear la instancia de Autorizacion para este propósito
             autorizacion_instance, _ = Autorizaciones.objects.get_or_create(proposito=proposito)
             
             form = AutorizacionForm(request.POST, request.FILES, instance=autorizacion_instance, prefix=prefix, proposito=proposito)
 
             if form.is_valid():
                 autorizacion = form.save(commit=False)
-                autorizacion.proposito = proposito # Asegurarse de que el propósito está asignado
+                autorizacion.proposito = proposito
                 autorizacion.save()
             else:
                 all_forms_valid = False
-                # Agregamos los errores con el prefijo correcto para que JS los encuentre
                 for field, error_list in form.errors.items():
                     errors[f"{prefix}-{field}"] = error_list
 
         if all_forms_valid:
             messages.success(request, "¡Historia clínica completada exitosamente!")
-            redirect_url = reverse('index')
+
+            # ======================= LÍNEA AÑADIDA =======================
+            # Limpiamos la sesión para que el próximo acceso a "Crear Historia"
+            # sea para una historia nueva y no para editar la que acabamos de terminar.
+            request.session.pop('historia_en_progreso_id', None)
+            # =============================================================
+
+            redirect_url = reverse('index') # Puedes cambiar esto a una página de "éxito" si lo prefieres
             if is_ajax:
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})
             return redirect(redirect_url)
@@ -925,9 +973,8 @@ def autorizaciones_view(request, historia_id, tipo, objeto_id):
             if is_ajax:
                 return JsonResponse({'success': False, 'errors': errors}, status=400)
             messages.error(request, "Por favor, corrija los errores en el formulario.")
-            # La recarga de la página se manejará con la lógica GET a continuación
 
-    # Lógica para la petición GET (o si falla el POST no-AJAX)
+    # Lógica GET se mantiene igual
     autorizacion_contexts = []
     for proposito in propositos_a_procesar:
         instance, _ = Autorizaciones.objects.get_or_create(proposito=proposito)
@@ -945,7 +992,6 @@ def autorizaciones_view(request, historia_id, tipo, objeto_id):
         'historia': historia
     }
     return render(request, 'autorizaciones.html', context)
-    
 # --- El resto de las vistas no manejan formularios complejos y estaban correctas ---
 # (Las incluyo aquí sin cambios para que el archivo esté completo)
 @login_required
