@@ -720,17 +720,20 @@ a i{
 }
 
 .history-card{
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  position: relative;
   background-color: var(--white);
-  border: 2px solid var(--lighter-blue);
+  border: 1px solid var(--lighter-blue);
   border-radius: 1rem;
   padding: 2.4rem;
+  overflow: hidden;
 }
 
-.card-main-content{
-  flex-grow: 1;
+.history-card .view-content{
+  display: block;
+}
+
+.history-card .editable-content{
+  display: none;
 }
 
 .history-card .historia-card-header{
@@ -822,6 +825,107 @@ a i{
   font-size: 1rem;
   font-weight: 500;
 }
+
+      /*----- Botón de acción de la tarjeta -----*/
+.card-actions.view-actions{
+  position: absolute;
+  top: 2.4rem;
+  right: 2.4rem;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.action-btn{
+  background-color: var(--white);
+  border: 1px solid var(--dark-gray);
+  border-radius: 0.8rem;
+  width: 3.6rem;
+  height: 3.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--dark-gray);
+  transition: all 0.2s;
+}
+
+.action-btn:hover{
+  background-color: var(--button-gray);
+  border-color: var(--border-gray);
+  color: var(--dark-gray);
+}
+
+.action-btn i{
+  font-size: 1.3rem;
+  margin-left: 0.8rem;
+}
+
+      /*----- ESTADO DE EDICIÓN -----*/
+.history-card.is-editing .view-content{
+  display: none;
+}
+
+.history-card.is-editing .editable-content{
+  display: block;
+}
+
+      /*---- ESTILOS PARA EL FORMULARIO DE EDICION DE CONSULTA ----*/
+
+.editable-content h4{
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.edit-form .form-group{
+  margin-bottom: 1.6rem
+}
+
+.form-group h1{
+  font-size: 1rem;
+  color: var(--primary-darkerblue);
+}
+
+.form-group label{
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.6rem;
+  font-size: 1rem;
+}
+
+.form-group input, textarea{
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-gray);
+  border-radius: 0.8rem;
+  font-size: 1rem;
+}
+
+.card-actions.edit-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  margin-top: 2.4rem;
+}
+
+.btn{
+  padding: 1rem 2rem;
+  border-radius: 0.8rem;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary{
+  background-color: var(--primary-darkerblue);
+  color: var(--background-color);
+}
+
+.btn-secondary{
+  background-color: var(--lighter-blue);
+  color: var(--primary-darkerblue);
+}
+
 
 
 /*------------PESTAÑA DE DIAGNOSTICOS Y PRUEBAS---------------*/

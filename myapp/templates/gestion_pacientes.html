@@ -329,56 +329,136 @@
 
                     <!--Tarjeta de consulta clinica 1-->
                     <div class="history-card">
-                        <div class="card-main-content">
-                            <div class="historia-card-header">
-                                <span class="badge history-id">HC-001</span>
-                                <span class="badge status-completed">Completado</span>
-                            </div>
-                            <div class="card-body">
-                                <h4 class="history-title">Consulta Inicial</h4>
-                                <p class="history-subtitle">Sindrome de Marfan - Sospecha</p>
-                                <div class="history-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-calendar"></i>
-                                        <span>2024-01-15</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-user"></i>
-                                        <span>Dra. Gamboa</span>
+
+                        <div class="view-content">
+                            <div class="card-main-content">
+                                <div class="historia-card-header">
+                                    <span class="badge history-id">HC-001</span>
+                                    <span class="badge status-completed">Completado</span>
+                                </div>
+                                <div class="card-body">
+                                    <h4 class="history-title">Consulta Inicial</h4>
+                                    <p class="history-subtitle">Sindrome de Marfan - Sospecha</p>
+                                    <div class="history-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>2024-01-15</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-user"></i>
+                                            <span>Dra. Gamboa</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="history-tags">
+                                    <span class="tag">Ecocardiograma</span>
+                                    <span class="tag">Analisis Genético</span>
+                                </div>
                             </div>
-                            <div class="history-tags">
-                                <span class="tag">Ecocardiograma</span>
-                                <span class="tag">Analisis Genético</span>
+                            <div class="card-actions view-actions">
+                                <button class="action-btn js-edit-btn" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CONTENIDO EDITABLE (oculto por defecto) -->
+                        <div class="editable-content">
+                            <h4>Editando Historia Clínica: HC-001</h4>
+                            
+                            <!-- Aquí va tu formulario -->
+                            <form class="edit-form">
+                                <h1>Observaciones de la consulta</h1>
+                                <div class="form-group">
+                                    <label for="fecha-asesoramiento">Fecha</label>
+                                    <input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento">
+                                </div>
+                                <div class="form-group">
+                                    <label for="asesoramiento">Asesoramiento</label>
+                                    <textarea name="asesoramiento" id="asesoramiento"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evolucion">Evoluciones</label>
+                                    <textarea name="evolucion" id="evolucion"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="examenes">Examenes</label>
+                                    <input type="file" name="examenes" id="examenes">
+                                </div>
+                            </form>
+
+                            <!-- Botones para el modo de edición -->
+                            <div class="card-actions edit-actions">
+                                <button class="btn btn-secondary js-cancel-btn">Cancelar</button>
+                                <button class="btn btn-primary js-save-btn">Guardar Cambios</button>
                             </div>
                         </div>
                     </div>
 
                     <!--Tarjeta de consulta clinica 2-->
                     <div class="history-card">
-                        <div class="card-main-content">
-                            <div class="historia-card-header">
-                                <span class="badge history-id">HC-001</span>
-                                <span class="badge status-completed">Completado</span>
-                            </div>
-                            <div class="card-body">
-                                <h4 class="history-title">Consulta de Seguimiento</h4>
-                                <p class="history-subtitle">Sindrome de Marfan - Confirmado</p>
-                                <div class="history-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-calendar"></i>
-                                        <span>2024-02-15</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-user"></i>
-                                        <span>Dra. Gamboa</span>
+
+                        <div class="view-content">
+                            <div class="card-main-content">
+                                <div class="historia-card-header">
+                                    <span class="badge history-id">HC-001</span>
+                                    <span class="badge status-completed">Completado</span>
+                                </div>
+                                <div class="card-body">
+                                    <h4 class="history-title">Consulta de Seguimiento</h4>
+                                    <p class="history-subtitle">Sindrome de Marfan - Confirmado</p>
+                                    <div class="history-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>2024-02-15</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-user"></i>
+                                            <span>Dra. Gamboa</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="history-tags">
+                                    <span class="tag">Secuenciacion completa</span>
+                                    <span class="tag">Analisis familiar</span>
+                                </div>
                             </div>
-                            <div class="history-tags">
-                                <span class="tag">Secuenciacion completa</span>
-                                <span class="tag">Analisis familiar</span>
+                            <div class="card-actions view-actions">
+                                <button class="action-btn js-edit-btn" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CONTENIDO EDITABLE (oculto por defecto) -->
+                        <div class="editable-content">
+                            <h4>Editando Historia Clínica: HC-001</h4>
+                            
+                            <!-- Aquí va tu formulario -->
+                            <form class="edit-form">
+                                <h1>Observaciones de la consulta</h1>
+                                <div class="form-group">
+                                    <label for="fecha-asesoramiento">Fecha</label>
+                                    <input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento">
+                                </div>
+                                <div class="form-group">
+                                    <label for="asesoramiento">Asesoramiento</label>
+                                    <textarea name="asesoramiento" id="asesoramiento"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evolucion">Evoluciones</label>
+                                    <textarea name="evolucion" id="evolucion"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="examenes">Examenes</label>
+                                    <input type="file" name="examenes" id="examenes">
+                                </div>
+                            </form>
+
+                            <!-- Botones para el modo de edición -->
+                            <div class="card-actions edit-actions">
+                                <button class="btn btn-secondary js-cancel-btn">Cancelar</button>
+                                <button class="btn btn-primary js-save-btn">Guardar Cambios</button>
                             </div>
                         </div>
                     </div>              
@@ -501,6 +581,49 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(tabId).classList.add('active');
         });
     });
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Usamos un contenedor padre para delegar los eventos
+    const historyListContainer = document.querySelector('.history-list'); // Ajusta este selector a tu contenedor de tarjetas
+
+    if (historyListContainer) {
+        historyListContainer.addEventListener('click', (event) => {
+            // Encuentra el botón de editar más cercano al elemento clickeado
+            const editButton = event.target.closest('.js-edit-btn');
+            if (editButton) {
+                const card = editButton.closest('.history-card');
+                if (card) {
+                    card.classList.add('is-editing');
+                }
+                return; // Detenemos la ejecución para no buscar otros botones
+            }
+
+            // Encuentra el botón de guardar más cercano
+            const saveButton = event.target.closest('.js-save-btn');
+            if (saveButton) {
+                const card = saveButton.closest('.history-card');
+                if (card) {
+                    // Aquí iría tu lógica para guardar los datos del formulario
+                    console.log('Guardando datos...');
+                    card.classList.remove('is-editing'); // Vuelve al modo vista
+                }
+                return;
+            }
+
+            // Encuentra el botón de cancelar más cercano
+            const cancelButton = event.target.closest('.js-cancel-btn');
+            if (cancelButton) {
+                const card = cancelButton.closest('.history-card');
+                if (card) {
+                    // Simplemente vuelve al modo vista sin guardar
+                    card.classList.remove('is-editing');
+                }
+                return;
+            }
+        });
+    }
 });
 
 </script>
