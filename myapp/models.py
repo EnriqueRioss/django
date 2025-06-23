@@ -594,6 +594,7 @@ def create_or_update_genetista_profile(sender, instance, created, **kwargs):
 
 
 class HistorialCambios(models.Model):
+
     cambio_id = models.AutoField(primary_key=True)
     historia = models.ForeignKey('HistoriasClinicas', on_delete=models.CASCADE, null=True, blank=True)
     fecha_cambio = models.DateTimeField(auto_now_add=True)
@@ -603,6 +604,15 @@ class HistorialCambios(models.Model):
         return f"Historial Cambio {self.cambio_id} para Historia {self.historia_id if self.historia else 'N/A'}"
 
 class HistoriasClinicas(models.Model):
+
+    ESTADO_BORRADOR = 'borrador'
+    ESTADO_FINALIZADA = 'finalizada'
+    
+    ESTADO_CHOICES = [
+        (ESTADO_BORRADOR, 'Borrador'),
+        (ESTADO_FINALIZADA, 'Finalizada'),
+    ]
+
     historia_id = models.AutoField(primary_key=True)
     numero_historia = models.IntegerField(unique=True)
     fecha_ingreso = models.DateTimeField(auto_now_add=True)
@@ -613,8 +623,18 @@ class HistoriasClinicas(models.Model):
     medico = models.CharField(max_length=100, null=True, blank=True)
     especialidad = models.CharField(max_length=100, null=True, blank=True)
 
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default=ESTADO_BORRADOR,
+        verbose_name="Estado de la Historia"
+    )
+
+
     def __str__(self):
-        return f"Historia Clinica N° {self.numero_historia}"
+        # MODIFICADO: Se añade el estado al string
+        return f"Historia Clinica N° {self.numero_historia} ({self.get_estado_display()})"
+
 
 class InformacionPadres(models.Model):
     padre_id = models.AutoField(primary_key=True)
