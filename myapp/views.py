@@ -54,6 +54,17 @@ from .forms import (
 from django.views.decorators.cache import patch_cache_control
 
 
+def clear_editing_session(request):
+    """
+    Función auxiliar para limpiar la sesión de edición si se inició
+    desde la lista de 'ver_historias'.
+    """
+    if request.session.pop('source_is_edit_list', False):
+        if 'historia_en_progreso_id' in request.session:
+            del request.session['historia_en_progreso_id']
+            messages.info(request, "La edición de la historia clínica ha sido cancelada.")
+
+
 def never_cache_on_get(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -140,6 +151,11 @@ def crear_editar_historia(request, historia_id=None):
     if historia_id:
         instance = get_object_or_404(HistoriasClinicas, pk=historia_id)
         editing = True
+        # --- LÓGICA AÑADIDA ---
+        # Marcar que la edición se inició desde la lista
+        request.session['source_is_edit_list'] = True
+        # Asegurarse de que la sesión de progreso esté sincronizada
+        request.session['historia_en_progreso_id'] = instance.pk
     elif 'historia_en_progreso_id' in request.session:
         try:
             instance = HistoriasClinicas.objects.get(pk=request.session['historia_en_progreso_id'])
@@ -171,8 +187,11 @@ def crear_editar_historia(request, historia_id=None):
                 # MODIFICADO: Lógica para "Guardar Borrador"
                 if 'save_draft' in request.POST:
                     request.session.pop('historia_en_progreso_id', None)
+                    # --- AÑADIDO ---
+                    request.session.pop('source_is_edit_list', None) # Limpiar también al guardar borrador
+                    # --- FIN ---
                     messages.success(request, f"Borrador de la Historia Clínica N° {historia.numero_historia} guardado exitosamente.")
-                    redirect_url = reverse('index')
+                    redirect_url = reverse('ver_historias') # Redirigir a la lista
                     if is_ajax:
                         return JsonResponse({'success': True, 'redirect_url': redirect_url})
                     return redirect(redirect_url)
@@ -781,6 +800,8 @@ def autorizaciones_view(request, historia_id, tipo, objeto_id):
             messages.success(request, "¡Historia clínica finalizada y guardada exitosamente!")
             
             request.session.pop('historia_en_progreso_id', None)
+            # --- AÑADIDO ---
+            request.session.pop('source_is_edit_list', None)
 
             redirect_url = reverse('index')
             if is_ajax:
@@ -884,6 +905,7 @@ def ver_proposito(request, proposito_id):
 @admin_required
 @never_cache
 def gestion_usuarios_view(request):
+    clear_editing_session(request)
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     if request.method == 'POST':
@@ -954,8 +976,66 @@ def gestion_usuarios_view(request):
 
 
 @login_required
+@all_roles_required
+@never_cache
 def ver_historias(request):
-    return render(request, 'ver_historias.html')
+    clear_editing_session(request) # Limpiar sesión si se navega aquí desde una edición
+
+    # --- Construcción del Queryset Base con RBAC ---
+    try:
+        user_profile = request.user.genetistas
+    except Genetistas.DoesNotExist:
+        messages.error(request, "Su perfil de usuario no está configurado.")
+        return redirect('index')
+
+    base_qs = HistoriasClinicas.objects.select_related('genetista__user').prefetch_related('propositos_set').order_by('-fecha_ingreso')
+
+    if user_profile.rol == 'GEN':
+        historias_qs = base_qs.filter(genetista=user_profile)
+    elif user_profile.rol == 'LEC':
+        if user_profile.associated_genetista:
+            historias_qs = base_qs.filter(genetista=user_profile.associated_genetista)
+        else:
+            historias_qs = HistoriasClinicas.objects.none()
+            messages.warning(request, "Usted es un Lector sin genetista asociado.")
+    else: # ADM y Superuser ven todo
+        historias_qs = base_qs
+
+    # --- Aplicación de Filtros ---
+    search_query = request.GET.get('buscar_historia', '').strip()
+    estado_query = request.GET.get('estado_historia', '').strip()
+    genetista_query = request.GET.get('genetista', '').strip()
+    motivo_query = request.GET.get('motivo_consulta', '').strip()
+
+    if search_query:
+        historias_qs = historias_qs.filter(
+            Q(numero_historia__icontains=search_query) |
+            Q(propositos__nombres__icontains=search_query) |
+            Q(propositos__apellidos__icontains=search_query)
+        ).distinct()
+
+    if estado_query and estado_query != 'todos':
+        historias_qs = historias_qs.filter(estado=estado_query)
+
+    if genetista_query and genetista_query != 'todos':
+        # Esta búsqueda es frágil si los nombres no son únicos. Una mejor
+        # implementación usaría IDs de genetista en el select del HTML.
+        historias_qs = historias_qs.filter(
+            Q(genetista__user__first_name__icontains=genetista_query) |
+            Q(genetista__user__last_name__icontains=genetista_query)
+        )
+
+    if motivo_query and motivo_query != 'todos':
+        historias_qs = historias_qs.filter(motivo_tipo_consulta=motivo_query)
+
+    # Para poblar el dropdown de genetistas en el filtro
+    genetistas_list = Genetistas.objects.filter(rol='GEN').select_related('user').order_by('user__first_name')
+
+    context = {
+        'historias_list': historias_qs,
+        'genetistas_list': genetistas_list,
+    }
+    return render(request, 'ver_historias.html', context)
 
 # views.py
 
@@ -1059,6 +1139,7 @@ def signout(request):
 @all_roles_required
 @never_cache
 def reports_view(request):
+    clear_editing_session(request)
     form = ReportSearchForm(request.GET or None, user=request.user)
     results = []
     applied_filters_display = {}
@@ -1351,6 +1432,7 @@ def reset_password_admin(request, user_id):
 @login_required
 @all_roles_required
 def index_view(request):
+    clear_editing_session(request)
     user_gen_profile = request.user.genetistas
     role = user_gen_profile.rol
     
@@ -1442,6 +1524,7 @@ def pacientes_lector_view(request, genetista_id):
 @login_required
 @all_roles_required
 def pacientes_redirect_view(request):
+    clear_editing_session(request)
     user_profile = request.user.genetistas
     role = user_profile.rol
 

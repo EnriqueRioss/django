@@ -630,6 +630,30 @@ class HistoriasClinicas(models.Model):
         verbose_name="Estado de la Historia"
     )
 
+    def get_paciente_display(self):
+        """
+        Devuelve el nombre del paciente o de la pareja asociado a esta historia.
+        Este método asume que has usado .prefetch_related('propositos') en tu queryset para eficiencia.
+        """
+        # La relación inversa desde Propositos es 'propositos_set' por defecto, pero como la ForeignKey
+        # se llama 'historia', el related_name por defecto es 'propositos_set'.
+        # Si lo cambiaste en el modelo Propositos, ajusta esto.
+        propositos = self.propositos_set.all()
+
+        if not propositos:
+            return "Sin Paciente Asignado"
+
+        if len(propositos) == 1:
+            return f"{propositos[0].nombres} {propositos[0].apellidos}"
+        
+        # Para más de un propósito, asumimos que son una pareja.
+        # La lógica robusta buscaría el objeto Pareja, pero esto es más directo.
+        if len(propositos) > 1:
+            names = " y ".join([f"{p.nombres}" for p in propositos])
+            return f"Pareja: {names}"
+        
+        return "Información de paciente inconsistente"
+
 
     def __str__(self):
         # MODIFICADO: Se añade el estado al string
