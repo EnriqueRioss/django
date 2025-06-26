@@ -18,13 +18,16 @@ urlpatterns = [
     path('logout/', views.signout, name="logout"),
 
     # Role-specific "Pacientes" list access points
-    path('pacientes/admin/', views.gestion_pacientes_view, name="pacientes_admin_list"),
-    path('pacientes/genetista/', views.pacientes_genetista_view, name="pacientes_genetista_list"),
-    path('pacientes/lector/<int:genetista_id>/', views.pacientes_lector_view, name="pacientes_lector_list"),
+    path('gestion/pacientes/', views.gestion_pacientes_view, name='gestion_pacientes'),
+    #path('pacientes/admin/', views.gestion_pacientes_view, name="pacientes_admin_list"),
+    #path('pacientes/genetista/', views.pacientes_genetista_view, name="pacientes_genetista_list"),
+    #path('pacientes/lector/<int:genetista_id>/', views.pacientes_lector_view, name="pacientes_lector_list"),
     # Redirector for the generic "Pacientes" sidebar link
     path('pacientes/', views.pacientes_redirect_view, name="pacientes_list_redirect"),
+    path('historias/delete/<int:historia_id>/', views.delete_historia, name='historia_delete'),
 
     path('historias/crear/', views.crear_editar_historia, name="historia_crear"),
+     path('historias/<int:historia_id>/pdf/', views.generar_pdf_historia, name='historia_pdf'),
 path('historias/<int:historia_id>/editar/', views.crear_editar_historia, name="historia_editar"),
     path('historias/<int:historia_id>/paciente/crear/', views.crear_paciente, name="paciente_crear"),
     path('historias/<int:historia_id>/pareja/crear/', views.crear_pareja, name="pareja_crear"),

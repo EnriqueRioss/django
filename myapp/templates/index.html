@@ -1,12 +1,9 @@
 {% extends 'layouts/base.html' %}
 
 {% load static %}
-{% load humanize %} {# Carga la librería para usar 'naturaltime' #}
+{% load humanize %}
 
-
-{%block content%}
-
-
+{% block content %}
 <head>
     <title>{{ page_title }} | IIG - LUZ</title>
     <link rel="stylesheet" href= "{% static '/styles/main.css' %}">
@@ -24,7 +21,6 @@
     <div class="dashboard-content">
         <div class="welcome-banner">
             <div class="welcome-text">
-                {# Muestra el nombre y rol del usuario dinámicamente #}
                 <h1>Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</h1>
                 <p>Sistema de Gestión de Historias Clínicas Genéticas</p>
                 {% if request.user.genetistas %}
@@ -39,104 +35,82 @@
         </div>
 
         <div class="stats-grid">
+            <!-- Las tarjetas de estadísticas permanecen iguales -->
             <div class="stat-card">
                 <div class="stat-header">
-                    <h3>Historias Clínicas</h3>
-                    <i class="fas fa-file-alt"></i>
+                    <h3>Historias Clínicas</h3><i class="fas fa-file-alt"></i>
                 </div>
-                <div class="stat-content">
-                    {# Muestra el conteo de historias del contexto #}
-                    <h2>{{ stats.historias }}</h2>
-                    <p>+2% desde el mes pasado</p>
-                </div>
+                <div class="stat-content"><h2>{{ stats.historias }}</h2><p>+2% desde el mes pasado</p></div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-header">
-                    <h3>Pacientes</h3>
-                    <i class="fas fa-users"></i>
+                    <h3>Pacientes</h3><i class="fas fa-users"></i>
                 </div>
-                <div class="stat-content">
-                    {# Muestra el conteo de pacientes del contexto #}
-                    <h2>{{ stats.pacientes }}</h2>
-                    <p>+2% desde el mes pasado</p>
-                </div>
+                <div class="stat-content"><h2>{{ stats.pacientes }}</h2><p>+2% desde el mes pasado</p></div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-header">
-                    <h3>Consultas</h3>
-                    <i class="fas fa-list"></i>
+                    <h3>Consultas</h3><i class="fas fa-list"></i>
                 </div>
-                <div class="stat-content">
-                    {# Muestra las consultas completadas del contexto #}
-                    <h2>{{ stats.consultas_completadas }}</h2>
-                    <p>+4% desde el mes pasado</p>
-                </div>
+                <div class="stat-content"><h2>{{ stats.consultas_completadas }}</h2><p>+4% desde el mes pasado</p></div>
             </div>
-
             <div class="stat-card">
                 <div class="stat-header">
-                    <h3>Diagnósticos Completados</h3>
-                    <i class="fas fa-check-circle"></i>
+                    <h3>Diagnósticos Completados</h3><i class="fas fa-check-circle"></i>
                 </div>
-                <div class="stat-content">
-                    {# Muestra el valor estático del contexto #}
-                    <h2>{{ stats.diagnosticos_completados }}</h2>
-                    <p>+1.5% desde el mes pasado</p>
-                </div>
+                <div class="stat-content"><h2>{{ stats.diagnosticos_completados }}</h2><p>+1.5% desde el mes pasado</p></div>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
         <div class="content-grid">
-          <!-- Actividades Recientes -->
           <div class="content-card wide">
             <div class="card-header">
-              <h2>Actividad Reciente</h2>
-              <p>Últimas acciones en el sistema</p>
+              <h2>Actividad Reciente</h2><p>Últimas acciones en el sistema</p>
             </div>
             <div class="card-content">
               <div class="activity-list">
-                {# Itera sobre la lista de actividades del contexto #}
                 {% for activity in recent_activities %}
                 <div class="activity-item">
                   <div class="activity-indicator {{ activity.indicator_class }}"></div>
                   <div class="activity-details">
                     <p class="activity-title">{{ activity.title }}</p>
-                    {# Usa 'naturaltime' para mostrar "Hace X tiempo" #}
                     <p class="activity-meta">{{ activity.meta }} • {{ activity.timestamp|naturaltime }}</p>
                   </div>
                 </div>
                 {% empty %}
                 <div class="activity-item">
-                    <div class="activity-details">
-                        <p class="activity-title">No hay actividad reciente para mostrar.</p>
-                    </div>
+                    <div class="activity-details"><p class="activity-title">No hay actividad reciente para mostrar.</p></div>
                 </div>
                 {% endfor %}
               </div>
             </div>
           </div>
           
-          <!-- Acciones Rapidas -->
           <div class="content-card">
             <div class="card-header">
-              <h2>Acciones Rápidas</h2>
-              <p>Funciones más utilizadas</p>
+              <h2>Acciones Rápidas</h2><p>Funciones más utilizadas</p>
             </div>
             <div class="card-content">
-                {# Solo muestra este botón si el usuario tiene permiso #}
                 {% if can_create_historia %}
                 <a href="{% url 'historia_crear' %}" class="action-button">
                     <i class="fas fa-file-alt"></i>
                     Nueva Historia Clínica
                 </a>
                 {% endif %}
-                <a href="{% url 'pacientes_list_redirect' %}" class="action-button">
-                    <i class="fas fa-users"></i>
-                    Registrar Paciente
-                </a>
+
+                {# --- LÓGICA MODIFICADA PARA EL BOTÓN DE PACIENTES/HISTORIAS --- #}
+                {% if request.user.genetistas.rol == 'LEC' %}
+                    <a href="{% url 'ver_historias' %}" class="action-button">
+                        <i class="fas fa-book-medical"></i>
+                        Ver Historias
+                    </a>
+                {% else %}
+                    <a href="{% url 'gestion_pacientes' %}" class="action-button">
+                        <i class="fas fa-users"></i>
+                        Gestionar Pacientes
+                    </a>
+                {% endif %}
+                
                 <a href="{% url 'reports_dashboard' %}" class="action-button">
                     <i class="fas fa-chart-bar"></i>
                     Ver Reportes
@@ -146,8 +120,6 @@
         </div>
     </div>
 </div>
-    
-
 {% endblock %}
 
 <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script> 

@@ -38,7 +38,6 @@
                 </div>
                 <div class="user-info">
                     <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
-                    {# Correctly check for genetistas profile and then its role #}
                     {% if user.genetistas and user.genetistas.rol %}
                         <span class="user-role">{{ user.genetistas.get_rol_display }}</span>
                     {% elif user.is_superuser %}
@@ -62,14 +61,14 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{% url 'pacientes_list_redirect' %}" class="nav-link">
+                        <a href="{% url 'gestion_pacientes' %}" class="nav-link">
                             <i class="fas fa-users"></i>
                             <span class="text">Pacientes</span>
                         </a>
                     </li>
-                    {# Corrected conditional for Historias Clínicas link #}
+                    {# --- LÓGICA MODIFICADA PARA INCLUIR AL LECTOR --- #}
                     {% if user.is_authenticated and user.genetistas %}
-                        {% if user.genetistas.rol == 'GEN' or user.genetistas.rol == 'ADM' %}
+                        {% if user.genetistas.rol == 'GEN' or user.genetistas.rol == 'ADM' or user.genetistas.rol == 'LEC' or user.is_superuser %}
                         <li class="nav-item">
                             <a href="{% url 'ver_historias' %}" class="nav-link">
                                 <i class="fas fa-file-alt"></i>
@@ -90,17 +89,10 @@
                             <span class="text">Reportes</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link"> <!-- Link a Estadísticas -->
-                            <i class="fas fa-chart-line"></i>
-                            <span class="text">Estadísticas</span>
-                        </a>
-                    </li>
                 </ul>
             </div>
 
-            {# Corrected conditional for Administración section #}
-            {% if user.is_authenticated and user.genetistas and user.genetistas.rol == 'ADM' %}
+            {% if user.is_authenticated and user.genetistas and user.genetistas.rol == 'ADM' or user.is_superuser %}
             <div class="nav-section">
                 <h3 class="nav-section-title">Administración</h3>
                 <ul class="nav-menu">
@@ -111,15 +103,15 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link"> <!-- Link a Gestión de Pacientes -->
+                        <a href="{% url 'gestion_pacientes' %}" class="nav-link">
                             <i class="fas fa-database"></i>
                             <span class="text">Gestión de Pacientes</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link"> <!-- Link a Exportar datos -->
-                            <i class="fas fa-download"></i>
-                            <span class="text">Exportar datos</span>
+                        <a href="#" class="nav-link"> 
+                            <i class="fas fa-cog"></i>
+                            <span class="text">Configuraciones</span>
                         </a>
                     </li>
                 </ul>
@@ -129,12 +121,6 @@
             <div class="nav-section">
                 <h3 class="nav-section-title">Sistema</h3>
                 <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link"> <!-- Link a Configuraciones -->
-                            <i class="fas fa-cog"></i>
-                            <span class="text">Configuraciones</span>
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a href="{% url 'logout' %}" class="nav-link">
                             <i class="fa-solid fa-right-to-bracket"></i>
@@ -148,7 +134,7 @@
        
     <div class="content">
         {% if messages %}
-            <div class="messages-container" style="padding: 2rem 2rem 3rem 27rem;">
+            <div class="messages-container" style="padding: 2rem 2rem 0rem 27rem;">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" 
                          style="background-color: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% elif message.tags == 'warning' %}#fff3cd{% else %}#cce5ff{% endif %}; 
@@ -157,7 +143,7 @@
                                 padding: .75rem 1.25rem; margin-bottom: 1rem; border-radius: .25rem; position: relative;">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" 
-                                style="position: absolute; top: 0; right: 0; padding: .75rem 1.25rem; background: transparent; border: 0; font-size: 1.2rem;"
+                                style="position: absolute; top: 0; right: 0; padding: .75rem 1.25rem; background: transparent; border: 0; font-size: 1.2rem; cursor: pointer;"
                                 onclick="this.parentElement.style.display='none';">×</button>
                     </div>
                 {% endfor %}
@@ -168,17 +154,15 @@
         {% endblock %}
         
     </div>  
+    
+    <!-- El resto del HTML (Chatbot y Scripts) permanece igual -->
     <div id="chatbot-container" class="chatbot-container">
         <div class="chatbot-header">
             <h3><i class="fas fa-robot"></i> GenAssist</h3>
             <button id="chatbot-close-btn" class="chatbot-close-btn">×</button>
         </div>
-        <div id="chatbot-messages" class="chatbot-messages">
-            <!-- Los mensajes se insertarán aquí -->
-        </div>
-        <div id="chatbot-suggestions" class="chatbot-suggestions">
-            <!-- Las sugerencias se insertarán aquí -->
-        </div>
+        <div id="chatbot-messages" class="chatbot-messages"></div>
+        <div id="chatbot-suggestions" class="chatbot-suggestions"></div>
         <form id="chatbot-form" class="chatbot-form">
             <input type="text" id="chatbot-input" placeholder="Escribe tu pregunta..." autocomplete="off" disabled>
             <button type="submit" id="chatbot-send-btn" disabled>
@@ -186,7 +170,6 @@
             </button>
         </form>
     </div>
-    <!-- Botón Flotante para abrir el chat -->
     <button id="chatbot-fab" class="chatbot-fab">
         <i class="fas fa-brain"></i>
     </button> 
@@ -201,7 +184,6 @@
         
             let clickedButton = null;
         
-            // 1. Captura qué botón de envío fue clickeado
             form.querySelectorAll('button[type="submit"]').forEach(button => {
                 button.addEventListener('click', function() {
                     clickedButton = this;
@@ -209,44 +191,36 @@
             });
         
             form.addEventListener('submit', function(e) {
-                e.preventDefault(); // Detener el envío normal
+                e.preventDefault();
         
                 const formData = new FormData(form);
         
-                // 2. Añade el nombre y valor del botón clickeado al FormData
                 if (clickedButton) {
                     formData.append(clickedButton.name, clickedButton.value || '');
                 }
         
-                // Limpiar errores previos
                 form.querySelectorAll('.field-errors').forEach(el => el.innerHTML = '');
                 const nonFieldErrors = form.querySelector('.non-field-errors');
                 if (nonFieldErrors) nonFieldErrors.innerHTML = '';
-        
         
                 fetch(form.action, {
                     method: 'POST',
                     body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        // El CSRF token ya está en el FormData, no es necesario en headers
                     }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.redirect_url) {
-                        // Redirección exitosa
                         window.location.href = data.redirect_url;
                     } else {
-                        // Manejar errores de validación
                         if (data.errors) {
-                            // Errores globales del formulario
                             if (data.errors.__all__) {
                                 data.errors.__all__.forEach(error => {
                                     if(nonFieldErrors) nonFieldErrors.innerHTML += `<span>${error}</span>`;
                                 });
                             }
-                            // Errores específicos de cada campo
                             for (const fieldName in data.errors) {
                                 if (fieldName !== '__all__') {
                                     const errorDiv = document.getElementById(`error_id_${fieldName}`);
@@ -271,7 +245,6 @@
                     if(nonFieldErrors) nonFieldErrors.innerHTML = '<span>Error de conexión. Intente de nuevo.</span>';
                 });
         
-                // Resetear el botón clickeado para el próximo envío
                 clickedButton = null;
             });
         }

@@ -5,6 +5,85 @@
 <head>
     <title>HISTORIAS CLÍNICAS | IIG - LUZ</title>
     <link rel="stylesheet" href="{% static '/styles/verhistorias.css' %}">
+
+    <style>
+        /* Estilos para el modal de confirmación */
+        .modal-confirm {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            outline: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-confirm.active {
+            display: flex;
+        }
+        .modal-confirm-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.5);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-confirm-icon {
+            font-size: 3rem;
+            color: #dc3545; /* Rojo peligro */
+            margin-bottom: 1rem;
+        }
+        .modal-confirm-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .modal-confirm-text {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+        .modal-confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .btn-modal {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .btn-modal-cancel {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #212529;
+        }
+        .btn-modal-cancel:hover {
+            background-color: #e9ecef;
+        }
+        .btn-modal-confirm {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .btn-modal-confirm:hover {
+            background-color: #c82333;
+        }
+        
+
+    </style>
 </head>
 
 <div class="main-content">
@@ -17,19 +96,20 @@
             </div>
         </header>
 
-        <!-- Contenido de la historia-->
         <div class="historias-content">
-            <!-- Header -->
             <div class="contenido-header">
                 <div class="header-content">
                     <h1>Historias Clínicas Genéticas</h1>
                     <p>Gestiona y consulta todas las historias clínicas del sistema</p>
                 </div>
                 <div class="header-actions">
+                    {# --- LÓGICA AÑADIDA: Ocultar botón para Lector --- #}
+                    {% if request.user.genetistas.rol != 'LEC' %}
                     <a href="{% url 'historia_crear' %}" class="btn-primary">
                         <i class="fas fa-file-alt"></i>
                         Nueva Historia
                     </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -52,29 +132,43 @@
                             <div class="filter-group">
                                 <label for="estado_historia">Estado</label>
                                 <select name="estado_historia" id="estado_historia">
-                                    <option value="todos" {% if request.GET.estado_historia == 'todos' %}selected{% endif %}>Todos los estados</option>
+                                    <option value="todos" {% if not request.GET.estado_historia or request.GET.estado_historia == 'todos' %}selected{% endif %}>Todos los estados</option>
                                     <option value="borrador" {% if request.GET.estado_historia == 'borrador' %}selected{% endif %}>Borrador</option>
                                     <option value="finalizada" {% if request.GET.estado_historia == 'finalizada' %}selected{% endif %}>Finalizada</option>
                                 </select>
                             </div>
                             
+                            {# --- LÓGICA MODIFICADA PARA EL FILTRO DE GENETISTA --- #}
                             <div class="filter-group">
                                 <label for="genetista">Genetista</label>
-                                <select name="genetista" id="genetista">
-                                    <option value="todos" {% if request.GET.genetista == 'todos' %}selected{% endif %}>Todos los genetistas</option>
-                                    {% for g in genetistas_list %}
-                                        <option value="{{ g.user.first_name }}" {% if request.GET.genetista == g.user.first_name %}selected{% endif %}>
-                                            {{ g.user.get_full_name|default:g.user.username }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                {% if request.user.genetistas.rol == 'ADM' or request.user.is_superuser %}
+                                <div class="genetista-select"> {# Se envuelve para consistencia #}
+                                    <select name="genetista" id="genetista">
+                                        <option value="todos" {% if not request.GET.genetista or request.GET.genetista == 'todos' %}selected{% endif %}>Todos los genetistas</option>
+                                        {% for g in genetistas_list %}
+                                            <option value="{{ g.pk }}" {% if request.GET.genetista == g.pk|stringformat:"s" %}selected{% endif %}>
+                                                {{ g.user.get_full_name|default:g.user.username }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% else %}
+                                    {% with target_genetista=request.user.genetistas.associated_genetista|default:request.user.genetistas %}
+                                    <div class="genetista-select"> {# La clave es usar la misma estructura HTML #}
+                                        <select disabled> {# Se usa un <select> para que herede los estilos correctos #}
+                                            <option selected>
+                                                {{ target_genetista.user.get_full_name|default:target_genetista.user.username }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    {% endwith %}
+                                {% endif %}
                             </div>
-
                             <div class="filter-group">
                                 <label for="motivo_consulta">Motivo de Consulta</label>
                                 <select name="motivo_consulta" id="motivo_consulta">
                                     <option value="todos" {% if not request.GET.motivo_consulta or request.GET.motivo_consulta == 'todos' %}selected{% endif %}>Todos los motivos</option>
-                                    {% for value, display in historias_list.model.motivo_tipo_consulta.field.choices %}
+                                    {% for value, display in motivo_choices %}
                                         <option value="{{ value }}" {% if request.GET.motivo_consulta == value %}selected{% endif %}>{{ display }}</option>
                                     {% endfor %}
                                 </select>
@@ -95,7 +189,7 @@
             <div class="content-card">
                 <div class="card-header">
                     <h2>Resultados de Búsqueda</h2>
-                    <p>{{ historias_list.count }} registro(s) encontrado(s).</p>
+                    <p>{{ historias_list.count }} registro{{ historias_list.count|pluralize }} encontrado{{ historias_list.count|pluralize }}.</p>
                 </div>
                 <div class="card-content">
                     <div class="table-container">
@@ -118,25 +212,35 @@
                                     <td>{{ historia.get_paciente_display }}</td>
                                     <td>{{ historia.get_motivo_tipo_consulta_display }}</td>
                                     <td>
-                                        {% if historia.estado == 'finalizada' %}
-                                            <span class="badge default">Finalizada</span>
-                                        {% else %}
-                                            <span class="badge secondary">Borrador</span>
-                                        {% endif %}
+                                        <span class="badge {% if historia.estado == 'finalizada' %}default{% else %}secondary{% endif %}">{{ historia.get_estado_display }}</span>
                                     </td>
                                     <td>{{ historia.genetista.user.get_full_name|default:"N/A" }}</td>
                                     <td>{{ historia.fecha_ingreso|date:"d/m/Y" }}</td>
                                     <td>
+                                        {# --- LÓGICA AÑADIDA: Ocultar acciones para Lector --- #}
+                                        {% if request.user.genetistas.rol != 'LEC' %}
                                         <div class="dropdown">
                                             <button class="btn-icon">
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="{% url 'historia_editar' historia.pk %}" class="edit-historia"><i class="fas fa-edit"></i> Editar</a>
+                                                <a href="{% url 'historia_editar' historia.pk %}"><i class="fas fa-edit"></i> Editar</a>
                                                 <a href="#" class="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</a>
-                                                <a href="#" class="danger"><i class="fas fa-download"></i> Descargar PDF</a>
+                                                <a href="#" class="warning"><i class="fas fa-ban"></i> Anular</a>
+                                                <a href="{% url 'historia_pdf' historia.pk %}" target="_blank" class="info"><i class="fas fa-file-pdf"></i> Generar PDF</a>
+
+                                            <!--    {# --- LÓGICA DE ELIMINAR COMENTADA --- #}
+                                                {# 
+                                                <a href="#" class="danger js-delete-historia" data-historia-id="{{ historia.pk }}" data-historia-numero="{{ historia.numero_historia }}">
+                                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                                </a> 
+                                                #}
+                                                -->
                                             </div>
                                         </div>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -154,29 +258,82 @@
 </div>
 
 
+<!-- Modal de Confirmación para Eliminar 
+<div class="modal-confirm" id="deleteConfirmationModal">
+    <div class="modal-confirm-content">
+        <div class="modal-confirm-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 class="modal-confirm-title">¿Está seguro?</h3>
+        <p class="modal-confirm-text">
+            Está a punto de eliminar la historia clínica <strong id="modal-historia-numero"></strong>. 
+            Esta acción es irreversible y borrará permanentemente todos los datos del paciente y sus consultas asociadas.
+        </p>
+        <div class="modal-confirm-actions">
+            <button type="button" class="btn-modal btn-modal-cancel" id="cancelDeleteBtn">Cancelar</button>
+            <form id="deleteHistoriaForm" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-modal btn-modal-confirm">Sí, eliminar</button>
+            </form>
+        </div>
+    </div>
+</div>
+-->
 <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
 
 <script>
-// Para el comportamiento del dropdown
 document.addEventListener('DOMContentLoaded', function() {
+    // Dropdown de acciones
     document.body.addEventListener('click', function(e) {
-        // Cerrar todos los dropdowns
         document.querySelectorAll('.dropdown-content').forEach(content => {
-            content.style.display = 'none';
+            if (!content.previousElementSibling.contains(e.target)) {
+                content.style.display = 'none';
+            }
         });
-
-        // Si el clic fue en un botón de dropdown, abrirlo
         const dropdownButton = e.target.closest('.btn-icon');
         if (dropdownButton) {
-            e.stopPropagation(); // Prevenir que el clic en el body lo cierre inmediatamente
+            e.stopPropagation();
             const dropdownContent = dropdownButton.nextElementSibling;
             if (dropdownContent && dropdownContent.classList.contains('dropdown-content')) {
-                // Alternar el dropdown actual
                 const isVisible = dropdownContent.style.display === 'block';
                 dropdownContent.style.display = isVisible ? 'none' : 'block';
             }
         }
     });
+
+  // --- CÓDIGO JS PARA ELIMINAR COMENTADO ---
+    /*
+    const deleteModal = document.getElementById('deleteConfirmationModal');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const deleteForm = document.getElementById('deleteHistoriaForm');
+    const modalHistoriaNumero = document.getElementById('modal-historia-numero');
+
+    document.querySelectorAll('.js-delete-historia').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const historiaId = this.dataset.historiaId;
+            const historiaNumero = this.dataset.historiaNumero;
+            
+            const deleteUrl = `/historias/delete/${historiaId}/`;
+            deleteForm.action = deleteUrl;
+            modalHistoriaNumero.textContent = `HC-${historiaNumero}`;
+            
+            deleteModal.classList.add('active');
+        });
+    });
+
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.remove('active');
+        });
+    }
+
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                deleteModal.classList.remove('active');
+            }
+        });
+    }
+    */
 });
 </script>
 {% endblock %}
