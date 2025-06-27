@@ -1,4 +1,3 @@
-
 {% extends 'layouts/base.html' %}
 {% load static %}
 
@@ -7,6 +6,16 @@
   <title>Gestión de Pacientes</title>
   <link rel="stylesheet" href="{% static '/styles/pacientes.css' %}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    /* Estilo para resaltar y agrupar visualmente a las parejas */
+    .patients-table tbody tr.pareja-row {
+      background-color: #f0f8ff; /* Light Alice Blue */
+    }
+    /* Añade un borde sutil para separar una pareja de la siguiente fila */
+    .patients-table tbody tr.pareja-row:last-of-type {
+       border-bottom: 2px solid #aed6f1;
+    }
+  </style>
 </head>
 <body>
 
@@ -163,23 +172,34 @@
                                 </thead>
                                 <tbody>
                                     {% for proposito in pacientes_list %}
-                                    <tr>
+                                    <tr class="{% if proposito.is_in_couple %}pareja-row{% endif %}"
+                                        data-nombre="{{ proposito.nombres }} {{ proposito.apellidos }}"
+                                        data-identificacion="{{ proposito.identificacion }}"
+                                        data-foto-url="{% if proposito.foto %}{{ proposito.foto.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}"
+                                        data-edad="{{ proposito.edad|default_if_none:'N/A' }}"
+                                        data-telefono="{{ proposito.telefono|default_if_none:'N/A' }}"
+                                        data-email="{{ proposito.email|default_if_none:'N/A' }}"
+                                        data-direccion="{{ proposito.direccion|default_if_none:'N/A' }}"
+                                        data-genetista="{{ proposito.historia.genetista.user.get_full_name|default:'N/A' }}"
+                                        data-estado-display="{{ proposito.get_estado_display }}"
+                                        data-estado-slug="{{ proposito.estado|slugify }}"
+                                        data-ultima-visita="{{ proposito.historia.fecha_ingreso|date:'Y-m-d' }}"
+                                        data-avatar-fallback="{{ proposito.nombres|first|upper }}{{ proposito.apellidos|first|upper }}"
+                                        >
                                         <td>
-                                            <a href="{% url 'gestion_pacientes' %}" class="patient-info-link">
-                                                <div class="patient-info">
-                                                    <div class="patient-avatar">
-                                                         {% if proposito.foto %}
-                                                            <img src="{{ proposito.foto.url }}" alt="Avatar" class="avatar-img">
-                                                        {% else %}
-                                                            <span class="avatar-fallback">{{ proposito.nombres|first }}{{ proposito.apellidos|first }}</span>
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="patient-details">
-                                                        <div class="patient-name">{{ proposito.nombres }} {{ proposito.apellidos }}</div>
-                                                        <div class="patient-id">ID: {{ proposito.identificacion }}</div>
-                                                    </div>
+                                            <div class="patient-info">
+                                                <div class="patient-avatar">
+                                                     {% if proposito.foto %}
+                                                        <img src="{{ proposito.foto.url }}" alt="Avatar" class="avatar-img">
+                                                    {% else %}
+                                                        <span class="avatar-fallback">{{ proposito.nombres|first|upper }}{{ proposito.apellidos|first|upper }}</span>
+                                                    {% endif %}
                                                 </div>
-                                            </a>
+                                                <div class="patient-details">
+                                                    <div class="patient-name">{{ proposito.nombres }} {{ proposito.apellidos }}</div>
+                                                    <div class="patient-id">ID: {{ proposito.identificacion }}</div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>{{ proposito.edad|default_if_none:"N/A" }} años</td>
                                         <td>
@@ -201,7 +221,6 @@
                                         <td>{{ proposito.historia.genetista.user.get_full_name|default:"N/A" }}</td>
                                         <td>{{ proposito.historia.fecha_ingreso|date:"Y-m-d" }}</td>
                                         <td>
-                                            {# Usamos el valor del estado para la clase CSS (ej. badge-activo) #}
                                             <span class="badge badge-{{ proposito.estado|slugify }}">{{ proposito.get_estado_display }}</span>
                                         </td>
                                         <td>
@@ -216,12 +235,19 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                <button class="btn-ver" id="ver-paciente">
+                                                <button type="button" class="btn-ver">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button class="btn-editar" id="editar-paciente">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
+                                                <!-- ENLACE DE EDICIÓN MODIFICADO -->
+                                                {% if proposito.is_in_couple %}
+                                                    <a href="{% url 'pareja_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true" class="btn-editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% else %}
+                                                     <a href="{% url 'paciente_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true" class="btn-editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -245,14 +271,14 @@
     <div class="modal-content">
         <div class="modal-header">
             <div class="patient-modal-title">
-            <div class="patient-avatar large">
-                <img alt="" class="avatar-img">
-                <span class="avatar-fallback">MG</span>
-            </div>
-            <div>
-                <h2 class="patient-name">María González</h2>
-                <p class="patient-id muted">ID: P001</p>
-            </div>
+                <div class="patient-avatar large" id="modal-avatar">
+                    <img src="" alt="" class="avatar-img" id="modal-avatar-img">
+                    <span class="avatar-fallback" id="modal-avatar-fallback"></span>
+                </div>
+                <div>
+                    <h2 class="patient-name" id="modal-patient-name"></h2>
+                    <p class="patient-id muted" id="modal-patient-id"></p>
+                </div>
             </div>
         </div>
 
@@ -272,19 +298,19 @@
                         <div class="card-content">
                             <div class="info-item">
                                 <i class="fas fa-calendar"></i>
-                                <span class="info-text">Edad: 34 años</span>
+                                <span class="info-text" id="modal-info-edad"></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-phone"></i>
-                                <span class="info-text">+34 612 345 678</span>
+                                <span class="info-text" id="modal-info-telefono"></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-envelope"></i>
-                                <span class="info-text">maria.gonzalez@email.com</span>
+                                <span class="info-text" id="modal-info-email"></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-map-pin"></i>
-                                <span class="info-text">Calle Mayor 123, Madrid</span>
+                                <span class="info-text" id="modal-info-direccion"></span>
                             </div>
                         </div>
                     </div>
@@ -296,15 +322,15 @@
                         <div class="card-content">
                             <div class="info-row">
                                 <span class="info-label">Genetista asignado:</span>
-                                <span class="badge">Dr. García</span>
+                                <span class="badge" id="modal-info-genetista"></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Estado:</span>
-                                <span class="badge badge-active">Activo</span>
+                                <span class="badge" id="modal-info-estado"></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Última visita:</span>
-                                <span class="info-text">2024-01-15</span>
+                                <span class="info-text" id="modal-info-ultima-visita"></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Evoluciones:</span>
@@ -315,6 +341,7 @@
                 </div>
             </div>
 
+            <!-- CONTENIDO DE EJEMPLO RESTAURADO -->
             <div class="tab-content" id="medical-record">
                 <div class="tab-content-header">
                     <h3 class="tab-main-title">Historia Clínica Genética</h3>
@@ -323,200 +350,64 @@
                         Nueva Consulta
                     </button>
                 </div>
-
-                <!--Historial del paciente-->
                 <div class="history-list">
-
-                    <!--Tarjeta de consulta clinica 1-->
                     <div class="history-card">
-
                         <div class="view-content">
                             <div class="card-main-content">
-                                <div class="historia-card-header">
-                                    <span class="badge history-id">HC-001</span>
-                                    <span class="badge status-completed">Completado</span>
-                                </div>
+                                <div class="historia-card-header"><span class="badge history-id">HC-001</span><span class="badge status-completed">Completado</span></div>
                                 <div class="card-body">
                                     <h4 class="history-title">Consulta Inicial</h4>
                                     <p class="history-subtitle">Sindrome de Marfan - Sospecha</p>
-                                    <div class="history-meta">
-                                        <div class="meta-item">
-                                            <i class="fas fa-calendar"></i>
-                                            <span>2024-01-15</span>
-                                        </div>
-                                        <div class="meta-item">
-                                            <i class="fas fa-user"></i>
-                                            <span>Dra. Gamboa</span>
-                                        </div>
-                                    </div>
+                                    <div class="history-meta"><div class="meta-item"><i class="fas fa-calendar"></i><span>2024-01-15</span></div><div class="meta-item"><i class="fas fa-user"></i><span>Dra. Gamboa</span></div></div>
                                 </div>
-                                <div class="history-tags">
-                                    <span class="tag">Ecocardiograma</span>
-                                    <span class="tag">Analisis Genético</span>
-                                </div>
+                                <div class="history-tags"><span class="tag">Ecocardiograma</span><span class="tag">Analisis Genético</span></div>
                             </div>
-                            <div class="card-actions view-actions">
-                                <button class="action-btn js-edit-btn" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
+                            <div class="card-actions view-actions"><button class="action-btn js-edit-btn" title="Editar"><i class="fas fa-edit"></i></button></div>
                         </div>
-
-                        <!-- CONTENIDO EDITABLE (oculto por defecto) -->
                         <div class="editable-content">
                             <h4>Editando Historia Clínica: HC-001</h4>
-                            
-                            <!-- Aquí va tu formulario -->
-                            <form class="edit-form">
-                                <h1>Observaciones de la consulta</h1>
-                                <div class="form-group">
-                                    <label for="fecha-asesoramiento">Fecha</label>
-                                    <input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento">
-                                </div>
-                                <div class="form-group">
-                                    <label for="asesoramiento">Asesoramiento</label>
-                                    <textarea name="asesoramiento" id="asesoramiento"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="evolucion">Evoluciones</label>
-                                    <textarea name="evolucion" id="evolucion"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="examenes">Examenes</label>
-                                    <input type="file" name="examenes" id="examenes">
-                                </div>
-                            </form>
-
-                            <!-- Botones para el modo de edición -->
-                            <div class="card-actions edit-actions">
-                                <button class="btn btn-secondary js-cancel-btn">Cancelar</button>
-                                <button class="btn btn-primary js-save-btn">Guardar Cambios</button>
-                            </div>
+                            <form class="edit-form"><h1>Observaciones de la consulta</h1><div class="form-group"><label for="fecha-asesoramiento">Fecha</label><input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento"></div><div class="form-group"><label for="asesoramiento">Asesoramiento</label><textarea name="asesoramiento" id="asesoramiento"></textarea></div><div class="form-group"><label for="evolucion">Evoluciones</label><textarea name="evolucion" id="evolucion"></textarea></div><div class="form-group"><label for="examenes">Examenes</label><input type="file" name="examenes" id="examenes"></div></form>
+                            <div class="card-actions edit-actions"><button class="btn btn-secondary js-cancel-btn">Cancelar</button><button class="btn btn-primary js-save-btn">Guardar Cambios</button></div>
                         </div>
                     </div>
-
-                    <!--Tarjeta de consulta clinica 2-->
                     <div class="history-card">
-
                         <div class="view-content">
                             <div class="card-main-content">
-                                <div class="historia-card-header">
-                                    <span class="badge history-id">HC-001</span>
-                                    <span class="badge status-completed">Completado</span>
-                                </div>
+                                <div class="historia-card-header"><span class="badge history-id">HC-001</span><span class="badge status-completed">Completado</span></div>
                                 <div class="card-body">
                                     <h4 class="history-title">Consulta de Seguimiento</h4>
                                     <p class="history-subtitle">Sindrome de Marfan - Confirmado</p>
-                                    <div class="history-meta">
-                                        <div class="meta-item">
-                                            <i class="fas fa-calendar"></i>
-                                            <span>2024-02-15</span>
-                                        </div>
-                                        <div class="meta-item">
-                                            <i class="fas fa-user"></i>
-                                            <span>Dra. Gamboa</span>
-                                        </div>
-                                    </div>
+                                    <div class="history-meta"><div class="meta-item"><i class="fas fa-calendar"></i><span>2024-02-15</span></div><div class="meta-item"><i class="fas fa-user"></i><span>Dra. Gamboa</span></div></div>
                                 </div>
-                                <div class="history-tags">
-                                    <span class="tag">Secuenciacion completa</span>
-                                    <span class="tag">Analisis familiar</span>
-                                </div>
+                                <div class="history-tags"><span class="tag">Secuenciacion completa</span><span class="tag">Analisis familiar</span></div>
                             </div>
-                            <div class="card-actions view-actions">
-                                <button class="action-btn js-edit-btn" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
+                            <div class="card-actions view-actions"><button class="action-btn js-edit-btn" title="Editar"><i class="fas fa-edit"></i></button></div>
                         </div>
-
-                        <!-- CONTENIDO EDITABLE (oculto por defecto) -->
                         <div class="editable-content">
                             <h4>Editando Historia Clínica: HC-001</h4>
-                            
-                            <!-- Aquí va tu formulario -->
-                            <form class="edit-form">
-                                <h1>Observaciones de la consulta</h1>
-                                <div class="form-group">
-                                    <label for="fecha-asesoramiento">Fecha</label>
-                                    <input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento">
-                                </div>
-                                <div class="form-group">
-                                    <label for="asesoramiento">Asesoramiento</label>
-                                    <textarea name="asesoramiento" id="asesoramiento"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="evolucion">Evoluciones</label>
-                                    <textarea name="evolucion" id="evolucion"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="examenes">Examenes</label>
-                                    <input type="file" name="examenes" id="examenes">
-                                </div>
-                            </form>
-
-                            <!-- Botones para el modo de edición -->
-                            <div class="card-actions edit-actions">
-                                <button class="btn btn-secondary js-cancel-btn">Cancelar</button>
-                                <button class="btn btn-primary js-save-btn">Guardar Cambios</button>
-                            </div>
+                            <form class="edit-form"><h1>Observaciones de la consulta</h1><div class="form-group"><label for="fecha-asesoramiento">Fecha</label><input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento"></div><div class="form-group"><label for="asesoramiento">Asesoramiento</label><textarea name="asesoramiento" id="asesoramiento"></textarea></div><div class="form-group"><label for="evolucion">Evoluciones</label><textarea name="evolucion" id="evolucion"></textarea></div><div class="form-group"><label for="examenes">Examenes</label><input type="file" name="examenes" id="examenes"></div></form>
+                            <div class="card-actions edit-actions"><button class="btn btn-secondary js-cancel-btn">Cancelar</button><button class="btn btn-primary js-save-btn">Guardar Cambios</button></div>
                         </div>
-                    </div>              
-                </div>  
+                    </div>
+                </div>
             </div>
-
             <div class="tab-content" id="tests">
                 <div class="tab-content-header">
                     <h3 class="tab-main-title">Diagnósticos y Pruebas Genéticas</h3>
-                    <button class="btn-primary">
-                        <i class="fas fa-plus" class="btn-icon"></i>
-                            Nuevo Diagnóstico
-                    </button>
+                    <button class="btn-primary"><i class="fas fa-plus" class="btn-icon"></i>Nuevo Diagnóstico</button>
                 </div>
-
-                <!-- Dos columnas para tarjetas -->
                 <div class="analysis-grid">
-
-                    <!--Tarjeta de examenes-->
                     <div class="analysis-card pending">
-                        <div class="analysis-card-header">
-                            <i class="fas fa-clock" class="analysis-card-icon"></i>
-                            <h4 class="analysis-card-title">Examenes pendientes</h4>
-                        </div>
-                        <div class="analysis-list">
-                            <div class="analysis-item">
-                                <span class="analysis-name">Secuenciacion Exoma completo</span>
-                                <span class="badge status-pending">Pendiente</span>
-                            </div>
-                            <div class="analysis-item">
-                                <span class="analysis-name">Analisis Cromosomico</span>
-                                <span class="badge status-in-progress">En proceso</span>
-                            </div>
-                        </div>
+                        <div class="analysis-card-header"><i class="fas fa-clock" class="analysis-card-icon"></i><h4 class="analysis-card-title">Examenes pendientes</h4></div>
+                        <div class="analysis-list"><div class="analysis-item"><span class="analysis-name">Secuenciacion Exoma completo</span><span class="badge status-pending">Pendiente</span></div><div class="analysis-item"><span class="analysis-name">Analisis Cromosomico</span><span class="badge status-in-progress">En proceso</span></div></div>
                     </div>
-
-                    <!--Tarjeta de diagnosticos completados-->
                     <div class="analysis-card completed">
-                        <div class="analysis-card-header">
-                            <i class="fas fa-dna" class="analysis-card-icon"></i>
-                            <h4 class="analysis-card-title">Diagnosticos</h4>
-                        </div>
-                        <div class="analysis-list">
-                            <div class="analysis-item">
-                                <span class="analysis-name">Sindrome de Marfan</span>
-                                <span class="badge status-completed">Confirmado</span>
-                            </div>
-                            <div class="analysis-item">
-                                <span class="analysis-name">Sindrome de Down</span>
-                                <span class="badge status-discard">Descartado</span>
-                            </div>
-                        </div>
+                        <div class="analysis-card-header"><i class="fas fa-dna" class="analysis-card-icon"></i><h4 class="analysis-card-title">Diagnosticos</h4></div>
+                        <div class="analysis-list"><div class="analysis-item"><span class="analysis-name">Sindrome de Marfan</span><span class="badge status-completed">Confirmado</span></div><div class="analysis-item"><span class="analysis-name">Sindrome de Down</span><span class="badge status-discard">Descartado</span></div></div>
                     </div>
-
-
                 </div>
             </div>
-            
+            <!-- FIN DE CONTENIDO RESTAURADO -->
         </div>
 
         <button type="button" class="modal-close" id="closeVerPacienteModalBtn">×</button>
@@ -527,99 +418,106 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // Modal de Editar Paciente
+document.addEventListener('DOMContentLoaded', function() {
     const verPacienteModal = document.getElementById('verPacienteModal');
-    const verPacienteBtn = document.getElementById('ver-paciente');
+    const tableBody = document.querySelector('.patients-table tbody');
     const closeVerPacienteModalBtn = document.getElementById('closeVerPacienteModalBtn');
 
-
-    // Función para cerrar la modal
-    function closeAllModals() {
+    // Función para cerrar el modal
+    function closeModal() {
         if (verPacienteModal) verPacienteModal.classList.remove('active');
     }
 
-    // Eventos para ver Paciente
-    if (verPacienteBtn) {
-        verPacienteBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeAllModals();
-            if (verPacienteModal) verPacienteModal.classList.add('active');
+    // Usar delegación de eventos en la tabla para manejar todos los botones "ver"
+    if (tableBody) {
+        tableBody.addEventListener('click', function(e) {
+            const viewButton = e.target.closest('.btn-ver');
+            if (viewButton) {
+                const row = viewButton.closest('tr');
+                if (row) {
+                    // Poblar el modal con datos de la fila
+                    document.getElementById('modal-patient-name').textContent = row.dataset.nombre;
+                    document.getElementById('modal-patient-id').textContent = 'ID: ' + row.dataset.identificacion;
+                    
+                    const avatarImg = document.getElementById('modal-avatar-img');
+                    const avatarFallback = document.getElementById('modal-avatar-fallback');
+                    if (row.dataset.fotoUrl && !row.dataset.fotoUrl.endsWith('default_avatar.png')) {
+                        avatarImg.src = row.dataset.fotoUrl;
+                        avatarImg.style.display = 'block';
+                        avatarFallback.style.display = 'none';
+                    } else {
+                        avatarFallback.textContent = row.dataset.avatarFallback;
+                        avatarImg.style.display = 'none';
+                        avatarFallback.style.display = 'flex';
+                    }
+
+                    document.getElementById('modal-info-edad').textContent = 'Edad: ' + row.dataset.edad + ' años';
+                    document.getElementById('modal-info-telefono').textContent = row.dataset.telefono;
+                    document.getElementById('modal-info-email').textContent = row.dataset.email;
+                    document.getElementById('modal-info-direccion').textContent = row.dataset.direccion;
+                    document.getElementById('modal-info-genetista').textContent = row.dataset.genetista;
+                    document.getElementById('modal-info-ultima-visita').textContent = row.dataset.ultimaVisita;
+                    
+                    const estadoBadge = document.getElementById('modal-info-estado');
+                    estadoBadge.textContent = row.dataset.estadoDisplay;
+                    estadoBadge.className = 'badge badge-' + row.dataset.estadoSlug;
+
+                    // Mostrar el modal
+                    verPacienteModal.classList.add('active');
+                }
+            }
         });
     }
 
-    // Eventos de cierre para ambas modales
-    [closeVerPacienteModalBtn].forEach(btn => {
-        if (btn) {
-            btn.addEventListener('click', closeAllModals);
-        }
-    });
+    // Evento de cierre para el modal
+    if (closeVerPacienteModalBtn) {
+        closeVerPacienteModalBtn.addEventListener('click', closeModal);
+    }
+    if (verPacienteModal) {
+        verPacienteModal.addEventListener('click', function(event) {
+            if (event.target === verPacienteModal) {
+                closeModal();
+            }
+        });
+    }
 
-    // Cerrar al hacer clic fuera del contenido
-    [verPacienteModal].forEach(modal => {
-        if (modal) {
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    closeAllModals();
-                }
-            });
-        }
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching logic
-    const tabButtons = document.querySelectorAll('.tab-btn');
+    // Lógica para las pestañas dentro del modal
+    const tabButtons = document.querySelectorAll('.modal .tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
             tabButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(content => {
+            
+            const tabContainer = this.closest('.modal-tabs');
+            tabContainer.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
+            
             const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
+            tabContainer.querySelector('#' + tabId).classList.add('active');
         });
     });
-});
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Usamos un contenedor padre para delegar los eventos
-    const historyListContainer = document.querySelector('.history-list'); // Ajusta este selector a tu contenedor de tarjetas
-
+    // Lógica para editar dentro del modal (se mantiene la de ejemplo)
+    const historyListContainer = document.querySelector('.history-list');
     if (historyListContainer) {
         historyListContainer.addEventListener('click', (event) => {
-            // Encuentra el botón de editar más cercano al elemento clickeado
             const editButton = event.target.closest('.js-edit-btn');
             if (editButton) {
                 const card = editButton.closest('.history-card');
-                if (card) {
-                    card.classList.add('is-editing');
-                }
-                return; // Detenemos la ejecución para no buscar otros botones
+                if (card) card.classList.add('is-editing');
+                return;
             }
-
-            // Encuentra el botón de guardar más cercano
             const saveButton = event.target.closest('.js-save-btn');
             if (saveButton) {
                 const card = saveButton.closest('.history-card');
-                if (card) {
-                    // Aquí iría tu lógica para guardar los datos del formulario
-                    console.log('Guardando datos...');
-                    card.classList.remove('is-editing'); // Vuelve al modo vista
-                }
+                if (card) card.classList.remove('is-editing');
                 return;
             }
-
-            // Encuentra el botón de cancelar más cercano
             const cancelButton = event.target.closest('.js-cancel-btn');
             if (cancelButton) {
                 const card = cancelButton.closest('.history-card');
-                if (card) {
-                    // Simplemente vuelve al modo vista sin guardar
-                    card.classList.remove('is-editing');
-                }
+                if (card) card.classList.remove('is-editing');
                 return;
             }
         });

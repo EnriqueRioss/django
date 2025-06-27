@@ -256,6 +256,9 @@ def crear_paciente(request, historia_id):
     
     existing_proposito = Propositos.objects.filter(historia=historia).first()
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    
+    # --- AÑADIDO: Detectar si se viene de la gestión de pacientes ---
+    from_gestion = request.GET.get('from_gestion') == 'true'
 
     if request.method == 'POST':
         form = PropositosForm(request.POST, request.FILES, instance=existing_proposito)
@@ -264,23 +267,23 @@ def crear_paciente(request, historia_id):
                 proposito = form.save(historia=historia)
                 request.session.pop('form_data', None)
 
-                # MODIFICADO: Lógica para "Guardar Borrador"
-                if 'save_draft' in request.POST:
+                # --- LÓGICA DE REDIRECCIÓN MODIFICADA ---
+                if from_gestion:
+                    messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} actualizado exitosamente.")
+                    redirect_url = reverse('gestion_pacientes')
+                elif 'save_draft' in request.POST:
                     request.session.pop('historia_en_progreso_id', None)
                     messages.success(request, f"Borrador del paciente {proposito.nombres} guardado exitosamente.")
-                    redirect_url = reverse('index')
-                    if is_ajax:
-                        return JsonResponse({'success': True, 'redirect_url': redirect_url})
-                    return redirect(redirect_url)
-
-                # Lógica para "Siguiente"
-                action_verb = 'actualizado' if existing_proposito else 'creado'
-                messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {action_verb} exitosamente.")
-                redirect_url = reverse('padres_proposito_crear', kwargs={'historia_id': historia.historia_id, 'proposito_id': proposito.proposito_id})
+                    redirect_url = reverse('ver_historias') # Redirige a ver historias en lugar de index
+                else:
+                    action_verb = 'actualizado' if existing_proposito else 'creado'
+                    messages.success(request, f"Paciente {proposito.nombres} {proposito.apellidos} {action_verb} exitosamente.")
+                    redirect_url = reverse('padres_proposito_crear', kwargs={'historia_id': historia.historia_id, 'proposito_id': proposito.proposito_id})
 
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
                 return redirect(redirect_url)
+
             except Exception as e:
                 error_msg = f"Error al guardar el paciente: {e}"
                 if is_ajax: return JsonResponse({'success': False, 'errors': {'__all__': [error_msg]}}, status=400)
@@ -298,7 +301,12 @@ def crear_paciente(request, historia_id):
         if existing_proposito and not form_data:
             messages.info(request, f"Editando información para: {existing_proposito.nombres} {existing_proposito.apellidos}")
             
-    return render(request, "Crear_paciente.html", {'form': form, 'historia': historia, 'editing': bool(existing_proposito)})
+    # --- AÑADIDO: Pasar la variable al contexto ---
+    return render(request, "Crear_paciente.html", {'form': form, 'historia': historia, 'editing': bool(existing_proposito), 'from_gestion': from_gestion})
+
+# En tu archivo views.py
+
+# ... (todos los demás imports y vistas se mantienen igual) ...
 
 @login_required
 @genetista_or_admin_required
@@ -310,16 +318,31 @@ def crear_pareja(request, historia_id):
         raise PermissionDenied("No tiene permiso para modificar parejas de esta historia clínica.")
 
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    from_gestion = request.GET.get('from_gestion') == 'true'
+
+    # Buscamos si ya existe una pareja para esta historia.
+    propositos_en_historia = Propositos.objects.filter(historia=historia)
+    pareja_existente = Parejas.objects.filter(
+        proposito_id_1__in=propositos_en_historia,
+        proposito_id_2__in=propositos_en_historia
+    ).select_related('proposito_id_1', 'proposito_id_2').first()
+
+    editing = bool(pareja_existente)
+    
+    # --- CORRECCIÓN PARA EL PROBLEMA 2: ELIMINAMOS EL REDIRECT AUTOMÁTICO ---
+    # Ya no redirigimos si la pareja existe. Simplemente mostraremos el formulario
+    # pre-rellenado, permitiendo al usuario retroceder y editar.
 
     if request.method == 'POST':
         form = ParejaPropositosForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # La función auxiliar para obtener/crear Propositos se mantiene igual, es correcta.
                     def get_or_create_proposito_from_form(form_cleaned_data, prefix_num, historia_obj, files_data):
                         identificacion = form_cleaned_data[f'identificacion_{prefix_num}']
                         proposito_data = {
-                            'historia': historia_obj, 'nombres': form_cleaned_data[f'nombres_{prefix_num}'], 'apellidos': form_cleaned_data[f'apellidos_{prefix_num}'],
+                            'nombres': form_cleaned_data[f'nombres_{prefix_num}'], 'apellidos': form_cleaned_data[f'apellidos_{prefix_num}'],
                             'sexo': form_cleaned_data.get(f'sexo_{prefix_num}'), 'lugar_nacimiento': form_cleaned_data.get(f'lugar_nacimiento_{prefix_num}'),
                             'fecha_nacimiento': form_cleaned_data.get(f'fecha_nacimiento_{prefix_num}'), 'escolaridad': form_cleaned_data.get(f'escolaridad_{prefix_num}'),
                             'ocupacion': form_cleaned_data.get(f'ocupacion_{prefix_num}'), 'edad': form_cleaned_data.get(f'edad_{prefix_num}'),
@@ -330,11 +353,10 @@ def crear_pareja(request, historia_id):
                         proposito_defaults = {k: v for k, v in proposito_data.items() if v is not None}
                         proposito_defaults['historia'] = historia_obj
                         proposito, created = Propositos.objects.update_or_create(identificacion=identificacion, defaults=proposito_defaults)
-                        if not created and proposito.historia != historia_obj: proposito.historia = historia_obj
                         foto_file = files_data.get(f'foto_{prefix_num}')
                         if foto_file:
                             proposito.foto = foto_file
-                            proposito.save(update_fields=['foto'])
+                        proposito.save()
                         return proposito
 
                     proposito1 = get_or_create_proposito_from_form(form.cleaned_data, '1', historia, request.FILES)
@@ -343,24 +365,46 @@ def crear_pareja(request, historia_id):
                     if proposito1.pk == proposito2.pk:
                         raise IntegrityError("Los dos miembros de la pareja no pueden ser la misma persona.")
 
+                    # --- INICIO DE LA CORRECCIÓN PARA EL PROBLEMA 1 ---
+                    # Lógica de "buscar y actualizar" en lugar de "eliminar y crear".
+                    
                     p_min, p_max = sorted([proposito1, proposito2], key=lambda p: p.pk)
-                    pareja, pareja_created = Parejas.objects.get_or_create(proposito_id_1=p_min, proposito_id_2=p_max)
-                
+                    
+                    if pareja_existente:
+                        # Si ya existía una pareja, actualizamos sus miembros.
+                        pareja_existente.proposito_id_1 = p_min
+                        pareja_existente.proposito_id_2 = p_max
+                        pareja_existente.save()
+                        pareja = pareja_existente
+                        pareja_created = False
+                    else:
+                        # Si no existía, la creamos.
+                        pareja, pareja_created = Parejas.objects.get_or_create(
+                            proposito_id_1=p_min,
+                            proposito_id_2=p_max
+                        )
+
+                    # Limpieza de Propositos "huérfanos" en esta historia.
+                    # Esto ocurre si se cambió una identificación. El `Proposito` antiguo
+                    # debe ser eliminado de la base de datos.
+                    ids_correctos = {proposito1.pk, proposito2.pk}
+                    Propositos.objects.filter(historia=historia).exclude(pk__in=ids_correctos).delete()
+                    # --- FIN DE LA CORRECCIÓN PARA EL PROBLEMA 1 ---
+
                 request.session.pop('form_data', None)
-                
-                # MODIFICADO: Lógica para "Guardar Borrador"
-                if 'save_draft' in request.POST:
+
+                # La lógica de redirección se mantiene igual
+                if from_gestion:
+                    messages.success(request, f"Datos de la pareja ({proposito1.nombres} y {proposito2.nombres}) actualizados exitosamente.")
+                    redirect_url = reverse('gestion_pacientes')
+                elif 'save_draft' in request.POST:
                     request.session.pop('historia_en_progreso_id', None)
                     messages.success(request, f"Borrador de la pareja ({proposito1.nombres} y {proposito2.nombres}) guardado exitosamente.")
-                    redirect_url = reverse('index')
-                    if is_ajax:
-                        return JsonResponse({'success': True, 'redirect_url': redirect_url})
-                    return redirect(redirect_url)
-
-                # Lógica para "Siguiente"
-                action_verb = 'creada' if pareja_created else 'localizada/actualizada'
-                messages.success(request, f"Pareja ({proposito1.nombres} y {proposito2.nombres}) {action_verb} exitosamente.")
-                redirect_url = reverse('antecedentes_personales_crear', kwargs={'historia_id': historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja.pareja_id})
+                    redirect_url = reverse('ver_historias')
+                else:
+                    action_verb = 'creada' if pareja_created else 'actualizada'
+                    messages.success(request, f"Pareja ({proposito1.nombres} y {proposito2.nombres}) {action_verb} exitosamente.")
+                    redirect_url = reverse('antecedentes_personales_crear', kwargs={'historia_id': historia.historia_id, 'tipo': "pareja", 'objeto_id': pareja.pareja_id})
 
                 if is_ajax:
                     return JsonResponse({'success': True, 'redirect_url': redirect_url})
@@ -376,10 +420,31 @@ def crear_pareja(request, historia_id):
             messages.error(request, "No se pudo guardar la pareja. Corrija los errores.")
             request.session['form_data'] = request.POST.copy()
             return redirect(request.path_info)
-    else:
-        form = ParejaPropositosForm(request.session.pop('form_data', None) or None)
+    else: # Lógica GET (CARGAR PÁGINA)
+        form_data = request.session.pop('form_data', None)
+        initial_data = {}
         
-    return render(request, 'Crear_pareja.html', {'form': form, 'historia': historia})
+        if editing and not form_data:
+            p1 = pareja_existente.proposito_id_1
+            p2 = pareja_existente.proposito_id_2
+            
+            # Campos del primer cónyuge
+            field_names = [f.name for f in Propositos._meta.get_fields()]
+            for field_name in field_names:
+                if hasattr(p1, field_name): initial_data[f'{field_name}_1'] = getattr(p1, field_name)
+                if hasattr(p2, field_name): initial_data[f'{field_name}_2'] = getattr(p2, field_name)
+
+            messages.info(request, f"Editando información para la pareja: {p1.nombres} y {p2.nombres}.")
+
+        form = ParejaPropositosForm(form_data or initial_data or None)
+        
+    context = {
+        'form': form,
+        'historia': historia,
+        'from_gestion': from_gestion,
+        'editing': editing
+    }
+    return render(request, 'Crear_pareja.html', context)
 
 @login_required
 @genetista_or_admin_required
@@ -1575,13 +1640,15 @@ def pacientes_redirect_view(request):
             return redirect('index')
     else: return redirect('index')
     
+# En views.py
+
 @login_required
-@all_roles_required # Permitir acceso a todos los roles
+@all_roles_required
 @never_cache
 def gestion_pacientes_view(request):
     """
-    Vista refactorizada para la gestión de pacientes, con estadísticas y filtros
-    acotados por el rol del usuario.
+    Vista refactorizada para la gestión de pacientes, con estadísticas, filtros,
+    agrupación de parejas y control de acceso por rol.
     """
     base_pacientes_qs = _get_pacientes_queryset_for_role(request.user)
 
@@ -1607,33 +1674,69 @@ def gestion_pacientes_view(request):
 
     # Lógica de filtros
     form = ReportSearchForm(request.GET or None, user=request.user)
-    pacientes_list_qs = base_pacientes_qs.annotate(
+    pacientes_a_procesar_qs = base_pacientes_qs.annotate(
         plan_estudio_pendiente_count=Count('evaluaciongenetica__planes_estudio', filter=Q(evaluaciongenetica__planes_estudio__completado=False))
     ).order_by('-historia__fecha_ingreso')
 
     search_attempted = bool(request.GET)
     if form.is_valid():
         if form.cleaned_data.get('genetista'):
-            pacientes_list_qs = pacientes_list_qs.filter(historia__genetista=form.cleaned_data.get('genetista'))
+            pacientes_a_procesar_qs = pacientes_a_procesar_qs.filter(historia__genetista=form.cleaned_data.get('genetista'))
         if form.cleaned_data.get('buscar_paciente'):
             query = form.cleaned_data.get('buscar_paciente')
-            pacientes_list_qs = pacientes_list_qs.filter(Q(nombres__icontains=query) | Q(apellidos__icontains=query) | Q(identificacion__icontains=query))
+            pacientes_a_procesar_qs = pacientes_a_procesar_qs.filter(Q(nombres__icontains=query) | Q(apellidos__icontains=query) | Q(identificacion__icontains=query))
         if request.GET.get('estado'):
-            pacientes_list_qs = pacientes_list_qs.filter(estado=request.GET.get('estado'))
+            pacientes_a_procesar_qs = pacientes_a_procesar_qs.filter(estado=request.GET.get('estado'))
 
+    # --- LÓGICA PARA AGRUPAR PAREJAS ---
+    
+    # *** CORRECCIÓN 1: Usar .proposito_id en lugar de .id ***
+    pacientes_dict = {p.proposito_id: p for p in pacientes_a_procesar_qs}
+    
+    parejas_qs = Parejas.objects.filter(
+        Q(proposito_id_1_id__in=pacientes_dict.keys()) & Q(proposito_id_2_id__in=pacientes_dict.keys())
+    ).select_related('proposito_id_1', 'proposito_id_2')
+
+    final_pacientes_list = []
+    processed_ids = set()
+
+    # 1. Añadir todas las parejas juntas
+    for pareja in parejas_qs:
+        if pareja.proposito_id_1_id not in processed_ids and pareja.proposito_id_2_id not in processed_ids:
+            p1 = pacientes_dict.get(pareja.proposito_id_1_id)
+            p2 = pacientes_dict.get(pareja.proposito_id_2_id)
+            
+            p1.is_in_couple = True
+            p2.is_in_couple = True
+            p1.couple_id = pareja.pk
+            p2.couple_id = pareja.pk
+            
+            final_pacientes_list.extend([p1, p2])
+            
+            # *** CORRECCIÓN 2 y 3: Usar .proposito_id en lugar de .id ***
+            processed_ids.add(p1.proposito_id)
+            processed_ids.add(p2.proposito_id)
+
+    # 2. Añadir todos los propósitos individuales restantes
+    for proposito_id, proposito in pacientes_dict.items():
+        if proposito_id not in processed_ids:
+            proposito.is_in_couple = False
+            proposito.couple_id = None
+            final_pacientes_list.append(proposito)
+    
+    pacientes_count = len(final_pacientes_list)
+    
     context = {
         'total_pacientes': total_pacientes, 'pacientes_activos': pacientes_activos, 'pacientes_inactivos': pacientes_inactivos,
         'historias_clinicas_count': historias_clinicas_count, 'analisis_pendientes_count': analisis_pendientes_count,
         'nuevos_pacientes_mes': nuevos_pacientes_mes, 'nuevas_historias_mes': nuevas_historias_mes, 'porcentaje_activos': porcentaje_activos,
         'form': form, 
-        'pacientes_list': pacientes_list_qs, 
-        'pacientes_count': pacientes_list_qs.count(),
+        'pacientes_list': final_pacientes_list, # Usamos la lista reordenada
+        'pacientes_count': pacientes_count,
         'search_attempted': search_attempted, 
         'current_estado_filter': request.GET.get('estado', ''),
     }
     return render(request, "gestion_pacientes.html", context)
-    
-
 
 
 

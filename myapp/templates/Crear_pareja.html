@@ -18,13 +18,15 @@
                 <h2>Datos de la Pareja</h2>
             </div>
 
-            <p class="step-subtitle">Datos basicos de la pareja</p>
+            <p class="step-subtitle">Datos básicos de la pareja</p>
 
             <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
+            
+            <!--  INICIO DEL CAMBIO: Mostrar mensaje en modo edición -->
             {% if editing %}
-                <p class="editing-info"><em>Modo Edición: Actualizando datos del propósito.</em></p>
+                <p class="editing-info"><em>Modo Edición: Actualizando datos de la pareja.</em></p>
             {% endif %}
-
+            <!--  FIN DEL CAMBIO -->
 
             <div class="alert alert-danger non-field-errors"></div>
 
@@ -90,12 +92,17 @@
                 <div class="form-group"><label for="{{ form.foto_2.id_for_label }}">Foto</label><div class="file-input-container">{{ form.foto_2 }}<label for="{{ form.foto_2.id_for_label }}" class="file-label"><i class="fas fa-camera"></i> Seleccionar archivo</label><span class="file-name" id="file-name-2">Ningún archivo seleccionado</span></div><div class="field-errors" id="error_{{ form.foto_2.id_for_label }}"></div></div>
             </div>
         </div>
-
+        
+        <!-- BOTONES CONDICIONALES -->
         <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
-            <button type="submit" name="save_draft" class="btn btn-outline">Guardar Borrador</button>
-            <button type="submit" class="btn btn-primary" id="nextBtn">Siguiente</button>
-                <!--<button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">Finalizar y Guardar</button>-->
+            {% if from_gestion %}
+                <a href="{% url 'gestion_pacientes' %}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            {% else %}
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                <button type="submit" name="save_draft" class="btn btn-outline">Guardar Borrador</button>
+                <button type="submit" class="btn btn-primary" id="nextBtn">Siguiente</button>
+            {% endif %}
         </div>
     </form>
 </div>
