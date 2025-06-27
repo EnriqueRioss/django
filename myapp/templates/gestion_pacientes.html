@@ -240,14 +240,14 @@
                                                 </button>
                                                 <!-- ENLACE DE EDICIÓN MODIFICADO -->
                                                 {% if proposito.is_in_couple %}
-                                                    <a href="{% url 'pareja_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true" class="btn-editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                {% else %}
-                                                     <a href="{% url 'paciente_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true" class="btn-editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                {% endif %}
+                                                <button type="button" class="btn-editar" onclick="window.location.href='{% url 'pareja_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true'">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            {% else %}
+                                                 <button type="button" class="btn-editar" onclick="window.location.href='{% url 'paciente_crear' historia_id=proposito.historia.historia_id %}?from_gestion=true'">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            {% endif %}
                                             </div>
                                         </td>
                                     </tr>

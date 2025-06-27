@@ -96,7 +96,7 @@
         <!-- BOTONES CONDICIONALES -->
         <div class="form-actions">
             {% if from_gestion %}
-                <a href="{% url 'gestion_pacientes' %}" class="btn btn-secondary">Cancelar</a>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'gestion_pacientes' %}'">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             {% else %}
                 <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
