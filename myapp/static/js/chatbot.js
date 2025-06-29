@@ -1,146 +1,171 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Elementos del DOM ---
-    const chatbotFab = document.getElementById('chatbot-fab');
+// static/js/chatbot.js
+
+document.addEventListener('DOMContentLoaded', function () {
+    // --- Selección de Elementos del DOM ---
     const chatbotContainer = document.getElementById('chatbot-container');
-    const closeBtn = document.getElementById('chatbot-close-btn');
-    const messagesContainer = document.getElementById('chatbot-messages');
-    const form = document.getElementById('chatbot-form');
-    const input = document.getElementById('chatbot-input');
-    const sendBtn = document.getElementById('chatbot-send-btn');
-    const suggestionsContainer = document.getElementById('chatbot-suggestions');
+    const chatbotFab = document.getElementById('chatbot-fab');
+    const chatbotCloseBtn = document.getElementById('chatbot-close-btn');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotForm = document.getElementById('chatbot-form');
+    const chatbotInput = document.getElementById('chatbot-input');
+    const chatbotSendBtn = document.getElementById('chatbot-send-btn');
 
-    let isLoading = false;
+    // --- Clave para el Almacenamiento de Sesión ---
+    const CHAT_HISTORY_KEY = 'genassist_chat_history_v2'; // v2 para evitar conflictos con la versión anterior
 
-    // --- Funciones de Ayuda ---
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+    // --- Array para mantener el estado del historial en memoria ---
+    let chatHistory = [];
+
+    // --- Funciones de Utilidad ---
+
+    // Dibuja un mensaje en la UI
+    function renderMessage(messageObject) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', `${messageObject.sender}-message`);
+        messageElement.innerHTML = messageObject.text; // Renderiza HTML como <strong>, <ul>, etc.
+        chatbotMessages.appendChild(messageElement);
+    }
+
+    // Dibuja todo el historial de chat en la UI
+    function renderChatHistory() {
+        chatbotMessages.innerHTML = ''; // Limpia la ventana de chat antes de redibujar
+        chatHistory.forEach(message => {
+            renderMessage(message);
+        });
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight; // Siempre desplaza al final
+    }
+    
+    // Añade un nuevo mensaje al estado y a la UI, y lo guarda
+    function addMessage(text, sender) {
+        const messageObject = { text, sender };
+        chatHistory.push(messageObject); // Añade al array en memoria
+        renderMessage(messageObject);     // Dibuja solo el nuevo mensaje
+        saveChatHistory();                // Guarda el array actualizado en sessionStorage
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    // Muestra/oculta el indicador de "escribiendo..."
+    function showTypingIndicator(show) {
+        let indicator = document.getElementById('typing-indicator');
+        if (show) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'typing-indicator';
+                indicator.classList.add('message', 'bot-message');
+                indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+                chatbotMessages.appendChild(indicator);
+            }
+        } else {
+            if (indicator) {
+                indicator.remove();
             }
         }
-        return cookieValue;
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
     }
-    const csrftoken = getCookie('csrftoken');
 
-    // --- Lógica de la Interfaz ---
-    function toggleChat() {
-        const isActive = chatbotContainer.classList.toggle('active');
-        chatbotFab.style.display = isActive ? 'none' : 'flex';
-        if (isActive) {
-            setTimeout(() => input.focus(), 300);
-            if (messagesContainer.children.length === 0) {
-                 displayWelcomeMessage();
-            }
+    // --- Lógica de Persistencia ---
+
+    // Guarda el array del historial en sessionStorage como un string JSON
+    function saveChatHistory() {
+        try {
+            sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
+            console.log('Chat history saved:', chatHistory); // DEBUG
+        } catch (e) {
+            console.error('Failed to save chat history to sessionStorage:', e);
         }
     }
 
-    function displayWelcomeMessage() {
-        displayBotMessage('Hola, soy GenAssist. Estoy aquí para ayudarte. ¿Qué necesitas saber?');
-        displaySuggestions(['¿Cuáles son mis pacientes con análisis pendientes?', 'Resúmeme el caso del paciente con ID 12345678', 'Información sobre el Síndrome de Marfan']);
-        input.disabled = false;
-        sendBtn.disabled = true;
+    // Carga el historial desde sessionStorage
+    function loadChatHistory() {
+        try {
+            const savedHistoryJSON = sessionStorage.getItem(CHAT_HISTORY_KEY);
+            console.log('Attempting to load history from sessionStorage...'); // DEBUG
+
+            if (savedHistoryJSON) {
+                chatHistory = JSON.parse(savedHistoryJSON);
+                console.log('History loaded successfully:', chatHistory); // DEBUG
+                renderChatHistory(); // Dibuja todo el historial cargado
+            } else {
+                console.log('No history found. Initializing with welcome message.'); // DEBUG
+                // Si no hay historial, inicializa con un mensaje de bienvenida
+                chatHistory = []; // Asegúrate de que el array esté vacío
+                addMessage("¡Hola! Soy GenAssist. ¿En qué puedo ayudarte hoy?", 'bot');
+            }
+        } catch (e) {
+            console.error('Failed to load or parse chat history from sessionStorage:', e);
+            chatHistory = []; // En caso de error, reinicia el historial
+            addMessage("Hubo un error cargando el historial. Empecemos de nuevo.", 'bot');
+        }
     }
 
-    // --- Lógica de Mensajes ---
-    async function handleSendMessage(messageText) {
-        if (!messageText || isLoading) return;
+    // --- Manejadores de Eventos ---
 
-        isLoading = true;
-        sendBtn.disabled = true;
+    chatbotFab.addEventListener('click', () => {
+        chatbotContainer.classList.add('open');
+        chatbotFab.classList.add('hidden');
+    });
 
-        displayUserMessage(messageText);
-        suggestionsContainer.innerHTML = '';
-        const thinkingIndicator = displayBotMessage('<div class="typing-dots"><span></span><span></span><span></span></div>', true);
+    chatbotCloseBtn.addEventListener('click', () => {
+        chatbotContainer.classList.remove('open');
+        chatbotFab.classList.remove('hidden');
+    });
+
+    chatbotForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const query = chatbotInput.value.trim();
+        if (!query) return;
+
+        addMessage(query, 'user');
+        chatbotInput.value = '';
+        chatbotInput.disabled = true;
+        chatbotSendBtn.disabled = true;
+        showTypingIndicator(true);
 
         try {
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';').find(row => row.trim().startsWith(name + '='));
+                    if (cookie) {
+                        cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
             const response = await fetch('/api/chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken, // Clave para la seguridad de Django
+                    'X-CSRFToken': csrftoken
                 },
-                body: JSON.stringify({ query: messageText }),
+                body: JSON.stringify({ query: query })
             });
 
-            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
             const data = await response.json();
+            showTypingIndicator(false);
 
-            thinkingIndicator.querySelector('.message-content').innerHTML = data.response;
-            thinkingIndicator.classList.remove('thinking');
-            displaySuggestions(data.suggestions);
+            if (!response.ok) {
+                addMessage(`Error: ${data.error || 'No se pudo conectar con el asistente.'}`, 'bot');
+            } else {
+                addMessage(data.response, 'bot');
+            }
 
         } catch (error) {
-            console.error('Error al contactar al chatbot:', error);
-            thinkingIndicator.querySelector('.message-content').innerText = 'Lo siento, ocurrió un error de comunicación. Inténtalo de nuevo.';
-            thinkingIndicator.classList.remove('thinking');
+            showTypingIndicator(false);
+            console.error('Error en la petición del chatbot:', error);
+            addMessage('Lo siento, hubo un problema de conexión. Por favor, intenta de nuevo.', 'bot');
         } finally {
-            isLoading = false;
-            sendBtn.disabled = input.value.trim() === '';
-        }
-    }
-
-    function displayUserMessage(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'chat-message user';
-        messageDiv.innerHTML = `<div class="message-content">${message}</div>`;
-        messagesContainer.appendChild(messageDiv);
-        scrollToBottom();
-    }
-
-    function displayBotMessage(htmlContent, isThinking = false) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'chat-message bot';
-        if (isThinking) messageDiv.classList.add('thinking');
-        messageDiv.innerHTML = `<div class="message-content">${htmlContent}</div>`;
-        messagesContainer.appendChild(messageDiv);
-        scrollToBottom();
-        return messageDiv;
-    }
-
-    function displaySuggestions(suggestions) {
-        suggestionsContainer.innerHTML = '';
-        if (suggestions && Array.isArray(suggestions) && suggestions.length > 0) {
-            suggestions.forEach(text => {
-                const btn = document.createElement('button');
-                btn.className = 'suggestion-btn';
-                btn.textContent = text;
-                suggestionsContainer.appendChild(btn);
-            });
-        }
-    }
-
-    function scrollToBottom() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    // --- Event Listeners ---
-    chatbotFab.addEventListener('click', toggleChat);
-    closeBtn.addEventListener('click', toggleChat);
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        handleSendMessage(input.value.trim());
-        input.value = '';
-        sendBtn.disabled = true;
-    });
-
-    input.addEventListener('input', () => {
-        sendBtn.disabled = input.value.trim() === '' || isLoading;
-    });
-
-    suggestionsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('suggestion-btn')) {
-            const suggestionText = e.target.textContent;
-            input.value = suggestionText;
-            handleSendMessage(suggestionText);
-            input.value = '';
-            sendBtn.disabled = true;
+            chatbotInput.disabled = false;
+            chatbotSendBtn.disabled = false;
+            chatbotInput.focus();
         }
     });
+
+    // --- Inicialización ---
+    console.log('Chatbot script initialized.'); // DEBUG
+    loadChatHistory();
+    chatbotInput.disabled = false;
+    chatbotSendBtn.disabled = false;
 });
