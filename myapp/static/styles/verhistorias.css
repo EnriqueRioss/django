@@ -507,7 +507,7 @@ a i{
   background-color: var(--white);
   border-radius: 1rem;
   width: 90%;
-  max-width: 95rem;
+  max-width: 100rem;
   max-height: 80vh;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   overflow-y: auto;
@@ -523,7 +523,150 @@ a i{
   align-items: center;
 }
 
-/* Grid de información */
+.historia-modal-title{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.historia-informacion{
+  font-size: 1.5rem;
+  color: var(--primary-darkerblue);
+}
+
+.historia-icon{
+  font-size: 3rem;
+  color: var(--primary-darkerblue);
+}
+
+.modal-body {
+  padding: 3.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3.2rem;
+}
+
+.info-section {
+  padding: 2rem;
+  border: 1px solid var(--border-gray);
+  border-radius: 1.2rem;
+}
+
+.info-section.card{
+  padding: 2rem;
+  border: 1px solid var(--border-gray);
+}
+
+.info-section .section-title{
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--primary-darkerblue);
+  margin: 0 0 2.4rem 0;
+}
+
+.info-section .section-title i {
+  font-size: 2.2rem;
+  color: var(--primary-darkerblue);
+}
+
+.info-pair{
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.info-label{
+  font-size: 1.1rem;
+  color: var(--buttons-blue);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  color: var(--primary-darkerblue);
+  font-weight: 500;
+}
+
+.grid-3-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.4rem 3.2rem;
+}
+
+.main-grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.4rem;
+}
+
+.card{
+  background-color: var(--white);
+  border: var(--primary-darkerblue);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+}
+
+.info-section.card .section-content{
+  display: flex;
+  flex-direction: column;
+  gap: 2rem
+}
+
+.measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.4rem 3.2rem;
+  margin-bottom: 2.8rem;
+}
+
+.family-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.2rem;
+}
+
+.family-member-title{
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--buttons-blue);
+  margin: 0 0 1.6rem 0;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.member-data-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 1.6rem;
+}
+
+#verHistoriaModal .modal-close{
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    background: none;
+    border: none;
+    font-size: 2.6rem;
+    font-weight: 400; 
+    color: var(--primary-darkerblue);
+    opacity: 0.8;
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#verHistoriaModal .modal-close:hover{
+    color: rgb(153, 1, 1);
+}
+
+/* COMENTAMOS TODO ESTO PARA HACER PRUEBAS CON EL NUEVO DISEÑO
+
+/* Grid de información 
 .info-grid {
   display: grid;
   gap: 1.5rem;
@@ -553,4 +696,4 @@ a i{
   align-items: center;
   gap: 1.5rem;
   padding: 0.5rem 0;
-}
+}*/
