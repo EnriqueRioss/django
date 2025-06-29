@@ -394,11 +394,12 @@ a i{
 
 .patient-name {
   font-weight: 500;
+  font-size: 1.35rem;
 }
 
 .patient-id {
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
+  font-size: 1.25rem;
+  color: var(--buttons-blue);
 }
 
 
@@ -413,7 +414,7 @@ a i{
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 1rem;
   font-size: 1.2rem;
 }
 

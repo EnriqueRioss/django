@@ -118,8 +118,8 @@
                     <h2><i class="fas fa-filter"></i> Filtros de Búsqueda</h2>
                     <p>Utiliza los filtros para encontrar información específica</p>
                 </div>
-                <div class="card-content">
-                    <form method="GET" action="{% url 'ver_historias' %}" id="report-search-form">
+                <form method="GET" action="{% url 'ver_historias' %}" id="report-search-form">
+                    <div class="card-content">
                         <div class="filters-grid">
                             <div class="filter-group">
                                 <label for="buscar_historia">Buscar Historia</label>
@@ -182,8 +182,8 @@
                                 <a href="{% url 'ver_historias' %}" class="btn-limpiar" id="btn-limpiar-filters">Limpiar</a>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
 
             <div class="content-card">
@@ -193,7 +193,7 @@
                 </div>
                 <div class="card-content">
                     <div class="table-container">
-                        <table class="table">
+                        <table class="historia-table">
                             <thead>
                                 <tr>
                                     <th>N° Historia</th>
@@ -224,8 +224,8 @@
                                                 <i class="fas fa-ellipsis-h"></i>
                                             </button>
                                             <div class="dropdown-content">
-                                                <a href="{% url 'historia_editar' historia.pk %}"><i class="fas fa-edit"></i> Editar</a>
-                                                <a href="#" class="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</a>
+                                                <a href="{% url 'historia_editar' historia.pk %}" class="editar-historia"><i class="fas fa-edit"></i> Editar</a>
+                                                <a href="#" class="ver-historia" id="ver-historia"><i class="fas fa-eye"></i> Ver Detalles</a>
                                                 <a href="#" class="warning"><i class="fas fa-ban"></i> Anular</a>
                                                 <a href="{% url 'historia_pdf' historia.pk %}" target="_blank" class="info"><i class="fas fa-file-pdf"></i> Generar PDF</a>
 
@@ -277,6 +277,104 @@
     </div>
 </div>
 -->
+
+<!-- MODAL PARA VER LOS DETALLES DE LA HISTORIA CLÍNICA  -->
+<div class="modal" id="verHistoriaModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="historia-modal-title">
+                <div class="historia-icon">
+                    <i class="fas fa file"></i>
+                </div>
+                <div class="historia-informacion">
+                    <h2 class="hisotria-numero">HC-00214</h2>
+                    <p class="paciente-datos">María Gonzalez Rodríguez</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-contenido">
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Datos del Propósito</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Nombre Completo</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Identificación</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Edad</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Lugar de Nacimiento</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">IEscolaridad</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Ocupación</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="title">Tipo de Sangre</span>
+                            <span class="info-text">XXXXXXX</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Información Clínica</h3>
+                    </div>
+                    <div class="card-content">
+                        <span class="title">Motivo de Consulta</span>
+                        <span class="info-text">XXXXXXX</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="title">Genetista Asignado</span>
+                        <span class="info-text">XXXXXXX</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="title">Médico de Referencia</span>
+                        <span class="info-text">XXXXXXX</span>
+                    </div>
+                    <div class="card-content">
+                        <span class="title">Centro de Referencia</span>
+                        <span class="info-text">XXXXXXX</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-grid">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
 <script src="https://kit.fontawesome.com/8058dee255.js" crossorigin="anonymous"></script>
 
 <script>
@@ -298,6 +396,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+
+    //Lógica para abrir la modal de ver detalles de la historia
+    const verHistoriaModal = document.getElementById('verHistoriaModal');
+    const closeVerHistoriaModalBtn = document.getElementById('closeVerHistoriaModalBtn');
+
+    document.getElementById('ver-historia')?.addEventListener('click', () => verHistoriaModal.classList.add('active'));
+    verHistoriaModal?.addEventListener('click', e => { if (e.target === verHistoriaModal) verHistoriaModal.classList.remove('active'); });
+
+
+    function closeModal() {
+        if (verHistoriaModal) verHistoriaModal.classList.remove('active');
+    }
+
+    // Evento de cierre para el modal
+    if (closeVerHistoriaModalBtn) {
+        closeVerHistoriaModalBtn.addEventListener('click', closeModal);
+    }
+    if (verHistoriaModal) {
+        verHistoriaModal.addEventListener('click', function(event) {
+            if (event.target === verPacienteModal) {
+                closeModal();
+            }
+        });
+    }
 
   // --- CÓDIGO JS PARA ELIMINAR COMENTADO ---
     /*

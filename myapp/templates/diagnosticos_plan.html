@@ -3,333 +3,133 @@
 
 {% block form_content %}
     <title>Formulario de Evaluación Genética</title>
-    
+    <link rel="stylesheet" href="{% static '/styles/stylesforms.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tus estilos CSS (sin cambios) -->
-    <style>
-        /* --- General y Tipografía --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #eef2f7; /* Un gris azulado muy claro */
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* --- Contenedor Principal del Formulario --- */
-        .form-container {
-            max-width: 950px;
-            margin: 20px auto;
-            padding: 40px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            border: 1px solid #dee2e6;
-        }
-
-        .error-list {
-            color: #dc3545;
-            font-size: 0.875em;
-            margin-top: 5px;
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .form-group .error-list {
-            margin-top: 0.25rem;
-            margin-bottom: 1rem;
-        }
-        .error-list p {
-            margin: 0;
-        }
-        .non-form-errors {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        
-        .header-info {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-size: 1rem;
-        }
-        
-        .historia-info {
-            font-weight: 500;
-            background-color: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 6px;
-            display: inline-block;
-        }
-
-        /* --- Grupos de Campos (Fieldsets) --- */
-        fieldset {
-            border: 1px solid #dbe2e9;
-            padding: 25px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            background-color: #fdfdff;
-        }
-
-        legend {
-            width: auto;
-            padding: 0 15px;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #34495e;
-            border-bottom: none;
-            margin-bottom: 20px;
-        }
-
-        /* --- Estilos para cada sub-formulario (Diagnóstico, Plan) --- */
-        .dynamic-form-item {
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            background-color: #ffffff;
-            position: relative;
-            transition: box-shadow 0.2s ease-in-out;
-        }
-        .dynamic-form-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-        }
-
-        /* --- Estilos de etiquetas y campos de entrada --- */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .field-wrapper label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-            font-size: 0.95rem;
-        }
-
-        .field-wrapper input[type="text"],
-        .field-wrapper textarea,
-        .form-control { /* Aseguramos que la clase de Django también sea estilizada */
-            width: 100%;
-            padding: 12px 15px;
-            font-size: 1rem;
-            color: #495057;
-            background-color: #fff;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            box-sizing: border-box;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .field-wrapper textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .field-wrapper input[type="text"]:focus,
-        .field-wrapper textarea:focus,
-        .form-control:focus {
-            outline: none;
-            border-color: #80bdff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-        }
-
-        /* --- Estilos de Botones --- */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-            cursor: pointer;
-            user-select: none;
-            border: 1px solid transparent;
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 6px;
-            transition: all 0.2s ease-in-out;
-        }
-        
-        .btn i {
-            margin-right: 8px;
-        }
-
-        .btn-primary {
-            color: #fff;
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0069d9;
-            border-color: #0062cc;
-        }
-
-        .btn-secondary {
-            color: #fff;
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-
-        .btn-danger-soft {
-            color: #dc3545;
-            background-color: #f8d7da;
-            border-color: transparent;
-            font-size: 0.875rem;
-            padding: 5px 10px;
-        }
-        .btn-danger-soft:hover {
-            color: #fff;
-            background-color: #dc3545;
-        }
-
-        .remove-form-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-        }
-        
-        .add-form-btn {
-            margin-top: 10px;
-        }
-
-        .form-actions {
-            text-align: right;
-            margin-top: 40px;
-            border-top: 1px solid #e9ecef;
-            padding-top: 25px;
-        }
-    </style>
 </head>
+    
 
 
-<div class="form-container">
-    <h1>Evaluación Genética</h1>
-    <div class="header-info">
-        <span class="historia-info">
-            Historia Clínica #{{ historia_id }} - {{ parent_object }}
-        </span>
-        <p>Por favor, complete todos los campos requeridos.</p>
-    </div>
-
-    <div id="form-errors-global" class="non-form-errors" style="display:none;"></div>
-
+<div class="contenedor-formulario">
     <form method="post" id="evaluacion-form" novalidate>
         {% csrf_token %}
-
-        <div class="form-group">
-            <div class="field-wrapper">
-                {{ form.signos_clinicos.label_tag }}
-                {{ form.signos_clinicos }}
-                <div class="error-list" id="errors-signos_clinicos">{{ form.signos_clinicos.errors }}</div>
-            </div>
-        </div>
-
-        <fieldset>
-            <legend>Diagnósticos Presuntivos</legend>
-            
-            {{ diagnostico_formset.management_form }}
-            <div id="diagnostico-non-form-errors" class="error-list">
-                {{ diagnostico_formset.non_form_errors }}
+    
+        <div class="form-step active">
+            <div class="step-content-header">
+                <i class="fas fa-user"></i>
+                <h2>Evaluación Genética</h2>
             </div>
 
-            <div id="diagnostico-form-list">
-                {% for form in diagnostico_formset %}
-                    <div class="dynamic-form-item" id="diagnostico-form-{{ forloop.counter0 }}">
-                        {# ======================================================= #}
-                        {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
-                        {# Esto renderizará los <input type="hidden"> para el ID, la clave foránea y el campo 'orden' #}
-                        {{ form.diagnostico_id }} 
-                        {{ form.evaluacion }}
-                        {{ form.orden }}
-                        {# ======================================================= #}
+            <p class="step-subtitle">Datos del diagnóstico del paciente</p>
 
-                        <div class="field-wrapper">
-                            {{ form.descripcion.label_tag }}
-                            {{ form.descripcion }}
-                            <div class="error-list" id="errors-diagnostico-{{ forloop.counter0 }}-descripcion">{{ form.descripcion.errors }}</div>
-                        </div>
-                        
-                        {# Es crucial renderizar el campo DELETE para que el formset sepa qué eliminar #}
-                        <div style="display: none;">{{ form.DELETE }}</div> 
-                        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
-                            <i class="fas fa-trash"></i>
-                        </button>
+            <p class="historia-info">Nº de Historia Clínica: {{ historia_id }}</p>
+            {% if editing %}
+                <p class="editing-info"><em>Modo Edición: Actualizando datos del propósito.</em></p>
+            {% endif %}
+
+            <div id="form-errors-global" class="non-form-errors" style="display:none;"></div>
+
+            <div class="diagnostigo-evaluacion-section">
+        
+
+                <div class="form-group">
+                    <div class="field-wrapper">
+                        {{ form.signos_clinicos.label_tag }}
+                        {{ form.signos_clinicos }}
+                        <div class="error-list" id="errors-signos_clinicos">{{ form.signos_clinicos.errors }}</div>
                     </div>
-                {% endfor %}
-            </div>
-            <button type="button" id="add-diagnostico-btn" class="btn btn-secondary add-form-btn">
-                <i class="fas fa-plus"></i> Añadir Diagnóstico
-            </button>
-        </fieldset>
+                </div>
 
-        <!-- Sección de Plan de Estudio -->
-        <fieldset>
-            <legend>Plan de Estudio</legend>
-
-            {{ plan_formset.management_form }}
-            <div id="plan-non-form-errors" class="error-list">
-                {{ plan_formset.non_form_errors }}
-            </div>
-
-            <div id="plan-form-list">
-                {% for form in plan_formset %}
-                    <div class="dynamic-form-item" id="plan-form-{{ forloop.counter0 }}">
-                        {# ======================================================= #}
-                        {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
-                        {{ form.plan_id }}
-                        {{ form.evaluacion }}
-                        {{ form.completado }}
-                     
-                        {{ form.asesoramiento_evoluciones }}
-                        {# ======================================================= #}
-
-                        <div class="field-wrapper">
-                            {{ form.accion.label_tag }}
-                            {{ form.accion }}
-                            <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-accion">{{ form.accion.errors }}</div>
-                        </div>
-                        <div class="field-wrapper">
-                            {{ form.fecha_visita.label_tag }}
-                            {{ form.fecha_visita }}
-                            <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-fecha_visita">{{ form.fecha_visita.errors }}</div>
-                        </div>
-
-                        <div style="display: none;">{{ form.DELETE }}</div>
-                        <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                <fieldset>
+                    <legend>Diagnósticos Presuntivos</legend>
+                    
+                    {{ diagnostico_formset.management_form }}
+                    <div id="diagnostico-non-form-errors" class="error-list">
+                        {{ diagnostico_formset.non_form_errors }}
                     </div>
-                {% endfor %}
-            </div>
-            <button type="button" id="add-plan-btn" class="btn btn-secondary add-form-btn">
-                <i class="fas fa-plus"></i> Añadir Acción del Plan
-            </button>
-        </fieldset>
 
-        <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
-            <button type="submit" name="save_draft" class="btn-secondary" style="margin-right: 10px;">Guardar Borrador</button>
-            <button type="submit" class="btn btn-primary" id="submit-button">
-                <i class="fas fa-save"></i> Guardar Evaluación
-            </button>
+                    <div id="diagnostico-form-list">
+                        {% for form in diagnostico_formset %}
+                            <div class="dynamic-form-item" id="diagnostico-form-{{ forloop.counter0 }}">
+                                {# ======================================================= #}
+                                {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
+                                {# Esto renderizará los <input type="hidden"> para el ID, la clave foránea y el campo 'orden' #}
+                                {{ form.diagnostico_id }} 
+                                {{ form.evaluacion }}
+                                {{ form.orden }}
+                                {# ======================================================= #}
+
+                                <div class="field-wrapper">
+                                    {{ form.descripcion.label_tag }}
+                                    {{ form.descripcion }}
+                                    <div class="error-list" id="errors-diagnostico-{{ forloop.counter0 }}-descripcion">{{ form.descripcion.errors }}</div>
+                                </div>
+                                
+                                {# Es crucial renderizar el campo DELETE para que el formset sepa qué eliminar #}
+                                <div style="display: none;">{{ form.DELETE }}</div> 
+                                <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
+                                    <i class="fas fa-trash"></i>Eliminar diagnostico
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-diagnostico-btn" class="btn btn-secondary add-form-btn">
+                        <i class="fas fa-plus"></i> Añadir Diagnóstico
+                    </button>
+                </fieldset>
+
+                <!-- Sección de Plan de Estudio -->
+                <fieldset>
+                    <legend>Plan de Estudio</legend>
+
+                    {{ plan_formset.management_form }}
+                    <div id="plan-non-form-errors" class="error-list">
+                        {{ plan_formset.non_form_errors }}
+                    </div>
+
+                    <div id="plan-form-list">
+                        {% for form in plan_formset %}
+                            <div class="dynamic-form-item" id="plan-form-{{ forloop.counter0 }}">
+                                {# ======================================================= #}
+                                {# ===== RENDERIZADO EXPLÍCITO DE CAMPOS OCULTOS (CORREGIDO) #}
+                                {{ form.plan_id }}
+                                {{ form.evaluacion }}
+                                {{ form.completado }}
+                            
+                                {{ form.asesoramiento_evoluciones }}
+                                {# ======================================================= #}
+
+                                <div class="field-wrapper">
+                                    {{ form.accion.label_tag }}
+                                    {{ form.accion }}
+                                    <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-accion">{{ form.accion.errors }}</div>
+                                </div>
+                                <div class="field-wrapper">
+                                    {{ form.fecha_visita.label_tag }}
+                                    {{ form.fecha_visita }}
+                                    <div class="error-list" id="errors-plan-{{ forloop.counter0 }}-fecha_visita">{{ form.fecha_visita.errors }}</div>
+                                </div>
+
+                                <div style="display: none;">{{ form.DELETE }}</div>
+                                <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
+                                    <i class="fas fa-trash"></i>Eliminar plan de estudio
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-plan-btn" class="btn btn-secondary add-form-btn">
+                        <i class="fas fa-plus"></i> Añadir Acción del Plan
+                    </button>
+                </fieldset>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Anterior</button>
+                <button type="submit" name="save_draft" class="btn-secondary" style="margin-right: 10px;">Guardar Borrador</button>
+                <button type="submit" class="btn btn-primary" id="submit-button">
+                    <i class="fas fa-save"></i> Guardar Evaluación
+                </button>
+            </div>
         </div>
     </form>
 </div>
@@ -350,7 +150,7 @@
             <div class="error-list" id="errors-diagnostico-__prefix__-descripcion"></div>
         </div>
         <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar diagnóstico">
-            <i class="fas fa-trash"></i>
+            <i class="fas fa-trash"></i>Eliminar diagnositico
         </button>
     </div>
 </div>
@@ -373,7 +173,7 @@
             {{ plan_formset.empty_form.fecha_visita }}
             <div class="error-list" id="errors-plan-__prefix__-fecha_visita">
         <button type="button" class="btn btn-danger-soft remove-form-btn" title="Eliminar acción del plan">
-            <i class="fas fa-trash"></i>
+            <i class="fas fa-trash"></i>Eliminar plan de estudio
         </button>
     </div>
 </div>

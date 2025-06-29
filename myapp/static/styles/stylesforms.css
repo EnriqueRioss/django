@@ -715,84 +715,162 @@ form{
     width: 100%;
 }
 
+/*------------- Texto de autorización -------------------*/
 
-
-/*COMENTE LOS MENSAJES DE ERROR PORQUE ESTA TOMANDO ESTILOS DE OTRO CSS YA*/
-
-/*--------- css para los mensajes de error ----------*/
-/*.messages-container {
-    width: 80%;
-    margin: 15px auto;
-    padding: 0;
+.autorizacion-text{
+    font-size: 1.5rem;
+    margin-bottom: 3rem;
+    text-align: justify;
+    color: var(--primary-darkerblue);
 }
 
-ul.messages {
+
+/*--------------- ESTILOS CSS PARA EL FORMULARIO: DIAGNOSTICOS_PLAN ----------------*/
+
+
+.error-list {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 5px;
     list-style-type: none;
-    padding: 0;
+    padding-left: 0;
+}
+
+.form-group .error-list {
+    margin-top: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.error-list p {
     margin: 0;
 }
 
-li.message-item {
-    padding: 10px 15px;
-    margin-bottom: 10px;
+.non-form-errors {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid transparent;
     border-radius: 4px;
-    font-size: 0.95em;
-    display: flex;
-    align-items: center;
-}
-
-li.message-item i {
-    margin-right: 8px;
-    font-size: 1.2em;
-}
-
-li.message-item.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-li.message-item.success i { color: #155724; }
-
-li.message-item.error {
-    background-color: #f8d7da;
     color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
 }
-li.message-item.error i { color: #721c24; }
 
 
-li.message-item.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
+/* --- Grupos de Campos (Fieldsets) --- */
+fieldset {
+    border: 1px solid var(--border-gray);
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+    border-radius: 0.8rem;
+    background-color: var(--background-color);
 }
-li.message-item.info i { color: #0c5460; }
 
-li.message-item.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
+legend {
+    width: auto;
+    padding: 0 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-darkerblue);
+    border-bottom: none;
+    margin-bottom: 20px;
 }
-li.message-item.warning i { color: #856404; }*/
 
-/* For field-specific errors */
-/*.field-errors {
-    color: #721c24; Similar to bootstrap's text-danger 
-    font-size: 0.875em;
-    margin-top: .25rem;
+/* --- Estilos para cada sub-formulario (Diagnóstico, Plan) --- */
+.dynamic-form-item {
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    background-color: var(--background-color);
+    position: relative;
+    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: 0 4px 12px rgb(52, 58, 64, 0.2);
 }
-.field-errors span {
+
+/* --- Estilos de etiquetas y campos de entrada --- */      
+.field-wrapper label {
     display: block;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-darkerblue);
+    font-size: 1.3rem;
 }
 
-.form-group input.is-invalid,
-.form-group select.is-invalid,
-.form-group textarea.is-invalid {
-    border-color: #dc3545;  Bootstrap's danger color 
+.field-wrapper input[type="text"],
+.field-wrapper textarea,
+.form-control { 
+    width: 100%;
+    padding: 1.2rem 1.5rem;
+    font-size: 1.3rem;
+    color: var(--primary-darkerblue);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-gray);
+    border-radius: 0.6rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group .alert-danger {  If using alerts for field errors from formset 
-    font-size: 0.875em;
-    padding: 0.5rem 0.75rem;
+.field-wrapper textarea {
+    min-height: 12rem;
+    resize: vertical;
 }
-*/
+
+.field-wrapper input[type="text"]:focus,
+.field-wrapper textarea:focus,
+.form-control:focus {
+    outline: none;
+    border-color: var(--buttons-blue);
+    box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.2);
+}
+
+/* --- Estilos de Botones --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid var(--buttons-blue);
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+        
+.btn i {
+    margin-right: 8px;
+}
+
+.btn-danger-soft {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border-color: transparent;
+    font-size: 0.875rem;
+    padding: 5px 10px;
+}
+.btn-danger-soft:hover {
+    color: #fff;
+    background-color: #dc3545;
+}
+
+.remove-form-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+        
+.add-form-btn {
+    margin-top: 10px;
+}
+
+.add-form-btn:hover {
+    background-color: var(--buttons-blue);
+    color: var(--background-color);
+}
+
+
+
+

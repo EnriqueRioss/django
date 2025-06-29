@@ -14,13 +14,24 @@
         {% csrf_token %}
 
         {% for ctx in autorizacion_contexts %}
-        <div class="form-step active" style="margin-bottom: 2rem; border-top: 2px solid #007bff; padding-top: 1rem;">
+        <div class="form-step active">
             <div class="step-content-header">
                 <i class="fas fa-file-signature"></i>
                 <h2>Autorización para: {{ ctx.proposito.nombres }} {{ ctx.proposito.apellidos }}</h2>
             </div>
 
             <p class="step-subtitle">Datos de la autorización para el Paciente o su Representante.</p>
+
+            <p class="autorizacion-text">El suscrito paciente o representante del mismo Sr. o Sra.: 
+                Autorizo a él o los médicos del Instituto de Investigaciones Genéticas de L.U.Z
+                a efectuar todo examen físico y de laboratorio, fotografías y/o videos clínicos, 
+                imagenes diagnósticas, terapéuticas, estudios anatomopatológicos incluyendo necropsia
+                en caso de muerte, y diversas técnicas de diagnositico prenatal que se consideren pertinentes
+                para el diagnositico y tratamiento del mismo. Así mismo, autorizo a que la información, resultados
+                de examenes complementarios, fotografías y/o videos obtenidos durante el estudio del paciente,
+                siempre y cuando no se mencione su nombre, pueden ser divulgados por medios audiovisuales
+                y/o publicaciones escritas con fines estrictamente académicas o científicos. 
+            </p>
 
             <!-- Contenedor para errores no asociados a un campo específico -->
             <div class="alert alert-danger non-field-errors" data-prefix="{{ ctx.form.prefix }}"></div>
