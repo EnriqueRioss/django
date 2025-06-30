@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import date
+import os
 
 # Create your models here.
 
@@ -464,6 +465,38 @@ class PlanEstudio(models.Model):
         estado = 'Completado' if self.completado else 'Pendiente'
         fecha = f" (Visita: {self.fecha_visita})" if self.fecha_visita else ""
         return f"Plan: {self.accion[:40]}... [{estado}]{fecha}"
+
+# ===== INICIO DEL CÓDIGO A AÑADIR EN models.py =====
+# Este nuevo modelo almacenará los archivos para cada PlanEstudio
+def get_upload_path(instance, filename):
+    # Genera una ruta como: planes_estudio_archivos/plan_15/nombre_archivo.pdf
+    return os.path.join('planes_estudio_archivos', f'plan_{instance.plan_estudio.plan_id}', filename)
+
+class ArchivoPlanEstudio(models.Model):
+    archivo_id = models.AutoField(primary_key=True)
+    plan_estudio = models.ForeignKey(
+        PlanEstudio, 
+        on_delete=models.CASCADE, 
+        related_name='archivos'
+    )
+    archivo = models.FileField(
+        upload_to=get_upload_path,
+        verbose_name="Archivo Adjunto"
+    )
+    nombre_descriptivo = models.CharField(
+        max_length=150, 
+        blank=True, 
+        null=True, 
+        help_text="Nombre corto para mostrar en la UI (ej: 'Ecocardiograma'). Si se deja en blanco, se usará el nombre del archivo."
+    )
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombre_descriptivo or os.path.basename(self.archivo.name)
+
+    def get_display_name(self):
+        return self.nombre_descriptivo or os.path.basename(self.archivo.name)
+
 
 class EvolucionDesarrollo(models.Model):
     evolucion_id = models.AutoField(primary_key=True)

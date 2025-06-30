@@ -8,13 +8,14 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.forms import inlineformset_factory, DateInput
+import os
 
 
 from .models import (
     HistoriasClinicas, Propositos, InformacionPadres, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales, DesarrolloPsicomotor,
     AntecedentesPersonales, ExamenFisico, Parejas, EvaluacionGenetica, Genetistas,
-    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio,Autorizaciones
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio,Autorizaciones,ArchivoPlanEstudio
 )
 
 # --- General Purpose Forms ---
@@ -752,7 +753,52 @@ class DiagnosticoPresuntivoForm(forms.ModelForm):
             # Le decimos a Django que el campo 'orden' existe pero no es visible.
             'orden': forms.HiddenInput(), 
         }
+class PlanEstudioEditForm(forms.ModelForm):
+    # --- CAMPO ELIMINADO ---
+    # Ya no definimos 'archivos_nuevos' aquí.
+    # Lo manejaremos directamente en el HTML y la vista.
+    
+    # Campo para seleccionar archivos existentes para eliminar (ESTE SE QUEDA)
+    archivos_a_eliminar = forms.ModelMultipleChoiceField(
+        queryset=ArchivoPlanEstudio.objects.none(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Marcar archivos para eliminar"
+    )
 
+    class Meta:
+        model = PlanEstudio
+        fields = ['accion', 'asesoramiento_evoluciones', 'fecha_visita', 'completado']
+        widgets = {
+            'accion': forms.Textarea(attrs={'rows': 3}),
+            'asesoramiento_evoluciones': forms.Textarea(attrs={'rows': 3}),
+            'fecha_visita': forms.DateInput(attrs={'type': 'date'}),
+            'completado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'accion': 'Acción a Realizar (Plan de Estudio)',
+            'asesoramiento_evoluciones': 'Asesoramiento y Evoluciones (Resultados)',
+            'fecha_visita': 'Fecha de Próxima Visita',
+            'completado': 'Marcar como Completado',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['archivos_a_eliminar'].queryset = self.instance.archivos.all()
+            self.fields['archivos_a_eliminar'].label_from_instance = lambda obj: obj.get_display_name()
+
+    def save(self, commit=True):
+        plan_estudio = super().save(commit=commit)
+
+        if self.cleaned_data.get('archivos_a_eliminar'):
+            for archivo_obj in self.cleaned_data['archivos_a_eliminar']:
+                if archivo_obj.archivo:
+                    if os.path.isfile(archivo_obj.archivo.path):
+                        os.remove(archivo_obj.archivo.path)
+                archivo_obj.delete()
+                
+        return plan_estudio
 class PlanEstudioForm(forms.ModelForm):
     class Meta:
         model = PlanEstudio

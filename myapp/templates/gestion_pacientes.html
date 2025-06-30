@@ -15,6 +15,28 @@
     .patients-table tbody tr.pareja-row:last-of-type {
        border-bottom: 2px solid #aed6f1;
     }
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #09f;
+        animation: spin 1s ease infinite;
+        margin: 20px auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .file-delete-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .file-delete-list li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -22,6 +44,7 @@
 <div class="app-container">
     
     <div class="main-content">
+        {% csrf_token %}
         <main class="barra-content">
             <header class="content-header">
                 <div class="breadcrumb">
@@ -173,6 +196,7 @@
                                 <tbody>
                                     {% for proposito in pacientes_list %}
                                     <tr class="{% if proposito.is_in_couple %}pareja-row{% endif %}"
+                                    data-proposito-id="{{ proposito.proposito_id }}" {# <--- AÑADIDO #}
                                         data-nombre="{{ proposito.nombres }} {{ proposito.apellidos }}"
                                         data-identificacion="{{ proposito.identificacion }}"
                                         data-foto-url="{% if proposito.foto %}{{ proposito.foto.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}"
@@ -285,7 +309,7 @@
         <div class="modal-tabs">
             <div class="tabs-header">
                 <button class="tab-btn active" data-tab="personal-info">Información Personal</button>
-                <button class="tab-btn" data-tab="medical-record">Historias Clínicas</button>
+                <button class="tab-btn" data-tab="medical-record">Historia Clínica</button>
                 <button class="tab-btn" data-tab="tests">Análisis y Pruebas</button>
             </div>
 
@@ -342,55 +366,22 @@
             </div>
 
             <!-- CONTENIDO DE EJEMPLO RESTAURADO -->
-            <div class="tab-content" id="medical-record">
+             <!-- Tab: Historia Clínica (CONTENIDO DINÁMICO) -->
+             <div class="tab-content" id="medical-record">
                 <div class="tab-content-header">
                     <h3 class="tab-main-title">Historia Clínica Genética</h3>
                     <button class="btn-primary">
                         <i class="fas fa-plus" class="btn-icon"></i>
                         Nueva Consulta
                     </button>
+                    <!-- Botón "Nueva Consulta" podría llevar a un formulario de creación -->
                 </div>
-                <div class="history-list">
-                    <div class="history-card">
-                        <div class="view-content">
-                            <div class="card-main-content">
-                                <div class="historia-card-header"><span class="badge history-id">HC-001</span><span class="badge status-completed">Completado</span></div>
-                                <div class="card-body">
-                                    <h4 class="history-title">Consulta Inicial</h4>
-                                    <p class="history-subtitle">Sindrome de Marfan - Sospecha</p>
-                                    <div class="history-meta"><div class="meta-item"><i class="fas fa-calendar"></i><span>2024-01-15</span></div><div class="meta-item"><i class="fas fa-user"></i><span>Dra. Gamboa</span></div></div>
-                                </div>
-                                <div class="history-tags"><span class="tag">Ecocardiograma</span><span class="tag">Analisis Genético</span></div>
-                            </div>
-                            <div class="card-actions view-actions"><button class="action-btn js-edit-btn" title="Editar"><i class="fas fa-edit"></i></button></div>
-                        </div>
-                        <div class="editable-content">
-                            <h4>Editando Historia Clínica: HC-001</h4>
-                            <form class="edit-form"><h1>Observaciones de la consulta</h1><div class="form-group"><label for="fecha-asesoramiento">Fecha</label><input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento"></div><div class="form-group"><label for="asesoramiento">Asesoramiento</label><textarea name="asesoramiento" id="asesoramiento"></textarea></div><div class="form-group"><label for="evolucion">Evoluciones</label><textarea name="evolucion" id="evolucion"></textarea></div><div class="form-group"><label for="examenes">Examenes</label><input type="file" name="examenes" id="examenes"></div></form>
-                            <div class="card-actions edit-actions"><button class="btn btn-secondary js-cancel-btn">Cancelar</button><button class="btn btn-primary js-save-btn">Guardar Cambios</button></div>
-                        </div>
-                    </div>
-                    <div class="history-card">
-                        <div class="view-content">
-                            <div class="card-main-content">
-                                <div class="historia-card-header"><span class="badge history-id">HC-001</span><span class="badge status-completed">Completado</span></div>
-                                <div class="card-body">
-                                    <h4 class="history-title">Consulta de Seguimiento</h4>
-                                    <p class="history-subtitle">Sindrome de Marfan - Confirmado</p>
-                                    <div class="history-meta"><div class="meta-item"><i class="fas fa-calendar"></i><span>2024-02-15</span></div><div class="meta-item"><i class="fas fa-user"></i><span>Dra. Gamboa</span></div></div>
-                                </div>
-                                <div class="history-tags"><span class="tag">Secuenciacion completa</span><span class="tag">Analisis familiar</span></div>
-                            </div>
-                            <div class="card-actions view-actions"><button class="action-btn js-edit-btn" title="Editar"><i class="fas fa-edit"></i></button></div>
-                        </div>
-                        <div class="editable-content">
-                            <h4>Editando Historia Clínica: HC-001</h4>
-                            <form class="edit-form"><h1>Observaciones de la consulta</h1><div class="form-group"><label for="fecha-asesoramiento">Fecha</label><input type="date" name="fecha-asesoramiento" id="fecha-asesoramiento"></div><div class="form-group"><label for="asesoramiento">Asesoramiento</label><textarea name="asesoramiento" id="asesoramiento"></textarea></div><div class="form-group"><label for="evolucion">Evoluciones</label><textarea name="evolucion" id="evolucion"></textarea></div><div class="form-group"><label for="examenes">Examenes</label><input type="file" name="examenes" id="examenes"></div></form>
-                            <div class="card-actions edit-actions"><button class="btn btn-secondary js-cancel-btn">Cancelar</button><button class="btn btn-primary js-save-btn">Guardar Cambios</button></div>
-                        </div>
-                    </div>
+                <div class="history-list" id="history-list-container">
+                    <!-- El contenido se generará aquí con JavaScript -->
+                    <div class="spinner"></div>
                 </div>
             </div>
+
             <div class="tab-content" id="tests">
                 <div class="tab-content-header">
                     <h3 class="tab-main-title">Diagnósticos y Pruebas Genéticas</h3>
@@ -418,112 +409,239 @@
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const verPacienteModal = document.getElementById('verPacienteModal');
-    const tableBody = document.querySelector('.patients-table tbody');
-    const closeVerPacienteModalBtn = document.getElementById('closeVerPacienteModalBtn');
-
-    // Función para cerrar el modal
-    function closeModal() {
-        if (verPacienteModal) verPacienteModal.classList.remove('active');
-    }
-
-    // Usar delegación de eventos en la tabla para manejar todos los botones "ver"
-    if (tableBody) {
-        tableBody.addEventListener('click', function(e) {
-            const viewButton = e.target.closest('.btn-ver');
-            if (viewButton) {
-                const row = viewButton.closest('tr');
-                if (row) {
-                    // Poblar el modal con datos de la fila
-                    document.getElementById('modal-patient-name').textContent = row.dataset.nombre;
-                    document.getElementById('modal-patient-id').textContent = 'ID: ' + row.dataset.identificacion;
-                    
-                    const avatarImg = document.getElementById('modal-avatar-img');
-                    const avatarFallback = document.getElementById('modal-avatar-fallback');
-                    if (row.dataset.fotoUrl && !row.dataset.fotoUrl.endsWith('default_avatar.png')) {
-                        avatarImg.src = row.dataset.fotoUrl;
-                        avatarImg.style.display = 'block';
-                        avatarFallback.style.display = 'none';
-                    } else {
-                        avatarFallback.textContent = row.dataset.avatarFallback;
-                        avatarImg.style.display = 'none';
-                        avatarFallback.style.display = 'flex';
+    document.addEventListener('DOMContentLoaded', function() {
+        const verPacienteModal = document.getElementById('verPacienteModal');
+        const tableBody = document.querySelector('.patients-table tbody');
+        const closeVerPacienteModalBtn = document.getElementById('closeVerPacienteModalBtn');
+        const historyListContainer = document.getElementById('history-list-container');
+        const getCSRFToken = () => document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+        function closeModal() {
+            if (verPacienteModal) verPacienteModal.classList.remove('active');
+            // Limpiar el contenido del historial al cerrar para que cargue de nuevo la próxima vez
+            historyListContainer.innerHTML = '<div class="spinner"></div>';
+        }
+    
+        if (tableBody) {
+            tableBody.addEventListener('click', function(e) {
+                const viewButton = e.target.closest('.btn-ver');
+                if (viewButton) {
+                    const row = viewButton.closest('tr');
+                    if (row) {
+                        // Poblar la información general del modal (sin cambios)
+                        document.getElementById('modal-patient-name').textContent = row.dataset.nombre;
+                        document.getElementById('modal-patient-id').textContent = 'ID: ' + row.dataset.identificacion;
+                        const avatarImg = document.getElementById('modal-avatar-img');
+                        const avatarFallback = document.getElementById('modal-avatar-fallback');
+                        if (row.dataset.fotoUrl && !row.dataset.fotoUrl.endsWith('default_avatar.png')) {
+                            avatarImg.src = row.dataset.fotoUrl; avatarImg.style.display = 'block'; avatarFallback.style.display = 'none';
+                        } else {
+                            avatarFallback.textContent = row.dataset.avatarFallback; avatarImg.style.display = 'none'; avatarFallback.style.display = 'flex';
+                        }
+                        document.getElementById('modal-info-edad').textContent = 'Edad: ' + row.dataset.edad + ' años';
+                        document.getElementById('modal-info-telefono').textContent = row.dataset.telefono;
+                        document.getElementById('modal-info-email').textContent = row.dataset.email;
+                        document.getElementById('modal-info-direccion').textContent = row.dataset.direccion;
+                        document.getElementById('modal-info-genetista').textContent = row.dataset.genetista;
+                        document.getElementById('modal-info-ultima-visita').textContent = row.dataset.ultimaVisita;
+                        const estadoBadge = document.getElementById('modal-info-estado');
+                        estadoBadge.textContent = row.dataset.estadoDisplay;
+                        estadoBadge.className = 'badge badge-' + row.dataset.estadoSlug;
+    
+                        // Cargar dinámicamente el historial clínico
+                        const propositoId = row.dataset.propositoId;
+                        loadHistoriaClinica(propositoId);
+    
+                        verPacienteModal.classList.add('active');
                     }
-
-                    document.getElementById('modal-info-edad').textContent = 'Edad: ' + row.dataset.edad + ' años';
-                    document.getElementById('modal-info-telefono').textContent = row.dataset.telefono;
-                    document.getElementById('modal-info-email').textContent = row.dataset.email;
-                    document.getElementById('modal-info-direccion').textContent = row.dataset.direccion;
-                    document.getElementById('modal-info-genetista').textContent = row.dataset.genetista;
-                    document.getElementById('modal-info-ultima-visita').textContent = row.dataset.ultimaVisita;
-                    
-                    const estadoBadge = document.getElementById('modal-info-estado');
-                    estadoBadge.textContent = row.dataset.estadoDisplay;
-                    estadoBadge.className = 'badge badge-' + row.dataset.estadoSlug;
-
-                    // Mostrar el modal
-                    verPacienteModal.classList.add('active');
                 }
-            }
-        });
-    }
-
-    // Evento de cierre para el modal
-    if (closeVerPacienteModalBtn) {
-        closeVerPacienteModalBtn.addEventListener('click', closeModal);
-    }
-    if (verPacienteModal) {
-        verPacienteModal.addEventListener('click', function(event) {
-            if (event.target === verPacienteModal) {
-                closeModal();
-            }
-        });
-    }
-
-    // Lógica para las pestañas dentro del modal
-    const tabButtons = document.querySelectorAll('.modal .tab-btn');
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            const tabContainer = this.closest('.modal-tabs');
-            tabContainer.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
             });
+        }
+    
+        // Cerrar modal
+        if (closeVerPacienteModalBtn) closeVerPacienteModalBtn.addEventListener('click', closeModal);
+        if (verPacienteModal) verPacienteModal.addEventListener('click', e => { if (e.target === verPacienteModal) closeModal(); });
+    
+        // Pestañas del modal
+        verPacienteModal.querySelectorAll('.modal .tab-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                verPacienteModal.querySelectorAll('.modal .tab-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                verPacienteModal.querySelectorAll('.modal .tab-content').forEach(content => content.classList.remove('active'));
+                const tabId = this.getAttribute('data-tab');
+                verPacienteModal.querySelector('#' + tabId).classList.add('active');
+            });
+        });
+    
+        function loadHistoriaClinica(propositoId) {
+            historyListContainer.innerHTML = '<div class="spinner"></div>'; // Mostrar spinner
+            fetch(`/ajax/get-historia-clinica/${propositoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    historyListContainer.innerHTML = ''; // Limpiar spinner
+                    if (data.planes_de_estudio.length > 0) {
+                        data.planes_de_estudio.forEach(plan => {
+                            const cardHtml = createPlanEstudioCard(plan);
+                            historyListContainer.insertAdjacentHTML('beforeend', cardHtml);
+                        });
+                    } else {
+                        historyListContainer.innerHTML = '<p style="text-align:center; color: #777;">No hay planes de estudio registrados para este paciente.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching historia clinica:', error);
+                    historyListContainer.innerHTML = '<p style="text-align:center; color: red;">Error al cargar el historial.</p>';
+                });
+        }
+    
+        function createPlanEstudioCard(plan) {
+            const statusClass = plan.completado ? 'status-completed' : 'status-pending';
+            const statusText = plan.completado ? 'Completado' : 'Pendiente';
+            const fechaVisita = plan.fecha_visita ? new Date(plan.fecha_visita + 'T00:00:00').toLocaleDateString('es-ES') : 'N/A';
             
-            const tabId = this.getAttribute('data-tab');
-            tabContainer.querySelector('#' + tabId).classList.add('active');
+            let archivosHtml = plan.archivos.map(archivo => `<a href="${archivo.url}" target="_blank" class="tag">${archivo.nombre}</a>`).join('');
+            if (!archivosHtml) archivosHtml = '<span class="tag tag-muted">Sin archivos</span>';
+    
+            let archivosEliminarHtml = plan.archivos.map(archivo => `
+                <li>
+                    <label>
+                        <input type="checkbox" name="archivos_a_eliminar" value="${archivo.id}">
+                        ${archivo.nombre}
+                    </label>
+                </li>
+            `).join('');
+    
+            return `
+                <div class="history-card" data-plan-id="${plan.id}">
+                    <div class="view-content">
+                        <div class="card-main-content">
+                            <div class="historia-card-header">
+                                <span class="badge history-id">${plan.tipo_consulta}</span>
+                                <span class="badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="history-title">Plan de Estudio:</h4>
+                                <p class="history-subtitle">${plan.accion}</p>
+                                <h4 class="history-title" style="margin-top: 10px;">Resultados:</h4>
+                                <p class="history-subtitle">${plan.asesoramiento_evoluciones || 'Sin resultados registrados.'}</p>
+                                <div class="history-meta">
+                                    <div class="meta-item"><i class="fas fa-calendar"></i><span>${fechaVisita}</span></div>
+                                    <div class="meta-item"><i class="fas fa-user"></i><span>${plan.genetista_nombre}</span></div>
+                                </div>
+                            </div>
+                            <div class="history-tags">${archivosHtml}</div>
+                        </div>
+                        <div class="card-actions view-actions">
+                            <button class="action-btn js-edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                        </div>
+                    </div>
+                    <div class="editable-content">
+                        <h4>Editando: ${plan.tipo_consulta}</h4>
+                        <form class="edit-form" action="/ajax/edit-plan-estudio/${plan.id}/" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}">
+                            <div class="form-group">
+                                <label for="accion_${plan.id}">Acción a Realizar</label>
+                                <textarea name="accion" id="accion_${plan.id}" rows="3">${plan.accion}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="evoluciones_${plan.id}">Asesoramiento y Evoluciones (Resultados)</label>
+                                <textarea name="asesoramiento_evoluciones" id="evoluciones_${plan.id}" rows="3">${plan.asesoramiento_evoluciones}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha_visita_${plan.id}">Fecha de Próxima Visita</label>
+                                <input type="date" name="fecha_visita" id="fecha_visita_${plan.id}" value="${plan.fecha_visita || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="completado" ${plan.completado ? 'checked' : ''}>
+                                    Marcar como Completado
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="archivos_nuevos_${plan.id}">Añadir nuevos archivos</label>
+                                <input type="file" name="archivos_nuevos" id="archivos_nuevos_${plan.id}" multiple>
+                            </div>
+                            ${plan.archivos.length > 0 ? `
+                            <div class="form-group">
+                                <label>Eliminar archivos existentes</label>
+                                <ul class="file-delete-list">${archivosEliminarHtml}</ul>
+                            </div>
+                            ` : ''}
+                            <div class="card-actions edit-actions">
+                                <button type="button" class="btn btn-secondary js-cancel-btn">Cancelar</button>
+                                <button type="submit" class="btn btn-primary js-save-btn">Guardar Cambios</button>
+                            </div>
+                            <div class="form-errors" style="color: red; margin-top: 10px;"></div>
+                        </form>
+                    </div>
+                </div>`;
+        }
+    
+        // Delegación de eventos para los botones de las tarjetas dinámicas
+        historyListContainer.addEventListener('click', function(e) {
+            const card = e.target.closest('.history-card');
+            if (!card) return;
+    
+            // Botón Editar
+            if (e.target.closest('.js-edit-btn')) {
+                card.classList.add('is-editing');
+            }
+    
+            // Botón Cancelar
+            if (e.target.closest('.js-cancel-btn')) {
+                card.classList.remove('is-editing');
+                // Limpiar mensajes de error si los hubiera
+                card.querySelector('.form-errors').innerHTML = '';
+            }
+    
+            // Envío de formulario
+            if (e.target.closest('.js-save-btn')) {
+                e.preventDefault();
+                const form = card.querySelector('form');
+                const formData = new FormData(form);
+                const saveButton = e.target.closest('.js-save-btn');
+                const originalButtonText = saveButton.innerHTML;
+                saveButton.innerHTML = 'Guardando...';
+                saveButton.disabled = true;
+    
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        card.classList.remove('is-editing');
+                        // Recargar el historial para ver los cambios
+                        const propositoId = document.querySelector('.patients-table tr[data-proposito-id]').dataset.propositoId;
+                        loadHistoriaClinica(propositoId);
+                    } else {
+                        const errorContainer = card.querySelector('.form-errors');
+                        let errorHtml = '<strong>Por favor, corrija los siguientes errores:</strong><ul>';
+                        const errors = JSON.parse(data.errors);
+                        for (const field in errors) {
+                            errors[field].forEach(error => {
+                                errorHtml += `<li>${field}: ${error.message}</li>`;
+                            });
+                        }
+                        errorHtml += '</ul>';
+                        errorContainer.innerHTML = errorHtml;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting form:', error);
+                    card.querySelector('.form-errors').innerHTML = 'Ocurrió un error de red. Inténtelo de nuevo.';
+                })
+                .finally(() => {
+                    saveButton.innerHTML = originalButtonText;
+                    saveButton.disabled = false;
+                });
+            }
         });
     });
-
-    // Lógica para editar dentro del modal (se mantiene la de ejemplo)
-    const historyListContainer = document.querySelector('.history-list');
-    if (historyListContainer) {
-        historyListContainer.addEventListener('click', (event) => {
-            const editButton = event.target.closest('.js-edit-btn');
-            if (editButton) {
-                const card = editButton.closest('.history-card');
-                if (card) card.classList.add('is-editing');
-                return;
-            }
-            const saveButton = event.target.closest('.js-save-btn');
-            if (saveButton) {
-                const card = saveButton.closest('.history-card');
-                if (card) card.classList.remove('is-editing');
-                return;
-            }
-            const cancelButton = event.target.closest('.js-cancel-btn');
-            if (cancelButton) {
-                const card = cancelButton.closest('.history-card');
-                if (card) card.classList.remove('is-editing');
-                return;
-            }
-        });
-    }
-});
-
-</script>
-
-{% endblock %}
+    </script>
+    
+    {% endblock %}

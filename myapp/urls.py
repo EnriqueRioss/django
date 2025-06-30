@@ -43,10 +43,13 @@ path('historias/<int:historia_id>/editar/', views.crear_editar_historia, name="h
          path('historias/<int:historia_id>/<str:tipo>/<int:objeto_id>/autorizaciones/',
          views.autorizaciones_view, name='autorizaciones_crear'),
 
+     
+
 
 
     path('ajax/buscar-propositos/', views.buscar_propositos, name='ajax_buscar_propositos'), 
-
+path('ajax/get-historia-clinica/<int:proposito_id>/', views.get_historia_clinica_data, name='ajax_get_historia_clinica'),
+    path('ajax/edit-plan-estudio/<int:plan_id>/', views.edit_plan_estudio, name='ajax_edit_plan_estudio'),
     path('reports/', views.reports_view, name="reports_dashboard"),
     path('ver_historias/', views.ver_historias, name="ver_historias"),
     path('autorizaciones/', views.autorizaciones_view, name="autorizaciones"),

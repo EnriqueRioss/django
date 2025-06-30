@@ -21,9 +21,9 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.conf import settings
-
+from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
-
+from datetime import datetime, time
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -54,13 +54,13 @@ from .models import (
     Genetistas, Propositos, HistoriasClinicas, InformacionPadres, ExamenFisico,
     Parejas, AntecedentesPersonales, DesarrolloPsicomotor, PeriodoNeonatal,
     AntecedentesFamiliaresPreconcepcionales,
-    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task,Parejas,Autorizaciones
+    EvaluacionGenetica, DiagnosticoPresuntivo, PlanEstudio, Project, Task,Parejas,Autorizaciones,ArchivoPlanEstudio
 )
 from .forms import (
     ExtendedUserCreationForm, HistoriasForm, PropositosForm, PadresPropositoForm,
     AntecedentesDesarrolloNeonatalForm, AntecedentesPreconcepcionalesForm,
     ExamenFisicoForm, ParejaPropositosForm, EvaluacionGeneticaForm,
-    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm,AdminUserEditForm,AutorizacionForm
+    LoginForm, CreateNewTask, CreateNewProject, ReportSearchForm, AdminUserCreationForm, EvaluacionGeneticaForm, DiagnosticoFormSet, PlanEstudioFormSet,PasswordResetAdminForm,AdminUserEditForm,AutorizacionForm,PlanEstudioEditForm
 )
 
 from django.views.decorators.cache import patch_cache_control
@@ -307,6 +307,95 @@ def crear_paciente(request, historia_id):
 # En tu archivo views.py
 
 # ... (todos los demás imports y vistas se mantienen igual) ...
+@login_required
+@all_roles_required
+def get_historia_clinica_data(request, proposito_id):
+    """
+    Vista AJAX para obtener los datos de la historia clínica de un propósito específico.
+    """
+    # Verificación de permisos básica
+    proposito = get_object_or_404(_get_pacientes_queryset_for_role(request.user), pk=proposito_id)
+
+    # Encontrar la evaluación genética asociada (directamente o a través de una pareja)
+    evaluacion = EvaluacionGenetica.objects.filter(
+        Q(proposito=proposito) | 
+        Q(pareja__proposito_id_1=proposito) | 
+        Q(pareja__proposito_id_2=proposito)
+    ).first()
+
+    data = {
+        'planes_de_estudio': []
+    }
+
+    if evaluacion:
+        # Obtener todos los planes de estudio y sus archivos asociados
+        planes = PlanEstudio.objects.filter(evaluacion=evaluacion).prefetch_related('archivos').order_by('fecha_visita', 'plan_id')
+        
+        for i, plan in enumerate(planes):
+            archivos_list = [{
+                'id': archivo.archivo_id,
+                'nombre': archivo.get_display_name(),
+                'url': archivo.archivo.url
+            } for archivo in plan.archivos.all()]
+
+            data['planes_de_estudio'].append({
+                'id': plan.plan_id,
+                'tipo_consulta': 'Consulta Inicial' if i == 0 else 'Consulta de Seguimiento',
+                'completado': plan.completado,
+                'accion': plan.accion,
+                'asesoramiento_evoluciones': plan.asesoramiento_evoluciones or "",
+                'fecha_visita': plan.fecha_visita.strftime('%Y-%m-%d') if plan.fecha_visita else None,
+                'genetista_nombre': proposito.historia.genetista.user.get_full_name() if proposito.historia.genetista else "N/A",
+                'archivos': archivos_list,
+            })
+    
+    return JsonResponse(data)
+
+
+@require_POST
+@login_required
+@genetista_or_admin_required
+def edit_plan_estudio(request, plan_id):
+    """
+    Vista AJAX para editar un Plan de Estudio.
+    """
+    plan_instance = get_object_or_404(PlanEstudio, pk=plan_id)
+    
+    # Verificación de permisos
+    user_profile = request.user.genetistas
+    if user_profile.rol == 'GEN':
+        genetista_historia = None
+        if plan_instance.evaluacion.proposito:
+            genetista_historia = plan_instance.evaluacion.proposito.historia.genetista
+        elif plan_instance.evaluacion.pareja:
+            genetista_historia = plan_instance.evaluacion.pareja.proposito_id_1.historia.genetista
+        
+        if genetista_historia != user_profile:
+            return JsonResponse({'success': False, 'errors': {'__all__': ['No tiene permiso para editar este plan.']}}, status=403)
+
+    form = PlanEstudioEditForm(request.POST, instance=plan_instance)
+
+    if form.is_valid():
+        plan_estudio = form.save(commit=False) # No guarda todavía, solo actualiza la instancia
+        
+        # Guardar la instancia principal
+        plan_estudio.save()
+
+        # Eliminar archivos marcados (ya manejado en el form.save)
+        if form.cleaned_data.get('archivos_a_eliminar'):
+            form.cleaned_data['archivos_a_eliminar'].delete()
+
+        # Añadir nuevos archivos
+        new_files = request.FILES.getlist('archivos_nuevos')
+        for f in new_files:
+            # Puedes añadir lógica aquí para el `nombre_descriptivo` si lo deseas
+            ArchivoPlanEstudio.objects.create(plan_estudio=plan_estudio, archivo=f)
+
+        return JsonResponse({'success': True, 'message': 'Plan de estudio actualizado correctamente.'})
+    else:
+        return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+
+
 
 @login_required
 @genetista_or_admin_required
@@ -830,6 +919,10 @@ def diagnosticos_plan_estudio(request, historia_id, tipo, objeto_id):
         'parent_object': parent_object, 'historia_id': historia_id,
     }
     return render(request, 'diagnosticos_plan.html', context)
+
+
+
+
 
 @login_required
 @genetista_or_admin_required
@@ -1575,6 +1668,7 @@ def index_view(request):
     for historia in last_historias:
         proposito = Propositos.objects.filter(historia=historia).first()
         paciente_name = f"{proposito.nombres} {proposito.apellidos}" if proposito else f"Historia N° {historia.numero_historia}"
+        # historia.fecha_ingreso ya es "aware" gracias a Django y USE_TZ=True.
         recent_activities.append({'title': 'Nueva historia clínica creada', 'meta': f'Paciente: {paciente_name}', 'timestamp': historia.fecha_ingreso, 'indicator_class': 'success'})
     
     for plan in last_planes_completados:
@@ -1584,8 +1678,15 @@ def index_view(request):
         elif plan.evaluacion.pareja:
             p1, p2 = plan.evaluacion.pareja.proposito_id_1, plan.evaluacion.pareja.proposito_id_2
             paciente_name = f"Pareja: {p1.nombres} y {p2.nombres}"
-        recent_activities.append({'title': 'Análisis genético completado', 'meta': f'Paciente: {paciente_name}', 'timestamp': plan.fecha_visita, 'indicator_class': 'info'})
+        
+        if plan.fecha_visita:
+            # 1. Creamos un datetime "naive" (sin zona horaria)
+            naive_datetime = datetime.combine(plan.fecha_visita, time.min)
+            # 2. Usamos timezone.make_aware para hacerlo "aware" con la zona horaria del proyecto
+            aware_datetime = timezone.make_aware(naive_datetime)
+            recent_activities.append({'title': 'Análisis genético completado', 'meta': f'Paciente: {paciente_name}', 'timestamp': aware_datetime, 'indicator_class': 'info'})
     
+    # Esta línea ahora comparará solo datetimes "aware", funcionando correctamente.
     recent_activities = sorted([act for act in recent_activities if act['timestamp']], key=lambda x: x['timestamp'], reverse=True)[:5]
     
     page_title = f"Inicio ({user_gen_profile.get_rol_display()})" if user_gen_profile else "Inicio"
