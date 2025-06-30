@@ -458,6 +458,11 @@ form{
     margin-right: 2%;
 }
 
+.fifth-width{
+    width: calc(20% - 1rem);
+    flex-grow: 1;
+}
+
 .form-group-tres label{
     font-family: "Poppins", serif;
     font-size: 12px;
@@ -503,7 +508,8 @@ form{
 }
 
 .form-group-tres input,
-.form-group-tres select {
+.form-group-tres select, 
+.form-group-tres textarea {
     background-color: var(--background-color);
     width: 100%;
     padding: 8px;
@@ -518,29 +524,33 @@ form{
 /*------------ Apartado para los formularios desplegables ------------*/
 
 .form-section {
-    /*border: 1px solid var(--border-gray);*/
+    border: 2px solid var(--border-gray);
     margin-bottom: 3rem;
     overflow: hidden;
+    border-radius: 0.8rem;
 }
 
 .section-header {
-    background-color: var(--primary-darkerblue);
     padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-weight: bold;
-    margin-bottom: 2rem;
+    
+}
+
+.section-header i{
+    font-size: 1.3rem;
 }
 
 .section-header h3{
-    color: var(--background-color);
-    font-size: 1.6rem;
+    color: var(--primary-darkerblue);
+    font-size: 1.8rem;
     margin-bottom: 10px;
 }
 
-.section-header:hover{
-    background-color: var(--second-lighter-blue);
+.form-section:hover{
+    box-shadow: 0 0.8rem 1rem rgba(0,0,0,0.15);
 
 }
 
@@ -561,10 +571,9 @@ form{
     max-height: 2000px;
 }
 
-/* Esto solo funcionará en navegadores modernos */
-.form-section:has(.section-content.active) .section-header {
-    background-color: var(--background-color);
-    border-bottom: 2px solid var(--primary-darkerblue);
+/*Esto solo funcionará en navegadores modernos */
+.form-section:has(.section-content.active) .section-header{
+    background-color: var(--lighter-blue);
 }
 
 .form-section:has(.section-content.active) .section-header h3 {
@@ -583,6 +592,11 @@ form{
     font-size: 1.5rem;
     text-transform: uppercase;
 
+}
+
+.conyugue-title {
+    font-size: 1.6rem;
+    color: var(--primary-darkerblue);
 }
 
 
@@ -658,9 +672,6 @@ form{
 .btn-secondary:hover {
     background-color: var(--lighter-blue);
 }
-
-
-
 
 
 

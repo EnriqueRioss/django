@@ -25,7 +25,7 @@
 
             <p class="step-subtitle">Datos basicos del paciente</p>
 
-            <p class="historia-info">Historia Clínica #{{ historia.numero_historia }}</p>
+            <p class="historia-info">Nº de Historia Clínica: {{ historia.numero_historia }}</p>
             {% if editing %}
                 <p class="editing-info"><em>Modo Edición: Actualizando datos del propósito.</em></p>
             {% endif %}
@@ -38,6 +38,7 @@
             <div class="form-section">
                 <div class="section-header" onclick="toggleSection('prenatales')">
                     <h3>1. Antecedentes prenatales y obstetricos</h3>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
                 <div id="prenatales-content" class="section-content">
                     <div class="form-group-tres">
@@ -65,7 +66,10 @@
                 </div>
             </div>
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('neonatal')"><h3>2. Periodo Neonatal</h3></div>
+                <div class="section-header" onclick="toggleSection('neonatal')">
+                    <h3>2. Periodo Neonatal</h3>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
                 <div id="neonatal-content" class="section-content">
                     <div class="form-group-tres">
                         <div class="third-width"><label for="{{ form.peso_nacer.id_for_label }}">Peso al Nacer (kg)</label>{{ form.peso_nacer }}<div class="field-errors" id="error_{{ form.peso_nacer.id_for_label }}"></div></div>
@@ -88,7 +92,10 @@
                 </div>
             </div>
             <div class="form-section">
-                <div class="section-header" onclick="toggleSection('alimentacion')"><h3>3. Alimentación y Evolución</h3></div>
+                <div class="section-header" onclick="toggleSection('alimentacion')">
+                    <h3>3. Alimentación y Evolución</h3>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
                 <div id="alimentacion-content" class="section-content">
                     <div class="form-group"><label for="{{ form.tipo_alimentacion.id_for_label }}">Tipo de Alimentación</label>{{ form.tipo_alimentacion }}<div class="field-errors" id="error_{{ form.tipo_alimentacion.id_for_label }}"></div></div>
                     <div class="form-group"><label for="{{ form.observaciones_alimentacion.id_for_label }}">Observaciones de Alimentación</label>{{ form.observaciones_alimentacion }}<div class="field-errors" id="error_{{ form.observaciones_alimentacion.id_for_label }}"></div></div>
@@ -96,7 +103,10 @@
                 </div>
             </div>
             <div class="form-section">
-                <div class="section-header"  onclick="toggleSection('psicomotor')"><h3>4. Desarrollo Psicomotor</h3></div>
+                <div class="section-header"  onclick="toggleSection('psicomotor')">
+                    <h3>4. Desarrollo Psicomotor</h3>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
                 <div id="psicomotor-content" class="section-content">
                     <div class="form-group">
                         <table class="table-container">
